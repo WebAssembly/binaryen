@@ -49,8 +49,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 
   // Calls can have unpredictable, unknown cost. Model it as a large number.
   // TODO: For calls to functions in this module, we could in principle scan
-  //       them. However, call effects generally mean the cost is a moot point,
-  //       except for call.without.effects, which is rare.
+  //       them. However, call effects generally mean the cost is a moot point.
   static const CostType CallCost = 100;
 
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }

@@ -2,9 +2,6 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 funcref) (result i32)))
-
   ;; CHECK:      (func $if-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -543,7 +540,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-condition-no-2 (type $3)
+  ;; CHECK:      (func $past-condition-no-2 (type $2)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -762,16 +759,15 @@
     )
   )
 
-  ;; CHECK:      (func $sink-call (type $1) (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-expr (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $temp
-  ;; CHECK-NEXT:     (call $call.without.effects
+  ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (i32.const 1234)
-  ;; CHECK-NEXT:      (ref.func $sink-call)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return
@@ -781,15 +777,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $sink-call (param $p i32) (result i32)
+  (func $sink-expr (param $p i32) (result i32)
     (local $temp i32)
 
-    ;; This local has a call, but the call is an intrinsic indicating no
-    ;; effects, so it is safe to sink into the if.
+    ;; This local has an expression without effects, so it is safe to sink into
+    ;; the if.
     (local.set $temp
-      (call $call.without.effects
+      (i32.eqz
         (i32.const 1234)
-        (ref.func $sink-call)
       )
     )
     (if
@@ -803,12 +798,11 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $no-sink-call (type $1) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-expr (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (call $call.without.effects
+  ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 1234)
-  ;; CHECK-NEXT:    (ref.func $no-sink-call)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
@@ -821,16 +815,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $temp)
   ;; CHECK-NEXT: )
-  (func $no-sink-call (param $p i32) (result i32)
+  (func $no-sink-expr (param $p i32) (result i32)
     (local $temp i32)
 
     ;; As above, but now after the if we have a get of the temp local, so we
     ;; cannot sink. This + the previous testcase show we scan for such local
     ;; uses in exactly the right places.
     (local.set $temp
-      (call $call.without.effects
+      (i32.eqz
         (i32.const 1234)
-        (ref.func $no-sink-call)
       )
     )
     (if
@@ -844,12 +837,11 @@
     (local.get $temp) ;; this line changed.
   )
 
-  ;; CHECK:      (func $no-sink-call-2 (type $1) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-expr-2 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (call $call.without.effects
+  ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 1234)
-  ;; CHECK-NEXT:    (ref.func $no-sink-call-2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
@@ -863,15 +855,14 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (local.get $temp)
   ;; CHECK-NEXT: )
-  (func $no-sink-call-2 (param $p i32) (result i32)
+  (func $no-sink-expr-2 (param $p i32) (result i32)
     (local $temp i32)
 
     ;; As above, but add a nop before the final value. We still should not
     ;; optimize.
     (local.set $temp
-      (call $call.without.effects
+      (i32.eqz
         (i32.const 1234)
-        (ref.func $no-sink-call-2)
       )
     )
     (if
@@ -886,12 +877,11 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $no-sink-call-3 (type $1) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-expr-3 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (call $call.without.effects
+  ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 1234)
-  ;; CHECK-NEXT:    (ref.func $no-sink-call-3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
@@ -909,15 +899,14 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $no-sink-call-3 (param $p i32) (result i32)
+  (func $no-sink-expr-3 (param $p i32) (result i32)
     (local $temp i32)
 
     ;; As above, but add a nop after the get of the local after the if. We still
     ;; should not optimize.
     (local.set $temp
-      (call $call.without.effects
+      (i32.eqz
         (i32.const 1234)
-        (ref.func $no-sink-call-3)
       )
     )
     (if
@@ -936,16 +925,15 @@
     (i32.const 0) ;; this line was added.
   )
 
-  ;; CHECK:      (func $sink-call-3 (type $1) (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-expr-3 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $temp
-  ;; CHECK-NEXT:     (call $call.without.effects
+  ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (i32.const 1234)
-  ;; CHECK-NEXT:      (ref.func $no-sink-call-3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return
@@ -960,16 +948,15 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $sink-call-3 (param $p i32) (result i32)
+  (func $sink-expr-3 (param $p i32) (result i32)
     (local $temp i32)
 
     ;; As above, but stop reading the relevant local after the if, keeping the
     ;; number of other items unchanged. This verifies the presence of multiple
     ;; items is not a problem and we can optimize.
     (local.set $temp
-      (call $call.without.effects
+      (i32.eqz
         (i32.const 1234)
-        (ref.func $no-sink-call-3)
       )
     )
     (if
@@ -988,15 +975,14 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $no-sink-call-sub (type $1) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-expr-sub (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $other i32)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (call $call.without.effects
+  ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.tee $other
   ;; CHECK-NEXT:     (i32.const 1234)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.func $no-sink-call)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
@@ -1009,18 +995,17 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $no-sink-call-sub (param $p i32) (result i32)
+  (func $no-sink-expr-sub (param $p i32) (result i32)
     (local $temp i32)
     (local $other i32)
 
-    ;; The call has no effects, but one of the arguments to it does, so we
+    ;; The expr has no effects, but one of the arguments to it does, so we
     ;; cannot optimize.
     (local.set $temp
-      (call $call.without.effects
+      (i32.eqz
         (local.tee $other ;; an effect
           (i32.const 1234)
         )
-        (ref.func $no-sink-call)
       )
     )
     (if
@@ -1034,7 +1019,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $ref-into-if (type $4) (param $0 (ref any))
+  ;; CHECK:      (func $ref-into-if (type $3) (param $0 (ref any))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if

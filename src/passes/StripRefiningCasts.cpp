@@ -53,7 +53,6 @@
 
 #include "ir/effects.h"
 #include "ir/gc-type-utils.h"
-#include "ir/intrinsics.h"
 #include "ir/subtype-exprs.h"
 #include "pass.h"
 #include "passes/passes.h"
@@ -132,15 +131,6 @@ struct StripRefiningCasts
       }
       break;
     }
-  }
-
-  void visitCall(Call* curr) {
-    // call.without.effects operands must also satisfy the signature of the
-    // target function operand, not just the import's declared signature.
-    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
-      return;
-    }
-    Super::visitCall(curr);
   }
 
   void visitRefTest(RefTest* curr) {

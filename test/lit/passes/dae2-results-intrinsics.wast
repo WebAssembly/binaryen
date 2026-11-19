@@ -2,26 +2,6 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae2 --closed-world -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $2) (param funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param funcref) (result i32)))
-  ;; CHECK:      (func $target (type $1) (result i32)
-  ;; CHECK-NEXT:  (i32.const 42)
-  ;; CHECK-NEXT: )
-  (func $target (result i32) (i32.const 42))
-  ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $cwe
-  ;; CHECK-NEXT:    (ref.func $target)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $caller
-    ;; We cannot optimize function called via intrinsics.
-    (drop (call $cwe (ref.func $target)))
-  )
-)
-
-(module
   ;; CHECK:      (type $externs (array (mut externref)))
   (type $externs (array (mut externref)))
   ;; CHECK:      (type $funcs (array (mut funcref)))
@@ -100,10 +80,8 @@
 )
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $1) (param funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param funcref) (result i32)))
   ;; CHECK:      (@binaryen.js.called)
-  ;; CHECK-NEXT: (func $target (type $2) (result i32)
+  ;; CHECK-NEXT: (func $target (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (@binaryen.js.called)

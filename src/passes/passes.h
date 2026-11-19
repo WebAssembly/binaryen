@@ -82,7 +82,6 @@ Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
 Pass* createLocalSubtypingPass();
 Pass* createLogExecutionPass();
-Pass* createIntrinsicLoweringPass();
 Pass* createTraceCallsPass();
 Pass* createInstrumentBranchHintsPass();
 Pass* createInstrumentLocalsPass();

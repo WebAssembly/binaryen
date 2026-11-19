@@ -20,7 +20,6 @@
 #include <cassert>
 #include <unordered_set>
 
-#include "ir/intrinsics.h"
 #include "pass.h"
 #include "support/name.h"
 #include "wasm-traversal.h"
@@ -741,15 +740,6 @@ private:
     }
 
     void visitCall(Call* curr) {
-      if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
-        // The only effect this can have is to branch (which is an effect of the
-        // return, not the call).
-        if (curr->isReturn) {
-          parent.branchesOut = true;
-        }
-        return;
-      }
-
       const EffectAnalyzer* callTargetEffects = nullptr;
       if (auto* target = parent.module.getFunctionOrNull(curr->target);
           target && target->effects) {

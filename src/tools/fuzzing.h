@@ -20,6 +20,7 @@
 //
 
 #include "ir/branch-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/struct-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"

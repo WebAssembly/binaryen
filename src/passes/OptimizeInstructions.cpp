@@ -31,6 +31,7 @@
 #include <ir/effects.h>
 #include <ir/find_all.h>
 #include <ir/gc-type-utils.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>

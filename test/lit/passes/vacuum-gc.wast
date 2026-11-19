@@ -2,16 +2,11 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+
   ;; CHECK:      (type $"{}" (struct))
-
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 i32 funcref) (result anyref)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (type $3) (param i32 i32 funcref) (result (ref any))))
-  (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
-
   (type $"{}" (struct))
 
-  ;; CHECK:      (func $drop-ref-as (type $4) (param $x anyref)
+  ;; CHECK:      (func $drop-ref-as (type $2) (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -63,7 +58,7 @@
     )
   )
 
-  ;; CHECK:      (func $drop-i31.get (type $5) (param $ref i31ref) (param $ref-nn (ref i31))
+  ;; CHECK:      (func $drop-i31.get (type $3) (param $ref i31ref) (param $ref-nn (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i31.get_s
   ;; CHECK-NEXT:    (local.get $ref)
@@ -84,7 +79,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast.null.block (type $6) (param $ref (ref $"{}")) (result structref)
+  ;; CHECK:      (func $ref.cast.null.block (type $4) (param $ref (ref $"{}")) (result structref)
   ;; CHECK-NEXT:  (ref.cast (ref $"{}")
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
@@ -118,21 +113,6 @@
   ;; CHECK-NEXT:    (call $helper-ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (call $helper-i32)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (call $helper-i32)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $call.without.effects.non.null
-  ;; CHECK-NEXT:    (call $helper-i32)
-  ;; CHECK-NEXT:    (call $helper-i32)
-  ;; CHECK-NEXT:    (ref.func $helper-two-refs-non-null)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $dropped-calls
     ;; The calls' outputs are used in a computation that itself has no effects,
@@ -151,50 +131,19 @@
         (call $helper-ref)
       )
     )
-    ;; The call.without.effects can be removed, but not the two calls nested in
-    ;; it.
-    (drop
-      (call $call.without.effects
-        (call $helper-i32)
-        (call $helper-i32)
-        (ref.func $helper-two-refs)
-      )
-    )
-    ;; The non-null case however is tricky, and we do not handle it atm. TODO
-    (drop
-      (call $call.without.effects.non.null
-        (call $helper-i32)
-        (call $helper-i32)
-        (ref.func $helper-two-refs-non-null)
-      )
-    )
   )
 
-  ;; CHECK:      (func $helper-i32 (type $7) (result i32)
+  ;; CHECK:      (func $helper-i32 (type $5) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $helper-i32 (result i32)
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $helper-ref (type $8) (result eqref)
+  ;; CHECK:      (func $helper-ref (type $6) (result eqref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper-ref (result eqref)
-    (unreachable)
-  )
-
-  ;; CHECK:      (func $helper-two-refs (type $9) (param $0 i32) (param $1 i32) (result anyref)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $helper-two-refs (param i32) (param i32) (result (ref null any))
-    (unreachable)
-  )
-
-  ;; CHECK:      (func $helper-two-refs-non-null (type $10) (param $0 i32) (param $1 i32) (result (ref any))
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $helper-two-refs-non-null (param i32) (param i32) (result (ref any))
     (unreachable)
   )
 )

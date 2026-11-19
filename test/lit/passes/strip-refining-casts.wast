@@ -44,9 +44,6 @@
     (type $Desc (sub (describes $Described) (struct)))
   )
 
-  (import "binaryen-intrinsics" "call.without.effects"
-    (func $cwe (param (ref $Super)) (param funcref)))
-
   ;; TNH:      (global $g (mut (ref null $Super)) (ref.null none))
   ;; NO_TNH:      (global $g (mut (ref null $Super)) (ref.null none))
   (global $g (mut (ref null $Super)) (ref.null $Super))
@@ -67,17 +64,7 @@
     (nop)
   )
 
-  ;; TNH:      (func $target-sub (type $9) (param $s (ref $Sub))
-  ;; TNH-NEXT:  (nop)
-  ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $target-sub (type $9) (param $s (ref $Sub))
-  ;; NO_TNH-NEXT:  (nop)
-  ;; NO_TNH-NEXT: )
-  (func $target-sub (param $s (ref $Sub))
-    (nop)
-  )
-
-  ;; TNH:      (func $call (type $10) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
+  ;; TNH:      (func $call (type $8) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
   ;; TNH-NEXT:  (call $callee
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:  )
@@ -94,14 +81,8 @@
   ;; TNH-NEXT:    (local.get $any)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (call $cwe
-  ;; TNH-NEXT:   (ref.cast (ref $Sub)
-  ;; TNH-NEXT:    (local.get $x)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:   (ref.func $target-sub)
-  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $call (type $10) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
+  ;; NO_TNH:      (func $call (type $8) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
   ;; NO_TNH-NEXT:  (call $callee
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -125,12 +106,6 @@
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $any)
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (call $cwe
-  ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
-  ;; NO_TNH-NEXT:    (local.get $x)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (ref.func $target-sub)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $call (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
@@ -166,17 +141,9 @@
         (local.get $any)
       )
     )
-    ;; Arguments of call.without.effects must match the parameters of the actual
-    ;; target, not the intrinsic import, so casts on them must be kept.
-    (call $cwe
-      (ref.cast (ref $Sub)
-        (local.get $x)
-      )
-      (ref.func $target-sub)
-    )
   )
 
-  ;; TNH:      (func $call-ref (type $11) (param $fn (ref $Sig)) (param $x (ref $Super)) (param $any anyref)
+  ;; TNH:      (func $call-ref (type $9) (param $fn (ref $Sig)) (param $x (ref $Super)) (param $any anyref)
   ;; TNH-NEXT:  (call_ref $Sig
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:   (local.get $fn)
@@ -188,7 +155,7 @@
   ;; TNH-NEXT:   (local.get $fn)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $call-ref (type $11) (param $fn (ref $Sig)) (param $x (ref $Super)) (param $any anyref)
+  ;; NO_TNH:      (func $call-ref (type $9) (param $fn (ref $Sig)) (param $x (ref $Super)) (param $any anyref)
   ;; NO_TNH-NEXT:  (call_ref $Sig
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -217,7 +184,7 @@
     )
   )
 
-  ;; TNH:      (func $call-indirect (type $12) (param $x (ref $Super)) (param $any anyref)
+  ;; TNH:      (func $call-indirect (type $10) (param $x (ref $Super)) (param $any anyref)
   ;; TNH-NEXT:  (call_indirect $t (type $Sig)
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:   (i32.const 0)
@@ -229,7 +196,7 @@
   ;; TNH-NEXT:   (i32.const 0)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $call-indirect (type $12) (param $x (ref $Super)) (param $any anyref)
+  ;; NO_TNH:      (func $call-indirect (type $10) (param $x (ref $Super)) (param $any anyref)
   ;; NO_TNH-NEXT:  (call_indirect $t (type $Sig)
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -258,12 +225,12 @@
     )
   )
 
-  ;; TNH:      (func $return-cast (type $13) (param $x (ref $Super)) (result (ref $Super))
+  ;; TNH:      (func $return-cast (type $11) (param $x (ref $Super)) (result (ref $Super))
   ;; TNH-NEXT:  (return
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $return-cast (type $13) (param $x (ref $Super)) (result (ref $Super))
+  ;; NO_TNH:      (func $return-cast (type $11) (param $x (ref $Super)) (result (ref $Super))
   ;; NO_TNH-NEXT:  (return
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -278,14 +245,14 @@
     )
   )
 
-  ;; TNH:      (func $return-keep (type $14) (param $any anyref) (result (ref $Super))
+  ;; TNH:      (func $return-keep (type $12) (param $any anyref) (result (ref $Super))
   ;; TNH-NEXT:  (return
   ;; TNH-NEXT:   (ref.cast (ref $Sub)
   ;; TNH-NEXT:    (local.get $any)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $return-keep (type $14) (param $any anyref) (result (ref $Super))
+  ;; NO_TNH:      (func $return-keep (type $12) (param $any anyref) (result (ref $Super))
   ;; NO_TNH-NEXT:  (return
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
   ;; NO_TNH-NEXT:    (local.get $any)
@@ -300,7 +267,7 @@
     )
   )
 
-  ;; TNH:      (func $local-and-global-set (type $15) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref) (param $ext externref)
+  ;; TNH:      (func $local-and-global-set (type $13) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref) (param $ext externref)
   ;; TNH-NEXT:  (local $l (ref null $Super))
   ;; TNH-NEXT:  (local.set $l
   ;; TNH-NEXT:   (local.get $x)
@@ -333,7 +300,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $local-and-global-set (type $15) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref) (param $ext externref)
+  ;; NO_TNH:      (func $local-and-global-set (type $13) (param $x (ref $Super)) (param $ns (ref null $Super)) (param $any anyref) (param $ext externref)
   ;; NO_TNH-NEXT:  (local $l (ref null $Super))
   ;; NO_TNH-NEXT:  (local.set $l
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
@@ -429,7 +396,7 @@
     )
   )
 
-  ;; TNH:      (func $struct-and-array (type $16) (param $c (ref $Container)) (param $a (ref $Arr)) (param $s (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
+  ;; TNH:      (func $struct-and-array (type $14) (param $c (ref $Container)) (param $a (ref $Arr)) (param $s (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
   ;; TNH-NEXT:  (struct.set $Container 0
   ;; TNH-NEXT:   (local.get $c)
   ;; TNH-NEXT:   (local.get $s)
@@ -474,7 +441,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $struct-and-array (type $16) (param $c (ref $Container)) (param $a (ref $Arr)) (param $s (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
+  ;; NO_TNH:      (func $struct-and-array (type $14) (param $c (ref $Container)) (param $a (ref $Arr)) (param $s (ref $Super)) (param $ns (ref null $Super)) (param $any anyref)
   ;; NO_TNH-NEXT:  (struct.set $Container 0
   ;; NO_TNH-NEXT:   (local.get $c)
   ;; NO_TNH-NEXT:   (ref.cast (ref $Sub)
@@ -593,7 +560,7 @@
     )
   )
 
-  ;; TNH:      (func $select (type $17) (param $cond i32) (param $a (ref $Super)) (param $b (ref $Super)) (param $any anyref) (result (ref $Super))
+  ;; TNH:      (func $select (type $15) (param $cond i32) (param $a (ref $Super)) (param $b (ref $Super)) (param $any anyref) (result (ref $Super))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (select (result (ref $Super))
   ;; TNH-NEXT:    (local.get $a)
@@ -609,7 +576,7 @@
   ;; TNH-NEXT:   (local.get $cond)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select (type $17) (param $cond i32) (param $a (ref $Super)) (param $b (ref $Super)) (param $any anyref) (result (ref $Super))
+  ;; NO_TNH:      (func $select (type $15) (param $cond i32) (param $a (ref $Super)) (param $b (ref $Super)) (param $any anyref) (result (ref $Super))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (select (result (ref $Super))
   ;; NO_TNH-NEXT:    (ref.cast (ref $Sub)
@@ -651,7 +618,7 @@
     )
   )
 
-  ;; TNH:      (func $ref-test (type $18) (param $s (ref $Super)) (param $ns (ref null $Super))
+  ;; TNH:      (func $ref-test (type $16) (param $s (ref $Super)) (param $ns (ref null $Super))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (ref.test (ref $SubSub)
   ;; TNH-NEXT:    (local.get $s)
@@ -682,7 +649,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref-test (type $19) (param $s (ref $Super)) (param $ns (ref null $Super))
+  ;; NO_TNH:      (func $ref-test (type $17) (param $s (ref $Super)) (param $ns (ref null $Super))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.test (ref $SubSub)
   ;; NO_TNH-NEXT:    (ref.cast (ref $Sub)
@@ -764,7 +731,7 @@
     )
   )
 
-  ;; TNH:      (func $keep-descriptor-and-unreachable (type $19) (param $c i32) (param $x anyref) (param $d (ref $Desc))
+  ;; TNH:      (func $keep-descriptor-and-unreachable (type $17) (param $c i32) (param $x anyref) (param $d (ref $Desc))
   ;; TNH-NEXT:  (local $l anyref)
   ;; TNH-NEXT:  (local.set $l
   ;; TNH-NEXT:   (local.get $x)
@@ -827,7 +794,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $keep-descriptor-and-unreachable (type $20) (param $c i32) (param $x anyref) (param $d (ref $Desc))
+  ;; NO_TNH:      (func $keep-descriptor-and-unreachable (type $18) (param $c i32) (param $x anyref) (param $d (ref $Desc))
   ;; NO_TNH-NEXT:  (local $l anyref)
   ;; NO_TNH-NEXT:  (local.set $l
   ;; NO_TNH-NEXT:   (ref.cast_desc_eq (ref $Described)
@@ -949,7 +916,7 @@
     )
   )
 
-  ;; TNH:      (func $control-flow (type $20) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
+  ;; TNH:      (func $control-flow (type $18) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (if (result (ref $Super))
   ;; TNH-NEXT:    (local.get $c)
@@ -1006,7 +973,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (local.get $x)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $control-flow (type $21) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
+  ;; NO_TNH:      (func $control-flow (type $19) (param $c i32) (param $x (ref $Super)) (param $sub (ref $Sub)) (result (ref $Super))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref $Super))
   ;; NO_TNH-NEXT:    (local.get $c)
@@ -1155,14 +1122,14 @@
     )
   )
 
-  ;; TNH:      (func $any.convert_extern (type $21) (param $ext externref) (result (ref any))
+  ;; TNH:      (func $any.convert_extern (type $19) (param $ext externref) (result (ref any))
   ;; TNH-NEXT:  (any.convert_extern
   ;; TNH-NEXT:   (ref.as_non_null
   ;; TNH-NEXT:    (local.get $ext)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $any.convert_extern (type $22) (param $ext externref) (result (ref any))
+  ;; NO_TNH:      (func $any.convert_extern (type $20) (param $ext externref) (result (ref any))
   ;; NO_TNH-NEXT:  (any.convert_extern
   ;; NO_TNH-NEXT:   (ref.as_non_null
   ;; NO_TNH-NEXT:    (local.get $ext)
@@ -1178,14 +1145,14 @@
     )
   )
 
-  ;; TNH:      (func $extern.convert_any (type $22) (param $any anyref) (result (ref extern))
+  ;; TNH:      (func $extern.convert_any (type $20) (param $any anyref) (result (ref extern))
   ;; TNH-NEXT:  (extern.convert_any
   ;; TNH-NEXT:   (ref.as_non_null
   ;; TNH-NEXT:    (local.get $any)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $extern.convert_any (type $23) (param $any anyref) (result (ref extern))
+  ;; NO_TNH:      (func $extern.convert_any (type $21) (param $any anyref) (result (ref extern))
   ;; NO_TNH-NEXT:  (extern.convert_any
   ;; NO_TNH-NEXT:   (ref.as_non_null
   ;; NO_TNH-NEXT:    (local.get $any)
@@ -1201,14 +1168,14 @@
     )
   )
 
-  ;; TNH:      (func $extern.convert_any-unnecessary (type $23) (param $any anyref) (result externref)
+  ;; TNH:      (func $extern.convert_any-unnecessary (type $21) (param $any anyref) (result externref)
   ;; TNH-NEXT:  (extern.convert_any
   ;; TNH-NEXT:   (ref.as_non_null
   ;; TNH-NEXT:    (local.get $any)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $extern.convert_any-unnecessary (type $24) (param $any anyref) (result externref)
+  ;; NO_TNH:      (func $extern.convert_any-unnecessary (type $22) (param $any anyref) (result externref)
   ;; NO_TNH-NEXT:  (extern.convert_any
   ;; NO_TNH-NEXT:   (ref.as_non_null
   ;; NO_TNH-NEXT:    (local.get $any)

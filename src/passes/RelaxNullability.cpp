@@ -180,28 +180,6 @@ struct InsertRefAsNonNull
       // Labeled blocks are skipped. See `InsertRefAsNonNull::visitExpression`.
       WASM_UNREACHABLE("unexpected branch");
     }
-
-    void visitCall(Call* curr) {
-      // call.without.effects imports are treated as having a private type,
-      // so its params were relaxed regardless of what the underlying function
-      // being called demands. We don't need to note anything for the call to
-      // call.without.effects but we do need to note the demanded type for the
-      // underlying function's params seperately. Do that here.
-      if (Intrinsics(wasm).isCallWithoutEffects(curr)) {
-        if (curr->operands.back()->type.isSignature()) {
-          const auto& params =
-            curr->operands.back()->type.getHeapType().getSignature().params;
-          assert(params.size() == curr->operands.size() - 1);
-          for (size_t i = 0; i < params.size(); ++i) {
-            note(&curr->operands[i], params[i]);
-          }
-        }
-
-        return;
-      }
-
-      Super::visitCall(curr);
-    }
   } typer;
 
   InsertRefAsNonNull(Module& module, Function* func) : typer(module, func) {}

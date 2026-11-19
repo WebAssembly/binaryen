@@ -186,12 +186,6 @@ struct FunctionInfo {
   // when visiting other functions in parallel.
   std::atomic<bool> referenced = false;
 
-  // We cannot yet fully analyze and optimize call.without.effects, which would
-  // require creating new imports for new signatures, etc. Functions that are
-  // called via these intrinsics will not be optimized.
-  // TODO: Fix this.
-  std::atomic<bool> usedInIntrinsic = false;
-
   // Unreferenced functions can be optimized separately from referenced
   // functions with the same type. For unreferenced functions in that situation,
   // this is the new type that should be applied before global type rewriting to
@@ -620,10 +614,6 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
   }
 
   void visitCall(Call* curr) {
-    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
-      auto target = curr->operands.back()->cast<RefFunc>()->func;
-      funcInfos[funcIndices.at(target)].usedInIntrinsic = true;
-    }
     auto* callee = getModule()->getFunction(curr->target);
     if (callee->getResults().isConcrete()) {
       Location source = FuncResultLoc{funcIndices.at(curr->target)};
@@ -717,15 +707,6 @@ void DAE2::analyzeModule() {
     }
   }
 
-  // Functions called with call.without.effects cannot yet be optimized. Mark
-  // their parameters and results as used.
-  for (Index i = 0; i < wasm->functions.size(); ++i) {
-    if (funcInfos[i].usedInIntrinsic) {
-      markParamsUsed(i);
-      markResultsUsed(i);
-    }
-  }
-
   // JS-called functions will be called externally, so we cannot optimize out
   // their parameters or results.
   // TODO: Consider optimizing out a suffix of their parameters.
@@ -771,16 +752,6 @@ void DAE2::analyzeModule() {
   for (Index i = 0; i < wasm->functions.size(); ++i) {
     for (auto type : funcInfos[i].contTypes) {
       unrewritableRoots.insert(getRootType(type.getContinuation().type));
-    }
-  }
-
-  // The types of the call.without.effects imports are excluded from the set of
-  // public heap types, but until we can handle analyzing and updating them in
-  // this pass, we must treat them the same as any other imported function
-  // types.
-  for (auto& func : wasm->functions) {
-    if (Intrinsics(*wasm).isCallWithoutEffects(func.get())) {
-      unrewritableRoots.insert(getRootType(func->type.getHeapType()));
     }
   }
 

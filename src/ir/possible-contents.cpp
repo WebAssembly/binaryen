@@ -22,6 +22,7 @@
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/linear-execution.h"
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
@@ -897,42 +898,7 @@ struct InfoCollector
     }
   }
 
-  void visitCall(Call* curr) {
-    if (!Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
-      // This is just a normal call.
-      handleDirectCall(curr, curr->target);
-      return;
-    }
-    // A call-without-effects receives a function reference and calls it, the
-    // same as a CallRef. When we have a flag for non-closed-world, we should
-    // handle this automatically by the reference flowing out to an import,
-    // which is what binaryen intrinsics look like. For now, to support use
-    // cases of a closed world but that also use this intrinsic, handle the
-    // intrinsic specifically here. (Without that, the closed world assumption
-    // makes us ignore the function ref that flows to an import, so we are not
-    // aware that it is actually called.)
-    auto* target = curr->operands.back();
-
-    // We must ignore the last element when handling the call - the target is
-    // used to perform the call, and not sent during the call.
-    curr->operands.pop_back();
-
-    if (auto* refFunc = target->dynCast<RefFunc>()) {
-      // We can see exactly where this goes.
-      handleDirectCall(curr, refFunc->func);
-    } else {
-      // We can't see where this goes. We must be pessimistic and assume it
-      // can call anything of the proper type, the same as a CallRef. (We could
-      // look at the possible contents of |target| during the flow, but that
-      // would require special logic like we have for StructGet etc., and the
-      // intrinsics will be lowered away anyhow, so just running after that is
-      // a workaround.)
-      handleIndirectCall(curr, target->type);
-    }
-
-    // Restore the target.
-    curr->operands.push_back(target);
-  }
+  void visitCall(Call* curr) { handleDirectCall(curr, curr->target); }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: optimize the call target like CallRef
     // CallIndirect only knows a heap type, so it is always inexact.

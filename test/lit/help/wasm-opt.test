@@ -277,8 +277,6 @@
 ;; CHECK-NEXT:                                                 to intercept all loads and 
 ;; CHECK-NEXT:                                                 stores
 ;; CHECK-EMPTY:
-;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
-;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export 
 ;; CHECK-NEXT:                                                 boundary and prunes when needed
 ;; CHECK-EMPTY:

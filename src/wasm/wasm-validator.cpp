@@ -24,7 +24,6 @@
 #include "ir/find_all.h"
 #include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
-#include "ir/intrinsics.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
@@ -982,42 +981,6 @@ void FunctionValidator::visitCall(Call* curr) {
     return;
   }
   validateCallParamsAndResult(curr, target->type.getHeapType());
-
-  if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
-    // call.without.effects has the specific form of the last argument being a
-    // function reference, which will be called with all the previous arguments.
-    // The type must be consistent with that. This, for example, is not:
-    //
-    //  (call $call.without.effects
-    //    (i32.const 1)
-    //    (.. some function reference that expects an f64 param and not i32 ..)
-    //  )
-    if (shouldBeTrue(!curr->operands.empty(),
-                     curr,
-                     "call.without.effects must have a target operand")) {
-      auto* target = curr->operands.back();
-      // Validate only in the case that the target is a function. If it isn't,
-      // it might be unreachable (which is fine, and we can ignore this), or if
-      // the call.without.effects import doesn't have a function as the last
-      // parameter, then validateImports() will handle that later (and it's
-      // better to emit a single error there than one per callsite here).
-      if (target->type.isFunction()) {
-        // Copy the original call and remove the reference. It must then match
-        // the expected signature.
-        struct Copy {
-          std::vector<Expression*> operands;
-          bool isReturn;
-          Type type;
-        } copy;
-        for (Index i = 0; i < curr->operands.size() - 1; i++) {
-          copy.operands.push_back(curr->operands[i]);
-        }
-        copy.isReturn = curr->isReturn;
-        copy.type = curr->type;
-        validateCallParamsAndResult(&copy, target->type.getHeapType(), curr);
-      }
-    }
-  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -5027,16 +4990,6 @@ void validateImports(Module& module, ValidationInfo& info) {
                              curr->name,
                              "Imported function must not have i64 results");
       }
-    }
-
-    if (Intrinsics(module).isCallWithoutEffects(curr)) {
-      auto lastParam = curr->getParams();
-      if (lastParam.isTuple()) {
-        lastParam = lastParam.getTuple().back();
-      }
-      info.shouldBeTrue(lastParam.isFunction(),
-                        curr->name,
-                        "call.if.used's last param must be a function");
     }
   });
   ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {

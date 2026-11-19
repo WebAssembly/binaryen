@@ -1,4 +1,4 @@
-;; Test for a validation error on bad usage of call.without.effects
+;; Test for a validation error on out-of-bounds data index
 
 ;; RUN: not wasm-opt -all %s 2>&1 | filecheck %s
 

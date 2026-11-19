@@ -20,29 +20,8 @@
 
 namespace wasm {
 
-static Name BinaryenIntrinsicsModule("binaryen-intrinsics"),
-  CallWithoutEffects("call.without.effects"),
-  JSPrototypesModule("wasm:js-prototypes"), ConfigureAll("configureAll");
-
-bool Intrinsics::isCallWithoutEffects(Function* func) {
-  if (func->module != BinaryenIntrinsicsModule) {
-    return false;
-  }
-  if (func->base == CallWithoutEffects) {
-    return true;
-  }
-  Fatal() << "Unrecognized intrinsic";
-}
-
-bool Intrinsics::isCallWithoutEffects(Call* call) {
-  // The target function may not exist if the module is still being
-  // constructed.
-  if (auto* func = module.getFunctionOrNull(call->target)) {
-    return isCallWithoutEffects(func);
-  }
-
-  return false;
-}
+static Name JSPrototypesModule("wasm:js-prototypes"),
+  ConfigureAll("configureAll");
 
 bool Intrinsics::isConfigureAll(Function* func) {
   return func->module == JSPrototypesModule && func->base == ConfigureAll;

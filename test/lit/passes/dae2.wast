@@ -1953,65 +1953,6 @@
 )
 
 (module
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (param i32)))
-
-  ;; CHECK:       (type $cwe (func (param i32 funcref)))
-  (type $cwe (func (param i32) (param funcref)))
-  (import "binaryen-intrinsics" "call.without.effects"
-    (func $call.without.effects (type $cwe) (param i32) (param funcref)))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $cwe) (param i32 funcref)))
-
-  ;; CHECK:      (elem declare func $callee $referenced-same-type)
-
-  ;; CHECK:      (func $test (type $0) (param $unused i32)
-  ;; CHECK-NEXT:  (call $call.without.effects
-  ;; CHECK-NEXT:   (local.get $unused)
-  ;; CHECK-NEXT:   (ref.func $callee)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test (param $unused i32)
-    ;; We cannot yet optimize functions called via call.without.effects.
-    (call $call.without.effects
-      (local.get $unused)
-      (ref.func $callee)
-    )
-  )
-
-  ;; CHECK:      (func $callee (type $0) (param $unused i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $callee (param $unused i32)
-    (nop)
-  )
-
-  ;; CHECK:      (func $referenced-same-type (type $cwe) (param $0 i32) (param $1 funcref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.func $referenced-same-type)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $referenced-same-type (type $cwe) (param i32) (param funcref)
-    ;; Since call.without.effects is modeled as an import, it inhibits the
-    ;; optimization of other referenced functions that happen to share a type
-    ;; with it.
-    (drop
-      (ref.func $referenced-same-type)
-    )
-  )
-
-  ;; CHECK:      (func $unreferenced-same-type (type $2)
-  ;; CHECK-NEXT:  (local $0 funcref)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT: )
-  (func $unreferenced-same-type (type $cwe) (param i32) (param funcref)
-    ;; But unreferenced functions with the same type can still be optimized.
-  )
-)
-
-(module
   ;; CHECK:      (type $f (func (param i32)))
   (type $f (func (param i32)))
   ;; CHECK:      (import "" "" (func $imported (type $f) (param i32)))

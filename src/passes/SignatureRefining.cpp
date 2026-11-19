@@ -27,6 +27,7 @@
 //
 
 #include "ir/find_all.h"
+#include "ir/intrinsics.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -64,15 +65,6 @@ struct SignatureRefining : public Pass {
       std::vector<Call*> calls;
       std::vector<CallIndirect*> callIndirects;
       std::vector<CallRef*> callRefs;
-
-      // Additional calls to take into account. We store intrinsic calls here,
-      // as they must appear twice: call.without.effects is both a normal call
-      // and also takes a final parameter that is a function reference that is
-      // called, and so two signatures are relevant for it. For the latter, we
-      // add the call as an "extra call" (which is an unusual call, as it has an
-      // extra parameter at the end, the function reference, compared to what we
-      // expect for the signature being called).
-      std::vector<Call*> extraCalls;
 
       // A possibly improved LUB for the results.
       LUBFinder resultsLUB;
@@ -129,17 +121,6 @@ struct SignatureRefining : public Pass {
       for (auto* call : info.calls) {
         allInfo[module->getFunction(call->target)->type.getHeapType()]
           .calls.push_back(call);
-
-        // For call.without.effects, we also add the effective function being
-        // called as well. The final operand is the function reference being
-        // called, which defines that type.
-        if (Intrinsics(*module).isCallWithoutEffects(call)) {
-          auto targetType = call->operands.back()->type;
-          if (!targetType.isRef()) {
-            continue;
-          }
-          allInfo[targetType.getHeapType()].extraCalls.push_back(call);
-        }
       }
 
       // For non-direct calls, add each to the proper list of the relevant type.
@@ -265,12 +246,6 @@ struct SignatureRefining : public Pass {
         for (auto* callRef : info.callRefs) {
           updateLUBs(callRef->operands);
         }
-        for (auto* call : info.extraCalls) {
-          // Note that these intrinsic calls have an extra function reference
-          // param at the end, but updateLUBs looks at |numParams| only, so it
-          // considers just the relevant parameters.
-          updateLUBs(call->operands);
-        }
 
         // Find the final LUBs, and see if we found an improvement.
         std::vector<Type> newParamsTypes;
@@ -375,75 +350,8 @@ struct SignatureRefining : public Pass {
     GlobalTypeRewriter::updateSignatures(
       newSignatures, *module, getPassOptions().worldMode);
 
-    // Update intrinsics.
-    updateIntrinsics(module, allInfo);
-
     // TODO: we could do this only in relevant functions perhaps
     ReFinalize().run(getPassRunner(), module);
-  }
-
-  template<typename HeapInfoMap>
-  void updateIntrinsics(Module* module, HeapInfoMap& map) {
-    // The call.without.effects intrinsic needs to be updated if we refine the
-    // function reference it receives. Imagine that we have this:
-    //
-    //  (call $call.without.effects
-    //    (ref.func $returns.A)
-    //  )
-    //
-    // If we refined that $returns.A function to actually return a subtype $B,
-    // then now the call.without.effects should return $B, because logically it
-    // is still a direct call to that function. (We could also defer this to
-    // later, if we relaxed validation here, but updating right now is better
-    // for followup optimizations.)
-
-    // Each time we update we create a new import with the proper type. Keep a
-    // map of them to avoid creating more than one for each type.
-    std::unordered_map<HeapType, Function*> newImports;
-
-    auto getImportWithNewResults = [&](Function* import, Type newResults) {
-      auto newType = Signature(import->getParams(), newResults);
-      if (auto iter = newImports.find(newType); iter != newImports.end()) {
-        return iter->second;
-      }
-
-      auto name = Names::getValidFunctionName(*module, import->name);
-      auto newImport = module->addFunction(Builder(*module).makeFunction(
-        name, Type(newType, NonNullable, Inexact), {}));
-
-      // Copy the binaryen intrinsic module.base import names.
-      newImport->module = import->module;
-      newImport->base = import->base;
-
-      newImports[newType] = newImport;
-      return newImport;
-    };
-
-    for (auto& [_, info] : map) {
-      for (auto* call : info.calls) {
-        if (Intrinsics(*module).isCallWithoutEffects(call)) {
-          auto targetType = call->operands.back()->type;
-          if (!targetType.isRef()) {
-            continue;
-          }
-          auto heapType = targetType.getHeapType();
-          if (!heapType.isSignature()) {
-            continue;
-          }
-          auto newResults = heapType.getSignature().results;
-          if (call->type == newResults) {
-            continue;
-          }
-
-          // The target was refined, so we need to update here. Create a new
-          // import of the refined type, and call that instead.
-          call->target = getImportWithNewResults(
-                           module->getFunction(call->target), newResults)
-                           ->name;
-          call->type = newResults;
-        }
-      }
-    }
   }
 };
 

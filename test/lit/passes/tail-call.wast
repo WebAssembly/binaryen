@@ -14,8 +14,6 @@
   (type $i32-to-none (func (param i32)))
   ;; CHECK:      (type $struct (sub (struct)))
   (type $struct (sub (struct)))
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $6) (param i32 funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32) (param funcref) (result i32)))
   ;; CHECK:      (global $g (mut i32) (i32.const 0))
   (global $g (mut i32) (i32.const 0))
   ;; CHECK:      (table $table 1 funcref)
@@ -45,7 +43,7 @@
   (func $ref-callee (result i32)
     (i32.const 2)
   )
-  ;; CHECK:      (func $param-callee (type $7) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $param-callee (type $6) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $y)
@@ -57,7 +55,7 @@
       (local.get $y)
     )
   )
-  ;; CHECK:      (func $subtype-callee (type $8) (result (ref $struct))
+  ;; CHECK:      (func $subtype-callee (type $7) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
   (func $subtype-callee (result (ref $struct))
@@ -137,7 +135,7 @@
     )
   )
 
-  ;; CHECK:      (func $subtype-return (type $9) (result anyref)
+  ;; CHECK:      (func $subtype-return (type $8) (result anyref)
   ;; CHECK-NEXT:  (return_call $subtype-callee)
   ;; CHECK-NEXT: )
   (func $subtype-return (result anyref)
@@ -633,7 +631,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable-arg-mismatched-call-ref (type $10) (param $f (ref $i32-to-none)) (result i32)
+  ;; CHECK:      (func $unreachable-arg-mismatched-call-ref (type $9) (param $f (ref $i32-to-none)) (result i32)
   ;; CHECK-NEXT:  (call_ref $i32-to-none
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (local.get $f)
@@ -643,33 +641,6 @@
     (call_ref $i32-to-none
       (unreachable)
       (local.get $f)
-    )
-  )
-
-  ;; CHECK:      (func $unreachable-arg-mismatched-cwe (type $none-to-i32) (result i32)
-  ;; CHECK-NEXT:  (call $cwe
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (ref.func $void-arg-callee)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $unreachable-arg-mismatched-cwe (result i32)
-    (call $cwe
-      (unreachable)
-      (ref.func $void-arg-callee)
-    )
-  )
-
-  ;; CHECK:      (func $tail-cwe (type $none-to-i32) (result i32)
-  ;; CHECK-NEXT:  (return_call $cwe
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:   (ref.func $i32-to-i32-callee)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $tail-cwe (result i32)
-    ;; call.without.effects is optimized when reachable.
-    (call $cwe
-      (i32.const 42)
-      (ref.func $i32-to-i32-callee)
     )
   )
 )

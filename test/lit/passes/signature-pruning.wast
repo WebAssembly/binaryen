@@ -836,44 +836,6 @@
   )
 )
 
-;; Do not prune signatures used in the call.without.effects intrinsic.
-(module
-  ;; CHECK:      (type $0 (func (param i32 funcref) (result i32)))
-
-  ;; CHECK:      (type $1 (func (param i32) (result i32)))
-
-  ;; CHECK:      (type $2 (func (result i32)))
-
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $0) (param i32 funcref) (result i32)))
-  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
-
-  ;; CHECK:      (elem declare func $func)
-
-  ;; CHECK:      (func $func (type $1) (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: )
-  (func $func (param i32) (result i32)
-    ;; The parameter is unused, so we want to prune it. We won't because of the
-    ;; situation in the calling function, below.
-    (i32.const 1)
-  )
-
-  ;; CHECK:      (func $caller (type $2) (result i32)
-  ;; CHECK-NEXT:  (call $cwe
-  ;; CHECK-NEXT:   (i32.const 41)
-  ;; CHECK-NEXT:   (ref.func $func)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $caller (result i32)
-    ;; We call $func using call.without.effects. This causes us to not optimize
-    ;; in this case.
-    (call $cwe
-      (i32.const 41)
-      (ref.func $func)
-    )
-  )
-)
-
 ;; Due to function subtyping, we cannot prune fields from $func.B without also
 ;; pruning them in $func.A, and vice versa, if they have a subtyping
 ;; relationship. Atm we do not prune such "cycles" so we do not optimize here.

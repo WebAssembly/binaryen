@@ -36,7 +36,6 @@
 
 #include "fp16.h"
 #include "ir/import-utils.h"
-#include "ir/intrinsics.h"
 #include "ir/iteration.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
@@ -3636,9 +3635,8 @@ private:
         // These two modules are injected implicitly to tests. We won't find any
         // import information for them.
         // TODO: remove this workaround once we have a better way of handling
-        // intrinsic / spec function imports.
-        if (importable->module == "binaryen-intrinsics" ||
-            (importable->module == "spectest" &&
+        // spec function imports.
+        if ((importable->module == "spectest" &&
              importable->base.startsWith("print")) ||
             importable->module == "fuzzing-support") {
           return;
@@ -4038,13 +4036,6 @@ public:
     VISIT_ARGUMENTS(flow, curr->operands, arguments);
     auto* func = wasm.getFunction(curr->target);
     auto funcType = func->type;
-    if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
-      // The call.without.effects intrinsic is a call to an import that actually
-      // calls the given function reference that is the final argument.
-      target = arguments.back().getFunc();
-      funcType = funcType.with(arguments.back().type.getHeapType());
-      arguments.pop_back();
-    }
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference

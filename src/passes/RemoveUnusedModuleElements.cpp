@@ -139,28 +139,7 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     use({ModuleElementKind::Function, curr->target});
 
     Intrinsics intrinsics(*getModule());
-    if (intrinsics.isCallWithoutEffects(curr)) {
-      // A call-without-effects receives a function reference and calls it, the
-      // same as a CallRef. When we have a flag for non-closed-world, we should
-      // handle this automatically by the reference flowing out to an import,
-      // which is what binaryen intrinsics look like. For now, to support use
-      // cases of a closed world but that also use this intrinsic, handle the
-      // intrinsic specifically here. (Without that, the closed world assumption
-      // makes us ignore the function ref that flows to an import, so we are not
-      // aware that it is actually called.)
-      auto* target = curr->operands.back();
-      if (auto* refFunc = target->dynCast<RefFunc>()) {
-        // We can see exactly where this goes.
-        Call call(getModule()->allocator);
-        call.target = refFunc->func;
-        visitCall(&call);
-      } else {
-        // All we can see is the type, so do a CallRef of that.
-        CallRef callRef(getModule()->allocator);
-        callRef.target = target;
-        visitCallRef(&callRef);
-      }
-    } else if (intrinsics.isConfigureAll(curr)) {
+    if (intrinsics.isConfigureAll(curr)) {
       // Every function that configureAll refers to is signature-called. Mark
       // them all as called, as JS can call them.
       for (auto func : intrinsics.getConfigureAllFunctions(curr)) {
@@ -803,22 +782,6 @@ struct Analyzer {
       if (!useOperandNow) {
         useOperandNow =
           EffectAnalyzer(options, *module, operand).hasSideEffects();
-      }
-
-      // We must handle the call.without.effects intrinsic here in a special
-      // manner. That intrinsic is reported as having no side effects in
-      // EffectAnalyzer, but even though for optimization purposes we can ignore
-      // effects, the called code *is* actually reached, and it might have side
-      // effects. In other words, the point of the intrinsic is to temporarily
-      // ignore those effects during one phase of optimization. Or, put another
-      // way, the intrinsic lets us ignore the effects of computing some value,
-      // but we do still need to compute that value if it is received and used
-      // (if it is not received and used, other passes will remove it).
-      if (!useOperandNow) {
-        // To detect this, look for any call. A non-intrinsic call would have
-        // already been detected when we looked for side effects, so this will
-        // only notice intrinsic calls.
-        useOperandNow = !FindAll<Call>(operand).list.empty();
       }
 
       if (useOperandNow) {

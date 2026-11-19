@@ -15,7 +15,6 @@
  */
 
 #include "module-utils.h"
-#include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/metadata.h"
 #include "ir/subtypes.h"
@@ -905,9 +904,7 @@ getExposedPublicHeapTypes(Module& wasm) {
     }
   });
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    if (!Intrinsics(wasm).isCallWithoutEffects(func)) {
-      notePublic(func->type.getHeapType(), Inexact);
-    }
+    notePublic(func->type.getHeapType(), Inexact);
   });
   for (auto& ex : wasm.exports) {
     switch (ex->kind) {
