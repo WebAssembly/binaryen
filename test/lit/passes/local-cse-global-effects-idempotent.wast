@@ -39,7 +39,7 @@
   ;; CHECK-NEXT: )
   (@binaryen.idempotent)
   (func $box (param $x i32) (result i32)
-    ;; Mirrors Stage 3 of a boxing valueOf: writes a $clinit global and reads
+    ;; Mirrors a boxing valueOf in Java: writes a $clinit global and reads
     ;; a mutable array. With --generate-global-effects, this has non-empty
     ;; effects (writesGlobal + readsMutableArray).
     (global.set $initialized
@@ -65,8 +65,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $intervening-call (param $x i32)
-    ;; Intervening side-effecting call does not invalidate $box when its
-    ;; operand is a local.
+    ;; Intervening side-effecting call $use1 does not invalidate $box when its
+    ;; operand is a local: we can CSE the call to $box.
     (call $use1
       (call $box
         (local.get $x)
@@ -102,7 +102,8 @@
   ;; CHECK-NEXT: )
   (func $intervening-array-write (param $x i32) (param $arr (ref $array))
     ;; Even an intervening mutable array write and write to $initialized do not
-    ;; invalidate $box when its operand is a local.
+    ;; invalidate $box when its operand is a local, because $box is
+    ;; idempotent.
     (drop
       (call $box
         (local.get $x)
@@ -174,13 +175,13 @@
   ;; CHECK-NEXT: )
   (func $disjoint-global-operand-invalidated
     ;; Writing to $other in between DOES invalidate the copy, because the
-    ;; operand value may have changed.
+    ;; operand value may have changed by the first call to $box.
     (drop
       (call $box
         (global.get $other)
       )
     )
-    (global.set $other
+    (global.set $other  ;; this changed
       (i32.const 2)
     )
     (drop
