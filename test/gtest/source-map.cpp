@@ -16,6 +16,7 @@
 
 #include "source-map.h"
 #include "ir/module-utils.h"
+#include "pass.h"
 #include "print-test.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
@@ -548,4 +549,70 @@ TEST(SourceMapCopyTest, RemapInlinedStackLocations) {
   EXPECT_EQ(locs[0].symbolNameIndex, std::optional<BinaryLocation>(7));
   EXPECT_EQ(locs[1].fileIndex, 5u);
   EXPECT_EQ(locs[1].symbolNameIndex, std::optional<BinaryLocation>(9));
+}
+
+TEST_F(SourceMapTest, InliningCreatesCallStackScopes) {
+  auto text = R"wasm(
+    (module
+      (func $callee
+        ;;@ foo.cpp:10:2:calleeFunc
+        (nop)
+      )
+      (func $caller (export "caller")
+        ;;@ foo.cpp:50:4:callerFunc
+        (call $callee)
+      )
+    )
+  )wasm";
+  Module m1;
+  parseWast(m1, text);
+
+  PassRunner runner(&m1);
+  runner.add("inlining");
+  runner.run();
+
+  auto* caller1 = m1.getFunction("caller");
+  auto* block1 = caller1->body->cast<Block>();
+  ASSERT_EQ(block1->list.size(), 1u);
+  auto* inlinedNop1 = block1->list[0];
+  ASSERT_TRUE(caller1->debugLocations.count(inlinedNop1));
+  const auto& locs1 = caller1->debugLocations.at(inlinedNop1);
+  ASSERT_EQ(locs1.size(), 2u);
+  // Outer frame is the call site in callerFunc.
+  EXPECT_EQ(locs1[0].lineNumber, 50u);
+  EXPECT_EQ(locs1[0].columnNumber, 4u);
+  // Inner frame is the inlined instruction in calleeFunc.
+  EXPECT_EQ(locs1[1].lineNumber, 10u);
+  EXPECT_EQ(locs1[1].columnNumber, 2u);
+
+  // Write binary + source map and read back to verify synthesized scopes/ranges
+  // preserve the full inlined call stack.
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::string mapStr = mapStream.str();
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* caller2 = m2.functions[0].get();
+  ASSERT_TRUE(caller2->debugLocations.count(caller2->body));
+  const auto& locs2 = caller2->debugLocations.at(caller2->body);
+  ASSERT_EQ(locs2.size(), 2u);
+  EXPECT_EQ(locs2[0].lineNumber, 50u);
+  EXPECT_EQ(locs2[0].columnNumber, 4u);
+  ASSERT_TRUE(locs2[0].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs2[0].symbolNameIndex], "callerFunc");
+  EXPECT_EQ(locs2[1].lineNumber, 10u);
+  EXPECT_EQ(locs2[1].columnNumber, 2u);
+  ASSERT_TRUE(locs2[1].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs2[1].symbolNameIndex], "calleeFunc");
 }
