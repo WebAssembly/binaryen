@@ -469,10 +469,10 @@ struct Checker
   // idempotent calls inside it have no effects on subsequent executions (as
   // long as their operands evaluate to the same values), so we split their
   // shallow effects into |idempotentCallEffects| and put all other shallow
-  // effects (operands and enclosing expressions) into |effects|.
+  // effects (operands and enclosing expressions) into |copyEffects|.
   void
   collectCopyEffects(Expression* expr,
-                     EffectAnalyzer& effects,
+                     EffectAnalyzer& copyEffects,
                      std::optional<EffectAnalyzer>& idempotentCallEffects) {
     SmallVector<Expression*, 16> worklist{expr};
     while (!worklist.empty()) {
@@ -484,7 +484,7 @@ struct Checker
         }
         idempotentCallEffects->visit(curr);
       } else {
-        effects.visit(curr);
+        copyEffects.visit(curr);
       }
       for (auto* child : ChildIterator(curr)) {
         worklist.push_back(child);
