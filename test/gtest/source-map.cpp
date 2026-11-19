@@ -313,6 +313,146 @@ TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
   EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 5u);
 }
 
+TEST_F(SourceMapTest, ScopesAndRangesParsing) {
+  // names:
+  //   0: "outerFunc"
+  //   1: "function"
+  //   2: "x"
+  //   3: "y"
+  //   4: "inlinedFunc"
+  //   5: "a"
+  //   6: "local_x"
+  //   7: "local_y"
+  //   8: "local_a"
+  //
+  // scopes[0] (for "main.dart"):
+  //   Scope 0 (outerFunc):
+  //     B: flags=7 (name|kind|stackFrame), line=0 (+0 -> line 1), col=0,
+  //        nameIdx=0 (+0), kindIdx=1 (+1 -> 'C')
+  //     D: vars=[2 (+2 -> 'E'), 3 (+1 -> 'C')]
+  //     C: endLine=20 (+20 -> 'U'), endCol=0 ('A')
+  //   Scope 1 (inlinedFunc):
+  //     B: flags=5 (name|stackFrame), line=30 (+10 -> 'K'), col=2 ('C'),
+  //        nameIdx=4 (+4 -> 'I')
+  //     D: vars=[5 (+2 -> 'E')]
+  //     C: endLine=40 (+10 -> 'K'), endCol=0 ('A')
+  //
+  // ranges:
+  //   Outer range [10, 50) referencing source 0, scope 0:
+  //     E: flags=6 (def|stackFrame -> 'G'), col=10 ('K'), srcDiff=0 ('A'),
+  //        scpDiff=0 ('A')
+  //     G: bindings for [x, y] -> [local_x (6+1=7 -> 'H'), unavail (0 -> 'A')]
+  //     H: sub-range binding for var 1 (y): at offset 10+15=25 ('AA' + 'P'),
+  //        becomes local_y (7+1=8 -> 'I')
+  //     Child inlined range [20, 35) referencing source 0, scope 1:
+  //       E: flags=2 (def -> 'C'), colDiff=10 (10+10=20 -> 'K'),
+  //          srcDiff=0 ('A'), scpDiff=+1 ('C')
+  //       G: bindings for [a] -> [local_a (8+1=9 -> 'J')]
+  //       I: callSite in source 0 ('A'), line 9 (0-based -> 10 in 1-based,
+  //          'J'), col 4 ('E')
+  //       F: end at 20+15=35 ('P')
+  //     F: end at 35+15=50 ('P')
+  //
+  // mappings:
+  //   at offset 10 ('U'): file=0 ('A'), line=1+4=5 ('I'), col=2 ('E')
+  //   at offset 20 ('U'): file=0 ('A'), line=5+27=32 ('2B'), col=4 ('E')
+  //   at offset 30 ('U'): 1-element unmapped segment
+  //   at offset 35 ('K'): file=0 ('A'), line=32-20=12 ('pB'), col=6 ('E')
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["main.dart", "other.dart"],
+      "names": ["outerFunc", "function", "x", "y", "inlinedFunc", "a", "local_x", "local_y", "local_a"],
+      "mappings": "UAIE,UA2BE,U,KApBE",
+      "scopes": ["BHAAAC,DEC,CUA,BFKCI,DE,CKA", null],
+      "ranges": ["EGKAA,GHA,HBAPI,ECKAC,GJ,IAJE,FP,FP"]
+    }
+  )";
+  parseMap(sourceMap);
+
+  // At offset 10: inside outer range only; symbol resolved from outerFunc
+  // scope.
+  auto loc10 = reader->readDebugLocationAt(10);
+  ASSERT_EQ(loc10.size(), 1u);
+  EXPECT_EQ(loc10[0].fileIndex, 0u);
+  EXPECT_EQ(loc10[0].lineNumber, 5u);
+  EXPECT_EQ(loc10[0].columnNumber, 2u);
+  EXPECT_EQ(loc10[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  // At offset 20: inside outer range AND inlined child range.
+  auto loc20 = reader->readDebugLocationAt(20);
+  ASSERT_EQ(loc20.size(), 2u);
+  // Outer frame holds callsite position (file 0, line 10, col 4) and outerFunc.
+  EXPECT_EQ(loc20[0].fileIndex, 0u);
+  EXPECT_EQ(loc20[0].lineNumber, 10u);
+  EXPECT_EQ(loc20[0].columnNumber, 4u);
+  EXPECT_EQ(loc20[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+  // Inner frame holds inlined instruction position (file 0, line 32, col 4) and
+  // inlinedFunc.
+  EXPECT_EQ(loc20[1].fileIndex, 0u);
+  EXPECT_EQ(loc20[1].lineNumber, 32u);
+  EXPECT_EQ(loc20[1].columnNumber, 4u);
+  EXPECT_EQ(loc20[1].symbolNameIndex, std::optional<BinaryLocation>(4));
+
+  // At offset 30: unmapped 1-element segment.
+  auto loc30 = reader->readDebugLocationAt(30);
+  EXPECT_TRUE(loc30.empty());
+
+  // At offset 35: back in outer range only.
+  auto loc35 = reader->readDebugLocationAt(35);
+  ASSERT_EQ(loc35.size(), 1u);
+  EXPECT_EQ(loc35[0].fileIndex, 0u);
+  EXPECT_EQ(loc35[0].lineNumber, 12u);
+  EXPECT_EQ(loc35[0].columnNumber, 6u);
+  EXPECT_EQ(loc35[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+}
+
+TEST_F(SourceMapTest, RelativeCallSiteParsing) {
+  // Test 'J' (GeneratedRangeRelativeCallSite) with 1, 2, and 3 values:
+  // Scope 0 in source 0 starts at line 11 (0-based 10 -> 'K'), col 5 ('F').
+  // Scope 1 in source 0 starts at line 51 (0-based 50 -> +40 = 'oB'), col 0
+  // ('A'). Outer range [10, 40) has definition (source 0, scope 0). Child range
+  // 1 [12, 18): J with 1 arg (colOffset=3 -> 'D') => callSite=(0, 11, 8). Child
+  // range 2 [20, 26): J with 2 args (lineOffset=4 -> 'E', col=7 -> 'H') =>
+  // callSite=(0, 15, 7). Nested grandchild range [21, 25) inside child range 2:
+  //   J with 3 args (parentIdx=1 -> 'B', lineOffset=2 -> 'C', col=9 -> 'J')
+  //   parentIdx=1 refers to Outer range (scope 0 at line 11, col 5) =>
+  //   callSite=(0, 13, 9).
+  // mappings: at offset 12 ('Y'), file=0 ('A'), line=1 ('A'), col=0 ('A').
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["rel.dart"],
+      "names": ["f0", "f1"],
+      "mappings": "YAAA",
+      "scopes": ["BFKFA,CKA,BFoBAA,CKA"],
+      "ranges": ["EGKAA,ECCAC,JD,FG,ECCAA,JEH,ECBAC,JBCJ,FE,FB,FO"]
+    }
+  )";
+  parseMap(sourceMap);
+
+  auto loc12 = reader->readDebugLocationAt(12);
+  ASSERT_EQ(loc12.size(), 2u);
+  EXPECT_EQ(loc12[0].fileIndex, 0u);
+  EXPECT_EQ(loc12[0].lineNumber, 11u);
+  EXPECT_EQ(loc12[0].columnNumber, 8u);
+  EXPECT_EQ(loc12[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  auto loc20 = reader->readDebugLocationAt(20);
+  ASSERT_EQ(loc20.size(), 2u);
+  EXPECT_EQ(loc20[0].fileIndex, 0u);
+  EXPECT_EQ(loc20[0].lineNumber, 15u);
+  EXPECT_EQ(loc20[0].columnNumber, 7u);
+  EXPECT_EQ(loc20[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  auto loc21 = reader->readDebugLocationAt(21);
+  ASSERT_EQ(loc21.size(), 3u);
+  EXPECT_EQ(loc21[1].fileIndex, 0u);
+  EXPECT_EQ(loc21[1].lineNumber, 13u);
+  EXPECT_EQ(loc21[1].columnNumber, 9u);
+  EXPECT_EQ(loc21[1].symbolNameIndex, std::optional<BinaryLocation>(0));
+}
+
 TEST(SourceMapCopyTest, RemapInlinedStackLocations) {
   Module srcModule;
   Module dstModule;

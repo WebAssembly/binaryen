@@ -53,6 +53,25 @@ class SourceMapReader {
   bool hasInfo = false;
   bool hasSymbol = false;
 
+  // The source position of a call site that was inlined to produce a
+  // GeneratedRange.
+  struct CallSitePos {
+    uint32_t file = 0;
+    uint32_t line = 1;
+    uint32_t col = 0;
+  };
+
+  // A decoded GeneratedRange entry from the source map's "ranges" field.
+  struct DecodedRange {
+    size_t startOffset = 0;
+    size_t endOffset = 0;
+    std::optional<uint32_t> symbol;
+    std::optional<CallSitePos> callSite;
+    std::vector<DecodedRange> children;
+  };
+
+  std::vector<DecodedRange> rootRanges;
+
 public:
   SourceMapReader(std::vector<char>& buffer) : buffer(buffer) {}
 
@@ -80,6 +99,8 @@ private:
   }
 
   int32_t readBase64VLQ();
+  static uint32_t readBase64VLQUnsigned(std::string_view str, size_t& p);
+  static int32_t readBase64VLQSigned(std::string_view str, size_t& p);
 };
 
 } // namespace wasm
