@@ -455,7 +455,9 @@ struct Checker
     Index requestsLeft;
 
     // The effects when re-evaluating the expression as a copy (excluding the
-    // shallow effects of any idempotent calls inside it).
+    // shallow effects of any idempotent calls inside it - that is, it is ok for
+    // the original to have effects which, due to idempotency, the copy does not
+    // have, so we ignore such effects here).
     EffectAnalyzer effects;
   };
 
