@@ -583,9 +583,9 @@ struct Checker
     auto& info = iter->second;
     assert(info.requests > 0);
     // This is an original. Compute its effects when re-evaluated as a copy.
-    EffectAnalyzer effects(options, *getModule());
+    EffectAnalyzer copyEffects(options, *getModule());
     std::optional<EffectAnalyzer> idempotentCallEffects;
-    collectCopyEffects(curr, effects, idempotentCallEffects);
+    collectCopyEffects(curr, copyEffects, idempotentCallEffects);
 
     // We can ignore traps here, as we replace a repeating expression with a
     // single appearance of it, a store to a local, and gets in the other
@@ -594,10 +594,10 @@ struct Checker
     // anyhow. (The other checks we perform here, including invalidation and
     // determinism, will ensure that either all of the appearances trap, or
     // none of them.)
-    effects.trap = false;
+    copyEffects.trap = false;
 
     if (idempotentCallEffects &&
-        idempotentCallEffects->orderedBefore(effects)) {
+        idempotentCallEffects->orderedBefore(copyEffects)) {
       // An idempotent call inside ORIGINAL may have side effects on its first
       // call that interfere with re-evaluating the rest of the expression
       // (e.g., (call $idempotent (global.get $mutable))), so we cannot
@@ -611,7 +611,7 @@ struct Checker
     // perspective of this expression itself (but may be invalidated by other
     // code in between, see above).
     activeOriginals.emplace(
-      curr, ActiveOriginalInfo{info.requests, std::move(effects)});
+      curr, ActiveOriginalInfo{info.requests, std::move(copyEffects)});
   }
 
   static void doNoteNonLinear(Checker* self, Expression** currp) {
