@@ -91,7 +91,7 @@ void SourceMapReader::parse(Module& wasm) {
     if (!(s[i]->isString())) {
       throw MapParseException("Source map sources contains non-string");
     }
-    wasm.debugInfoFileNames.push_back(v->getCString());
+    wasm.debugInfoFileNames.emplace_back(v->getString());
   }
 
   if (json.has("sourcesContent")) {
@@ -100,7 +100,7 @@ void SourceMapReader::parse(Module& wasm) {
       throw MapParseException("Source map sourcesContent is not an array");
     }
     for (size_t i = 0; i < sc->size(); i++) {
-      wasm.debugInfoSourcesContent.push_back(sc[i]->getCString());
+      wasm.debugInfoSourcesContent.emplace_back(sc[i]->getString());
     }
   }
 
@@ -114,7 +114,7 @@ void SourceMapReader::parse(Module& wasm) {
       if (!v->isString()) {
         throw MapParseException("Source map names contains non-string");
       }
-      wasm.debugInfoSymbolNames.push_back(v->getCString());
+      wasm.debugInfoSymbolNames.emplace_back(v->getString());
     }
   }
 
@@ -123,7 +123,7 @@ void SourceMapReader::parse(Module& wasm) {
     if (!sr->isString()) {
       throw MapParseException("Source map sourceRoot is not a string");
     }
-    wasm.debugInfoSourceRoot = sr->getCString();
+    wasm.debugInfoSourceRoot = sr->getString();
   }
 
   if (json.has("file")) {
@@ -131,7 +131,7 @@ void SourceMapReader::parse(Module& wasm) {
     if (!f->isString()) {
       throw MapParseException("Source map file is not a string");
     }
-    wasm.debugInfoFile = f->getCString();
+    wasm.debugInfoFile = f->getString();
   }
 
   if (!json.has("mappings")) {
@@ -166,7 +166,7 @@ void SourceMapReader::parse(Module& wasm) {
       if (!v->isString()) {
         throw MapParseException("Source map scopes contains non-string");
       }
-      std::string_view scopeStr = v->getCString();
+      std::string_view scopeStr = v->getString();
       size_t openDepth = 0;
       uint32_t scopeLine = 0;
       uint32_t scopeCol = 0;
@@ -241,10 +241,10 @@ void SourceMapReader::parse(Module& wasm) {
         if (!rg[i]->isString()) {
           throw MapParseException("Source map ranges contains non-string");
         }
-        rangeSegments.push_back(rg[i]->getCString());
+        rangeSegments.push_back(rg[i]->getString());
       }
     } else if (rg->isString()) {
-      rangeSegments.push_back(rg->getCString());
+      rangeSegments.push_back(rg->getString());
     } else {
       throw MapParseException("Source map ranges is not an array or string");
     }
@@ -400,7 +400,7 @@ void SourceMapReader::parse(Module& wasm) {
     }
   }
 
-  mappings = m->getCString();
+  mappings = m->getString();
   if (mappings.empty()) {
     // There are no mappings.
     location = 0;

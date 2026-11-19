@@ -24,6 +24,7 @@
 #include "support/topological_sort.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-stack.h"
 
 namespace wasm::ModuleUtils {
 
@@ -393,9 +394,10 @@ struct TypeInfos {
     }
   }
   void noteControlFlow(Signature sig) {
-    // TODO: support control flow input parameters.
-    assert(sig.params.size() == 0);
-    if (sig.results.isTuple()) {
+    if (sig.results == Type::unreachable) {
+      sig.results = Type::none;
+    }
+    if (sig.params != Type::none || sig.results.isTuple()) {
       // We have to use a function type.
       ++controlFlowSignatures[sig];
     } else if (sig.results != Type::none) {
@@ -412,9 +414,16 @@ using ReferencedFuncs = std::unordered_map<Name, std::atomic<bool>>;
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
   ReferencedFuncs& referencedFuncs;
+  // Whether StackIR is being used for the function being scanned, in which case
+  // control flow signatures have already been collected from StackIR and should
+  // not be collected again from the Binaryen IR control flow nodes.
+  bool hasStackIR;
 
-  CodeScanner(Module& wasm, TypeInfos& info, ReferencedFuncs& referencedFuncs)
-    : info(info), referencedFuncs(referencedFuncs) {
+  CodeScanner(Module& wasm,
+              TypeInfos& info,
+              ReferencedFuncs& referencedFuncs,
+              bool hasStackIR = false)
+    : info(info), referencedFuncs(referencedFuncs), hasStackIR(hasStackIR) {
     setModule(&wasm);
   }
 
@@ -469,21 +478,18 @@ struct CodeScanner : PostWalker<CodeScanner> {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
-  void visitBlock(Block* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
+  void maybeNoteControlFlow(Type results) {
+    // If there is StackIR, we will separately note its control flow types
+    // instead.
+    if (!hasStackIR) {
+      info.noteControlFlow(Signature(Type::none, results));
+    }
   }
-  void visitIf(If* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
-  void visitLoop(Loop* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
-  void visitTry(Try* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
-  void visitTryTable(TryTable* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
+  void visitBlock(Block* curr) { maybeNoteControlFlow(curr->type); }
+  void visitIf(If* curr) { maybeNoteControlFlow(curr->type); }
+  void visitLoop(Loop* curr) { maybeNoteControlFlow(curr->type); }
+  void visitTry(Try* curr) { maybeNoteControlFlow(curr->type); }
+  void visitTryTable(TryTable* curr) { maybeNoteControlFlow(curr->type); }
   void visitRefFunc(RefFunc* curr) { referencedFuncs.at(curr->func) = true; }
 };
 
@@ -498,7 +504,8 @@ InsertOrderedMap<HeapType, HeapTypeInfo>
 collectHeapTypeInfo(Module& wasm,
                     WorldMode worldMode,
                     TypeInclusion inclusion,
-                    VisibilityHandling visibility) {
+                    VisibilityHandling visibility,
+                    const ModuleStackIR* stackIR) {
   // Collect module-level info.
   TypeInfos info;
   ReferencedFuncs referencedFuncs;
@@ -526,11 +533,20 @@ collectHeapTypeInfo(Module& wasm,
       for (auto type : func->vars) {
         info.note(type);
       }
+      auto* funcStackIR = stackIR ? stackIR->getStackIROrNull(func) : nullptr;
+      if (funcStackIR) {
+        for (auto* inst : *funcStackIR) {
+          if (inst && inst->isControlFlowBegin()) {
+            info.noteControlFlow(Signature(inst->params, inst->origin->type));
+          }
+        }
+      }
       // Don't just use `func->imported()` here because we also might be
       // printing an error message on a partially parsed module whose declared
       // function bodies have not all been parsed yet.
       if (func->body) {
-        CodeScanner(wasm, info, referencedFuncs).walk(func->body);
+        CodeScanner(wasm, info, referencedFuncs, funcStackIR != nullptr)
+          .walk(func->body);
       }
     });
 
@@ -970,9 +986,13 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
   return types;
 }
 
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts =
-    collectHeapTypeInfo(wasm, WorldMode::Open, TypeInclusion::BinaryTypes);
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm,
+                                              const ModuleStackIR* stackIR) {
+  auto counts = collectHeapTypeInfo(wasm,
+                                    WorldMode::Open,
+                                    TypeInclusion::BinaryTypes,
+                                    VisibilityHandling::NoVisibility,
+                                    stackIR);
 
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;

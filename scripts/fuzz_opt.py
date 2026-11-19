@@ -2868,9 +2868,13 @@ def get_random_opts():
            '--enable-exception-handling' in FEATURE_OPTS:
             print('avoiding --rereloop or --dfo due to exception-handling not supporting it')
             continue
-        if '--relax-nullability' in choice and '--enable-multivalue' in FEATURE_OPTS:
-            print('avoiding --relax-nullability due to it not supporting multivalue')
-            continue
+        if '--relax-nullability' in choice:
+            if '--enable-multivalue' in FEATURE_OPTS:
+                print('avoiding --relax-nullability due to it not supporting multivalue')
+                continue
+            if '--enable-gc' not in FEATURE_OPTS:
+                print('avoiding --relax-nullability due to it requiring GC')
+                continue
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:
             break
