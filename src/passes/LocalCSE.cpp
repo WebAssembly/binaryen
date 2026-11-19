@@ -458,7 +458,7 @@ struct Checker
     // shallow effects of any idempotent calls inside it - that is, it is ok for
     // the original to have effects which, due to idempotency, the copy does not
     // have, so we ignore such effects here).
-    EffectAnalyzer effects;
+    EffectAnalyzer copyEffects;
   };
 
   // The currently relevant original expressions, that is, the ones that may be
@@ -553,7 +553,7 @@ struct Checker
         // Check whether curr must remain before COPY. We use ORIGINAL's copy
         // effects in the check because we know they are the same as COPY's
         // effects.
-        if (effects.orderedBefore(originalInfo.effects)) {
+        if (effects.orderedBefore(originalInfo.copyEffects)) {
           invalidated.push_back(original);
         }
       }
