@@ -475,6 +475,10 @@ struct HeapTypeInfo {
   Visibility visibility = Visibility::Unknown;
 };
 
+// Collect heap type usage information across the module. If `stackIR` is
+// provided (e.g. during binary writing or StackIR printing), control flow
+// signatures (including control flow input parameters) are collected from each
+// function's up-to-date StackIR instead of its Binaryen IR control flow nodes.
 InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm,
   WorldMode worldMode,
@@ -507,7 +511,8 @@ struct IndexedHeapTypes {
 
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
 // type as well. Also orders the types to be valid and sorts the types by
-// frequency of use to minimize code size.
+// frequency of use to minimize code size. See `collectHeapTypeInfo` regarding
+// `stackIR`.
 IndexedHeapTypes
 getOptimizedIndexedHeapTypes(Module& wasm,
                              const ModuleStackIR* stackIR = nullptr);

@@ -419,7 +419,7 @@ using ReferencedFuncs = std::unordered_map<Name, std::atomic<bool>>;
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
   ReferencedFuncs& referencedFuncs;
-  // Whether StackIR is available for the function being scanned, in which case
+  // Whether StackIR is being used for the function being scanned, in which case
   // control flow signatures have already been collected from StackIR and should
   // not be collected again from the Binaryen IR control flow nodes.
   bool hasStackIR;
@@ -483,31 +483,18 @@ struct CodeScanner : PostWalker<CodeScanner> {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
-  void visitBlock(Block* curr) {
+  void maybeNoteControlFlow(Type results) {
+    // If there is StackIR, we will separately note its control flow types
+    // instead.
     if (!hasStackIR) {
-      info.noteControlFlow(Signature(Type::none, curr->type));
+      info.noteControlFlow(Signature(Type::none, results));
     }
   }
-  void visitIf(If* curr) {
-    if (!hasStackIR) {
-      info.noteControlFlow(Signature(Type::none, curr->type));
-    }
-  }
-  void visitLoop(Loop* curr) {
-    if (!hasStackIR) {
-      info.noteControlFlow(Signature(Type::none, curr->type));
-    }
-  }
-  void visitTry(Try* curr) {
-    if (!hasStackIR) {
-      info.noteControlFlow(Signature(Type::none, curr->type));
-    }
-  }
-  void visitTryTable(TryTable* curr) {
-    if (!hasStackIR) {
-      info.noteControlFlow(Signature(Type::none, curr->type));
-    }
-  }
+  void visitBlock(Block* curr) { maybeNoteControlFlow(curr->type); }
+  void visitIf(If* curr) { maybeNoteControlFlow(curr->type); }
+  void visitLoop(Loop* curr) { maybeNoteControlFlow(curr->type); }
+  void visitTry(Try* curr) { maybeNoteControlFlow(curr->type); }
+  void visitTryTable(TryTable* curr) { maybeNoteControlFlow(curr->type); }
   void visitRefFunc(RefFunc* curr) { referencedFuncs.at(curr->func) = true; }
 };
 
@@ -554,14 +541,7 @@ collectHeapTypeInfo(Module& wasm,
       auto* funcStackIR = stackIR ? stackIR->getStackIROrNull(func) : nullptr;
       if (funcStackIR) {
         for (auto* inst : *funcStackIR) {
-          if (!inst) {
-            continue;
-          }
-          if (inst->op == StackInst::BlockBegin ||
-              inst->op == StackInst::IfBegin ||
-              inst->op == StackInst::LoopBegin ||
-              inst->op == StackInst::TryBegin ||
-              inst->op == StackInst::TryTableBegin) {
+          if (inst && inst->isControlFlowBegin()) {
             info.noteControlFlow(Signature(inst->params, inst->origin->type));
           }
         }

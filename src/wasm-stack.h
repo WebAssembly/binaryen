@@ -91,6 +91,19 @@ public:
   // TryBegin, TryTableBegin), the input parameter types of the control-flow
   // block signature.
   Type params = Type::none;
+
+  bool isControlFlowBegin() const {
+    switch (op) {
+      case BlockBegin:
+      case IfBegin:
+      case LoopBegin:
+      case TryBegin:
+      case TryTableBegin:
+        return true;
+      default:
+        return false;
+    }
+  }
 };
 
 using StackIR = std::vector<StackInst*>;

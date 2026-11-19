@@ -433,18 +433,7 @@ bool StackIROptimizer::isControlFlowBarrier(StackInst* inst) {
 
 // A control flow beginning.
 bool StackIROptimizer::isControlFlowBegin(StackInst* inst) {
-  switch (inst->op) {
-    case StackInst::BlockBegin:
-    case StackInst::IfBegin:
-    case StackInst::LoopBegin:
-    case StackInst::TryBegin:
-    case StackInst::TryTableBegin: {
-      return true;
-    }
-    default: {
-      return false;
-    }
-  }
+  return inst->isControlFlowBegin();
 }
 
 // A control flow ending.
