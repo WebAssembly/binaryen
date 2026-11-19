@@ -444,7 +444,8 @@ struct GraphBuilder
   }
 };
 
-// Phase 2: Solve smallest fixed point over Flat<AllocId> origins.
+// Phase 2: Solve smallest fixed point over Flat<AllocId> origins to find which
+// allocation each Expression's value comes from (possibly none or many).
 void computeOrigins(AnalysisState& state) {
   size_t numNodes = state.origins.size();
   // Build a compressed-sparse-row (CSR) forward-adjacency table from
@@ -503,8 +504,8 @@ void computeOrigins(AnalysisState& state) {
   }
 }
 
-// Phase 3: Compute escaped allocations and return whether any remain
-// unescaped and can be optimized.
+// Phase 3: Compute escaped allocations and return whether any remain unescaped
+// and can be optimized. Return true if we find something to optimize.
 bool computeEscapes(AnalysisState& state) {
   for (NodeId u : state.escapingNodes) {
     if (const auto* alloc = state.origins[u].getVal()) {
@@ -531,11 +532,7 @@ bool computeEscapes(AnalysisState& state) {
 }
 
 // Phase 4: Rewrite all non-escaping allocations and their uses in one
-// post-order walk. Allocates per-field and descriptor locals for each
-// non-escaping allocation, lowers allocations to local sets returning a bottom
-// ref.null, rewrites uses, and finishes with ReFinalize (which widens
-// control-flow and br_if types to allow the ref.null values) and
-// handleNonDefaultableLocals.
+// post-order walk.
 struct Optimizer : public PostWalker<Optimizer> {
   AnalysisState& state;
   Function* func;
@@ -550,6 +547,8 @@ struct Optimizer : public PostWalker<Optimizer> {
       if (info.escaped) {
         continue;
       }
+      // We will optimize this allocation. Create locals for its fields and
+      // descriptor.
       info.fieldLocals.reserve(info.fields.size());
       for (const auto& field : info.fields) {
         info.fieldLocals.push_back(builder.addVar(func, field.type));
@@ -577,6 +576,8 @@ struct Optimizer : public PostWalker<Optimizer> {
     return PostWalker<Optimizer>::replaceCurrent(rep);
   }
 
+  // If `curr` evaluates exclusively to a single non-escaping candidate
+  // allocation, return its ID; otherwise return nullopt.
   std::optional<AllocId> getOptimizedAlloc(Expression* curr) {
     auto it = state.exprNodes.find(curr);
     if (it == state.exprNodes.end()) {
@@ -590,6 +591,8 @@ struct Optimizer : public PostWalker<Optimizer> {
     return std::nullopt;
   }
 
+  // If `curr` is an optimizable allocation, return its ID; otherwise return
+  // nullopt.
   std::optional<AllocId> getOptimizedCandidate(Expression* curr) {
     auto it = state.allocIds.find(curr);
     if (it == state.allocIds.end() || state.allocs[it->second].escaped) {
@@ -598,6 +601,7 @@ struct Optimizer : public PostWalker<Optimizer> {
     return it->second;
   }
 
+  // Create the null value with which we will replace an optimized allocation.
   Expression* makeOptimizedNull(AllocId alloc) {
     return builder.makeRefNull(
       state.allocs[alloc].expr->type.getHeapType().getBottom());
