@@ -3600,6 +3600,65 @@
 )
 
 (module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (global $g (mut anyref) (ref.null none))
+  (global $g (mut anyref) (ref.null none))
+
+  ;; CHECK:      (func $test (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $unused anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $unused
+  ;; CHECK-NEXT:     (ref.i31
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $unused
+  ;; CHECK-NEXT:     (ref.i31
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $g
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $unused)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $unused (ref any)) (param $x i32)
+    ;; The initial parameter value is never read because both arms overwrite
+    ;; $unused before the global.set. Removing the parameter turns $unused into
+    ;; a non-nullable local whose sets do not structurally dominate the get, so
+    ;; Optimizer must handle the fixup internally.
+    (if
+      (local.get $x)
+      (then
+        (local.set $unused
+          (ref.i31
+            (i32.const 0)
+          )
+        )
+      )
+      (else
+        (local.set $unused
+          (ref.i31
+            (i32.const 1)
+          )
+        )
+      )
+    )
+    (global.set $g
+      (local.get $unused)
+    )
+  )
+)
+
+(module
   ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
   ;; CHECK:      (type $1 (func))
