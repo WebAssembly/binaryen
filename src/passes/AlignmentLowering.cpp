@@ -137,7 +137,10 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     return builder.makeBlock({builder.makeLocalSet(temp, curr->ptr), ret});
   }
 
-  // Core lowering of a 32-bit store.
+  // Core lowering of a 32-bit store. The pieces are emitted from the highest
+  // offset to the lowest. A trapping store writes nothing, so the piece that
+  // may be out of bounds must run before the others. If the highest piece is
+  // in bounds then so are all the lower ones.
   Expression* lowerStoreI32(Store* curr) {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return curr;
@@ -152,14 +155,6 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       builder.makeBlock({builder.makeLocalSet(tempPtr, curr->ptr),
                          builder.makeLocalSet(tempValue, curr->value)});
     if (curr->bytes == 2) {
-      block->list.push_back(
-        builder.makeStore(1,
-                          curr->offset,
-                          1,
-                          builder.makeLocalGet(tempPtr, addressType),
-                          builder.makeLocalGet(tempValue, Type::i32),
-                          Type::i32,
-                          curr->memory));
       block->list.push_back(builder.makeStore(
         1,
         curr->offset + 1,
@@ -170,36 +165,16 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                            builder.makeConst(int32_t(8))),
         Type::i32,
         curr->memory));
+      block->list.push_back(
+        builder.makeStore(1,
+                          curr->offset,
+                          1,
+                          builder.makeLocalGet(tempPtr, addressType),
+                          builder.makeLocalGet(tempValue, Type::i32),
+                          Type::i32,
+                          curr->memory));
     } else if (curr->bytes == 4) {
       if (curr->align == 1) {
-        block->list.push_back(
-          builder.makeStore(1,
-                            curr->offset,
-                            1,
-                            builder.makeLocalGet(tempPtr, addressType),
-                            builder.makeLocalGet(tempValue, Type::i32),
-                            Type::i32,
-                            curr->memory));
-        block->list.push_back(builder.makeStore(
-          1,
-          curr->offset + 1,
-          1,
-          builder.makeLocalGet(tempPtr, addressType),
-          builder.makeBinary(ShrUInt32,
-                             builder.makeLocalGet(tempValue, Type::i32),
-                             builder.makeConst(int32_t(8))),
-          Type::i32,
-          curr->memory));
-        block->list.push_back(builder.makeStore(
-          1,
-          curr->offset + 2,
-          1,
-          builder.makeLocalGet(tempPtr, addressType),
-          builder.makeBinary(ShrUInt32,
-                             builder.makeLocalGet(tempValue, Type::i32),
-                             builder.makeConst(int32_t(16))),
-          Type::i32,
-          curr->memory));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 3,
@@ -210,15 +185,35 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              builder.makeConst(int32_t(24))),
           Type::i32,
           curr->memory));
-      } else if (curr->align == 2) {
+        block->list.push_back(builder.makeStore(
+          1,
+          curr->offset + 2,
+          1,
+          builder.makeLocalGet(tempPtr, addressType),
+          builder.makeBinary(ShrUInt32,
+                             builder.makeLocalGet(tempValue, Type::i32),
+                             builder.makeConst(int32_t(16))),
+          Type::i32,
+          curr->memory));
+        block->list.push_back(builder.makeStore(
+          1,
+          curr->offset + 1,
+          1,
+          builder.makeLocalGet(tempPtr, addressType),
+          builder.makeBinary(ShrUInt32,
+                             builder.makeLocalGet(tempValue, Type::i32),
+                             builder.makeConst(int32_t(8))),
+          Type::i32,
+          curr->memory));
         block->list.push_back(
-          builder.makeStore(2,
+          builder.makeStore(1,
                             curr->offset,
-                            2,
+                            1,
                             builder.makeLocalGet(tempPtr, addressType),
                             builder.makeLocalGet(tempValue, Type::i32),
                             Type::i32,
                             curr->memory));
+      } else if (curr->align == 2) {
         block->list.push_back(builder.makeStore(
           2,
           curr->offset + 2,
@@ -229,6 +224,14 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              builder.makeConst(int32_t(16))),
           Type::i32,
           curr->memory));
+        block->list.push_back(
+          builder.makeStore(2,
+                            curr->offset,
+                            2,
+                            builder.makeLocalGet(tempPtr, addressType),
+                            builder.makeLocalGet(tempValue, Type::i32),
+                            Type::i32,
+                            curr->memory));
       } else {
         WASM_UNREACHABLE("invalid alignment");
       }
@@ -389,7 +392,9 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                             high,
                             Type::i32,
                             curr->memory));
-        replacement = builder.makeBlock({setPtr, setValue, low, high});
+        // The high half is at the highest offset, so it must run first for the
+        // same reason as in lowerStoreI32.
+        replacement = builder.makeBlock({setPtr, setValue, high, low});
         break;
     }
     replaceCurrent(replacement);

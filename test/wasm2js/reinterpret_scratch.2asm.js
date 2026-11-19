@@ -39,12 +39,13 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  function foo() {
-  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $0 = Math_fround(0);
+  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $3 = 0, $0 = Math_fround(0);
   wasm2js_scratch_store_f64(+(305419896.0));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
+  $3 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$1 = (wasm2js_scratch_store_f32($0), wasm2js_scratch_load_i32(2));
-  HEAP32[i64toi32_i32$1 >> 2] = wasm2js_scratch_load_i32(0 | 0) | 0;
   HEAP32[(i64toi32_i32$1 + 4 | 0) >> 2] = i64toi32_i32$0;
+  HEAP32[i64toi32_i32$1 >> 2] = $3;
   return HEAP32[0 >> 2] | 0 | 0;
  }
  
