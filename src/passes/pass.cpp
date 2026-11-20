@@ -232,6 +232,9 @@ void PassRegistry::registerPasses() {
                createTypeRefiningGUFAPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
+  registerPass("heap2local2",
+               "experimental reimplementation of heap2local",
+               createHeap2Local2Pass);
   registerPass("heap-store-optimization",
                "optimize heap (GC) stores",
                createHeapStoreOptimizationPass);
