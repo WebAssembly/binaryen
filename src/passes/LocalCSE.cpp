@@ -510,10 +510,9 @@ struct Checker
           // which was one of those requests), and if none are left, remove the
           // original from being active.
           auto& originalInfo = originalIter->second;
-          if (originalInfo.requestsLeft == 1) {
+          --originalInfo.requestsLeft;
+          if (!originalInfo.requestsLeft) {
             activeOriginals.erase(originalIter);
-          } else {
-            originalInfo.requestsLeft--;
           }
           return;
         }
