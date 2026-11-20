@@ -144,9 +144,9 @@
 
   ;; CHECK-BIN-NODEBUG:      (type $8 (func (param eqref) (result funcref)))
 
-  ;; CHECK-BIN-NODEBUG:      (import "env" "import_global" (global $gimport$0 eqref))
+  ;; CHECK-BIN-NODEBUG:      (import "env" "import_global" (global $import_global eqref))
 
-  ;; CHECK-BIN-NODEBUG:      (import "env" "import_func" (func $fimport$0 (type $8) (param eqref) (result funcref)))
+  ;; CHECK-BIN-NODEBUG:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
 
   ;; CHECK-BIN-NODEBUG:      (global $global$0 (mut eqref) (ref.null none))
 
@@ -2091,9 +2091,9 @@
 )
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $7) (param i32))
 
-;; CHECK-BIN-NODEBUG:      (export "export_func" (func $fimport$0))
+;; CHECK-BIN-NODEBUG:      (export "export_func" (func $import_func))
 
-;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
+;; CHECK-BIN-NODEBUG:      (export "export_global" (global $import_global))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT: )
