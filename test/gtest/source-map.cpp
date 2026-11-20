@@ -52,7 +52,7 @@ protected:
     auto loc_str = std::stringstream() << "location: " << location;
     SCOPED_TRACE(loc_str.str());
     auto loc = reader->readDebugLocationAt(location);
-    ASSERT_FALSE(loc.empty());
+    ASSERT_EQ(loc.size(), 1);
     EXPECT_EQ(loc[0].fileIndex, file);
     EXPECT_EQ(loc[0].lineNumber, line);
     EXPECT_EQ(loc[0].columnNumber, col);
@@ -273,11 +273,11 @@ TEST(SourceMapCopyTest, UpdateSymbolOutsideLoop) {
   auto copied = ModuleUtils::copyFunctionWithoutAdd(
     func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
 
-  ASSERT_FALSE(copied->prologLocation.empty());
+  ASSERT_EQ(copied->prologLocation.size(), 1);
   ASSERT_TRUE(copied->prologLocation[0].symbolNameIndex.has_value());
   EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 10u);
 
-  ASSERT_FALSE(copied->epilogLocation.empty());
+  ASSERT_EQ(copied->epilogLocation.size(), 1);
   ASSERT_TRUE(copied->epilogLocation[0].symbolNameIndex.has_value());
   EXPECT_EQ(*copied->epilogLocation[0].symbolNameIndex, 11u);
 }
@@ -310,7 +310,7 @@ TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
     func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
 
   // Should be remapped exactly once: 0 -> 5.
-  ASSERT_FALSE(copied->prologLocation.empty());
+  ASSERT_EQ(copied->prologLocation.size(), 1);
   ASSERT_TRUE(copied->prologLocation[0].symbolNameIndex.has_value());
   EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 5u);
 }
