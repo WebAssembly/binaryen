@@ -772,3 +772,212 @@ TEST_F(SourceMapTest, MixedNamedAndUnnamedInlinedStackRoundTrip) {
   ASSERT_TRUE(locs[2].symbolNameIndex.has_value());
   EXPECT_EQ(m2.debugInfoSymbolNames[*locs[2].symbolNameIndex], "Inner");
 }
+
+TEST_F(SourceMapTest, RangesBridgeIntraFunctionGaps) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"Caller", "Callee"};
+
+  Builder builder(m1);
+  auto* nop1 = builder.makeNop();
+  auto* nop2 = builder.makeNop(); // unmapped gap inside Caller
+  auto* nop3 = builder.makeNop(); // start of inlined Callee
+  auto* nop4 = builder.makeNop(); // unmapped gap inside inlined Callee
+  auto* nop5 = builder.makeNop(); // continuation of same inlined Callee
+  auto* nop6 = builder.makeNop(); // unmapped gap after inlined Callee
+  auto* nop7 = builder.makeNop(); // back in Caller
+  auto* body = builder.makeBlock({nop1, nop2, nop3, nop4, nop5, nop6, nop7});
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, body);
+
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 10, 4, std::optional<BinaryLocation>(0)}};
+  func->debugLocations[nop3] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 1, std::optional<BinaryLocation>(1)}};
+  func->debugLocations[nop5] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 21, 1, std::optional<BinaryLocation>(1)}};
+  func->debugLocations[nop7] = {
+    Function::DebugLocation{0, 15, 4, std::optional<BinaryLocation>(0)}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // There must be only ONE outer Caller range ('EG') spanning all 7 nops, and
+  // ONE inner Callee range ('EC') starting at +2 ('C', nop3) with length 3
+  // ('FD', covering nop3..nop5 and closing before nop6 at gapOffset), followed
+  // by Caller closing +2 bytes later ('FC', after nop7).
+  // CallSite is app.cpp (0='A'), 0-based line 11 ('L'), col 4 ('E') => "IALE".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr(",ECCAC,IALE,FD,FC\"]"));
+  // Verify only one top-level range ('EG') was emitted.
+  auto rangesStart = mapStr.find("\"ranges\":[\"");
+  ASSERT_NE(rangesStart, std::string::npos);
+  rangesStart += strlen("\"ranges\":[\"");
+  auto rangesEnd = mapStr.find("\"]", rangesStart);
+  ASSERT_NE(rangesEnd, std::string::npos);
+  std::string rangesStr = mapStr.substr(rangesStart, rangesEnd - rangesStart);
+  EXPECT_EQ(rangesStr.rfind("EG", 0), 0u);
+  EXPECT_EQ(rangesStr.find(",EG"), std::string::npos);
+
+  // Round-trip: unmapped gap instructions must remain unmapped (via mappings),
+  // while located instructions keep their exact call stacks.
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  auto* block2 = f2->body->cast<Block>();
+  ASSERT_EQ(block2->list.size(), 7u);
+
+  EXPECT_EQ(f2->debugLocations.at(block2->list[0]).size(), 1u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[0])[0].lineNumber, 10u);
+  EXPECT_FALSE(f2->debugLocations.count(block2->list[1]));
+
+  ASSERT_EQ(f2->debugLocations.at(block2->list[2]).size(), 2u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[2])[0].lineNumber, 12u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[2])[1].lineNumber, 20u);
+  EXPECT_FALSE(f2->debugLocations.count(block2->list[3]));
+
+  ASSERT_EQ(f2->debugLocations.at(block2->list[4]).size(), 2u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[4])[0].lineNumber, 12u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[4])[1].lineNumber, 21u);
+  EXPECT_FALSE(f2->debugLocations.count(block2->list[5]));
+
+  ASSERT_EQ(f2->debugLocations.at(block2->list[6]).size(), 1u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[6])[0].lineNumber, 15u);
+}
+
+TEST_F(SourceMapTest, RangesDoNotMergeAcrossFunctions) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"SharedName", "Callee"};
+
+  Builder builder(m1);
+
+  // f1: named SharedName with an inlined Callee and an epilogLocation (so
+  // there is no intra-function nullptr before f1's end opcode).
+  auto* f1Nop = builder.makeNop();
+  auto f1 = builder.makeFunction(
+    "f1", {}, Signature(Type::none, Type::none), {}, f1Nop);
+  f1->debugLocations[f1Nop] = {
+    Function::DebugLocation{0, 10, 4, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 2, std::optional<BinaryLocation>(1)}};
+  f1->epilogLocation = {
+    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(0)}};
+  m1.addFunction(std::move(f1));
+
+  // f_unmapped: has no debug locations at all; f1's range must not smear into
+  // it.
+  auto fUnmapped = builder.makeFunction(
+    "f_unmapped", {}, Signature(Type::none, Type::none), {}, builder.makeNop());
+  m1.addFunction(std::move(fUnmapped));
+
+  // f2: ALSO uses SharedName at j == 0; must be a separate top-level range from
+  // f1.
+  auto* f2Nop = builder.makeNop();
+  auto f2 = builder.makeFunction(
+    "f2", {}, Signature(Type::none, Type::none), {}, f2Nop);
+  f2->debugLocations[f2Nop] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)}};
+  m1.addFunction(std::move(f2));
+
+  // f3 and f4: two adjacent functions with unnamed j == 0 frames; must also
+  // emit two distinct top-level 'EE' ranges rather than merging across
+  // functions.
+  auto* f3Nop = builder.makeNop();
+  auto f3 = builder.makeFunction(
+    "f3", {}, Signature(Type::none, Type::none), {}, f3Nop);
+  f3->debugLocations[f3Nop] = {Function::DebugLocation{0, 30, 1, std::nullopt},
+                               Function::DebugLocation{0, 40, 2, std::nullopt}};
+  m1.addFunction(std::move(f3));
+
+  auto* f4Nop = builder.makeNop();
+  auto f4 = builder.makeFunction(
+    "f4", {}, Signature(Type::none, Type::none), {}, f4Nop);
+  f4->debugLocations[f4Nop] = {Function::DebugLocation{0, 50, 1, std::nullopt},
+                               Function::DebugLocation{0, 40, 2, std::nullopt}};
+  m1.addFunction(std::move(f4));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  auto rangesStart = mapStr.find("\"ranges\":[\"");
+  ASSERT_NE(rangesStart, std::string::npos);
+  rangesStart += strlen("\"ranges\":[\"");
+  auto rangesEnd = mapStr.find("\"]", rangesStart);
+  ASSERT_NE(rangesEnd, std::string::npos);
+  std::string rangesStr = mapStr.substr(rangesStart, rangesEnd - rangesStart);
+  // Count comma-separated items starting with a given 2-char range prefix.
+  auto countItemsWithPrefix = [&](const char* prefix) {
+    size_t count = 0;
+    size_t p = 0;
+    while (p < rangesStr.size()) {
+      if (rangesStr.compare(p, strlen(prefix), prefix) == 0) {
+        ++count;
+      }
+      auto comma = rangesStr.find(',', p);
+      if (comma == std::string::npos) {
+        break;
+      }
+      p = comma + 1;
+    }
+    return count;
+  };
+  // f1 and f2 are two separate 'EG' ranges (not merged across f_unmapped).
+  EXPECT_EQ(countItemsWithPrefix("EG"), 2u);
+  // f3 and f4 are two separate 'EE' ranges (not merged across function
+  // boundary).
+  EXPECT_EQ(countItemsWithPrefix("EE"), 2u);
+
+  // Round-trip verification.
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 5u);
+  // f1
+  ASSERT_EQ(m2.functions[0]->debugLocations.at(m2.functions[0]->body).size(),
+            2u);
+  ASSERT_EQ(m2.functions[0]->epilogLocation.size(), 1u);
+  EXPECT_EQ(m2.functions[0]->epilogLocation[0].lineNumber, 11u);
+  // f_unmapped
+  EXPECT_TRUE(m2.functions[1]->debugLocations.empty());
+  // f2
+  ASSERT_EQ(m2.functions[2]->debugLocations.at(m2.functions[2]->body).size(),
+            1u);
+  EXPECT_EQ(
+    m2.functions[2]->debugLocations.at(m2.functions[2]->body)[0].lineNumber,
+    12u);
+  // f3
+  ASSERT_EQ(m2.functions[3]->debugLocations.at(m2.functions[3]->body).size(),
+            2u);
+  EXPECT_EQ(
+    m2.functions[3]->debugLocations.at(m2.functions[3]->body)[0].lineNumber,
+    30u);
+  // f4
+  ASSERT_EQ(m2.functions[4]->debugLocations.at(m2.functions[4]->body).size(),
+            2u);
+  EXPECT_EQ(
+    m2.functions[4]->debugLocations.at(m2.functions[4]->body)[0].lineNumber,
+    50u);
+}

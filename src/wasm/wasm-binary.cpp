@@ -600,6 +600,9 @@ void WasmBinaryWriter::writeFunctions() {
         }
       }
     }
+    if (sourceMap) {
+      functionEndOffsets.push_back(o.size());
+    }
     // We need to track the function location if we are tracking the locations
     // of expressions inside it, or, if it has code annotations (the function
     // itself may be annotated, even if nothing inside it is).
@@ -623,8 +626,16 @@ void WasmBinaryWriter::writeFunctions() {
                 << "number of locals in function " << func->name << ".\n";
     }
   });
-  lastFunctionEndOffset = o.size();
+  size_t sizeBeforeFinish = o.size();
   finishSection(sectionStart);
+  if (sourceMap) {
+    size_t sectionLEBShrink = sizeBeforeFinish - o.size();
+    if (sectionLEBShrink) {
+      for (auto& endOff : functionEndOffsets) {
+        endOff -= sectionLEBShrink;
+      }
+    }
+  }
 
   // Code annotations must come before the code section (see comment on
   // writeCodeAnnotations).
@@ -647,7 +658,9 @@ void WasmBinaryWriter::writeFunctions() {
       for (auto& location : sourceMapLocations) {
         location.first += annotationsSectionSize;
       }
-      lastFunctionEndOffset += annotationsSectionSize;
+      for (auto& endOff : functionEndOffsets) {
+        endOff += annotationsSectionSize;
+      }
     }
   }
 }
@@ -1729,36 +1742,58 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       }
     };
 
+    size_t funcIdx = 0;
+    std::optional<size_t> gapOffset;
     for (const auto& [offset, locs] : sourceMapLocations) {
-      SmallVector<TargetFrame, 4> targetFrames;
-      if (locs) {
-        for (size_t j = 0; j < locs->size(); ++j) {
-          const auto& dl = (*locs)[j];
-          TargetFrame tf;
-          if (dl.symbolNameIndex || j > 0) {
-            auto it = scopeIndices.find({dl.fileIndex, dl.symbolNameIndex});
-            if (it != scopeIndices.end()) {
-              tf.def = ScopeDef{dl.fileIndex, it->second};
-            }
-          }
-          tf.isStackFrame = (j == 0);
-          if (j > 0 && tf.def &&
-              (*locs)[j - 1].fileIndex < wasm->debugInfoFileNames.size()) {
-            tf.callSite = CallSite{(*locs)[j - 1].fileIndex,
-                                   (*locs)[j - 1].lineNumber,
-                                   (*locs)[j - 1].columnNumber};
-          }
-          targetFrames.push_back(tf);
+      // Close all open ranges when crossing a function boundary so ranges never
+      // merge or smear across distinct Wasm functions.
+      while (funcIdx < functionEndOffsets.size() &&
+             offset >= functionEndOffsets[funcIdx]) {
+        size_t closeOff = gapOffset ? *gapOffset : functionEndOffsets[funcIdx];
+        while (!openStack.empty()) {
+          closeTopRange(closeOff);
         }
+        gapOffset.reset();
+        ++funcIdx;
+      }
+      if (!locs) {
+        // Defer closing open ranges across intra-function gaps so ranges that
+        // continue after the gap stay merged, while any range that does not
+        // continue closes at gapOffset without smearing into the gap.
+        if (!gapOffset && !openStack.empty()) {
+          gapOffset = offset;
+        }
+        continue;
+      }
+      SmallVector<TargetFrame, 4> targetFrames;
+      for (size_t j = 0; j < locs->size(); ++j) {
+        const auto& dl = (*locs)[j];
+        TargetFrame tf;
+        if (dl.symbolNameIndex || j > 0) {
+          auto it = scopeIndices.find({dl.fileIndex, dl.symbolNameIndex});
+          if (it != scopeIndices.end()) {
+            tf.def = ScopeDef{dl.fileIndex, it->second};
+          }
+        }
+        tf.isStackFrame = (j == 0);
+        if (j > 0 && tf.def &&
+            (*locs)[j - 1].fileIndex < wasm->debugInfoFileNames.size()) {
+          tf.callSite = CallSite{(*locs)[j - 1].fileIndex,
+                                 (*locs)[j - 1].lineNumber,
+                                 (*locs)[j - 1].columnNumber};
+        }
+        targetFrames.push_back(tf);
       }
       size_t common = 0;
       while (common < openStack.size() && common < targetFrames.size() &&
              openStack[common].frame == targetFrames[common]) {
         ++common;
       }
+      size_t closeOff = gapOffset ? *gapOffset : offset;
       while (openStack.size() > common) {
-        closeTopRange(offset);
+        closeTopRange(closeOff);
       }
+      gapOffset.reset();
       for (size_t d = common; d < targetFrames.size(); ++d) {
         OutRange r;
         r.startOffset = offset;
@@ -1767,8 +1802,11 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
         openStack.push_back(std::move(r));
       }
     }
+    size_t finalCloseOff =
+      gapOffset ? *gapOffset
+                : (functionEndOffsets.empty() ? 0 : functionEndOffsets.back());
     while (!openStack.empty()) {
-      closeTopRange(lastFunctionEndOffset);
+      closeTopRange(finalCloseOff);
     }
 
     *sourceMap << ",\"ranges\":[\"";

@@ -1549,7 +1549,7 @@ private:
   std::vector<std::pair<size_t, const Function::DebugLocations*>>
     sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;
-  size_t lastFunctionEndOffset = 0;
+  std::vector<size_t> functionEndOffsets;
   Function::DebugLocations lastDebugLocation;
 
   std::unique_ptr<ImportInfo> importInfo;
