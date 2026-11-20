@@ -5585,6 +5585,12 @@ private:
     // memory.copy(dst, src, C)  ==>  store(dst, load(src))
     if (auto* csize = memCopy->size->dynCast<Const>()) {
       auto bytes = csize->value.getInteger();
+      if (options.targetJS && bytes > 1) {
+        // Multi-byte loads and stores emitted below have align=1 (and i64 or
+        // v128 types for 8 or 16 bytes), which require lowering passes that
+        // have already run when targeting JS.
+        return nullptr;
+      }
       Builder builder(*getModule());
 
       switch (bytes) {
@@ -5677,6 +5683,13 @@ private:
       // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
       return builder.makeBlock(
         {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
+    }
+
+    if (options.targetJS && bytes > 1) {
+      // Multi-byte stores emitted below have align=1 (and i64 or v128 types for
+      // 8 or 16 bytes), which require lowering passes that have already run
+      // when targeting JS.
+      return nullptr;
     }
 
     const uint32_t offset = 0, align = 1;
