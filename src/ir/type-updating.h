@@ -17,6 +17,8 @@
 #ifndef wasm_ir_type_updating_h
 #define wasm_ir_type_updating_h
 
+#include <unordered_set>
+
 #include "ir/branch-utils.h"
 #include "ir/module-utils.h"
 #include "support/insert_ordered.h"
@@ -564,7 +566,13 @@ namespace TypeUpdating {
 // them. Atm this turns them into nullable ones, and adds ref.as_non_null on
 // their uses (which keeps the type of the users identical).
 // This may also handle other types of nondefaultable locals in the future.
-void handleNonDefaultableLocals(Function* func, Module& wasm);
+//
+// If `forced` is provided, the locals at those indexes are made nullable as
+// well, even if they validate as they are.
+void handleNonDefaultableLocals(
+  Function* func,
+  Module& wasm,
+  const std::unordered_set<Index>* forced = nullptr);
 
 // Returns the type that a local should be, after handling of non-
 // defaultability.
