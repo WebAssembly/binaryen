@@ -10,6 +10,8 @@
 
   ;; CHECK:      (type $2 (func (param i32) (result i32)))
 
+  ;; CHECK:      (type $3 (func (result i32)))
+
   ;; CHECK:      (import "a" "b" (func $import (type $1)))
   (import "a" "b" (func $import))
   ;; CHECK:      (import "a" "c" (func $use1 (type $0) (param i32)))
@@ -687,6 +689,39 @@
       (i32.add
         (global.get $mutable)
         (global.get $mutable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $return-call (type $3) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (return_call $idempotent
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (return_call $idempotent
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return-call (result i32)
+    ;; A return_call transfers control out of the caller, so even though the
+    ;; callee is idempotent (and the wrapping typed blocks have concrete type
+    ;; i32, to make it appear optimizable), we do not treat it as an optimizable
+    ;; idempotent call.
+    (drop
+      (block (result i32)
+        (return_call $idempotent
+          (i32.const 10)
+        )
+      )
+    )
+    (block (result i32)
+      (return_call $idempotent
+        (i32.const 10)
       )
     )
   )
