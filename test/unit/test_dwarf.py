@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import tempfile
 
@@ -8,6 +9,66 @@ from . import utils
 
 
 class DWARFTest(utils.BinaryenTestCase):
+    def test_line_zero_roundtrip(self):
+        def custom_section(name, contents):
+            name = name.encode()
+            payload = bytes([len(name)]) + name + contents
+            self.assertLess(len(payload), 128)
+            return bytes([0, len(payload)]) + payload
+
+        # Padded i32.const encoding moves the second constant from offset 6
+        # to 5. Its line-zero row must move with it, not inherit line 5.
+        wasm = bytes.fromhex('0061736d010000000105016000017f03020100'
+                             '070501016600000a0a01080041810041026a0b')
+        abbrev = bytes.fromhex('0111001017000000')
+        info = bytes.fromhex('0c000000040000000000040100000000')
+        prologue = bytes.fromhex('010101fb0e0d000101010100000001000001')
+        prologue += b'\0test.c\0\0\0\0\0'
+
+        for dead_address in (0, 0xffffffff, 0xfffffffe):
+            for lines in ((5, 0, 9, 0), (0, 0, 0, 0)):
+                with self.subTest(dead_address=dead_address, lines=lines):
+                    # Later offsets in a dead sequence must not be remapped
+                    # onto live code, even when its first row has line zero.
+                    program = bytes.fromhex('000502')
+                    program += dead_address.to_bytes(4, 'little')
+                    program += bytes.fromhex('037f010203030501000101')
+                    program += bytes.fromhex('00050203000000')
+                    previous_address, previous_line = 3, 1
+                    for i, (address, line) in enumerate(zip((3, 6, 8, 10), lines, strict=True)):
+                        if i:
+                            program += bytes([2, address - previous_address])
+                        # These line deltas fit in one signed LEB128 byte.
+                        program += bytes([3, (line - previous_line) & 0x7f])
+                        program += bytes.fromhex('000101') if i == 3 else b'\x01'
+                        previous_address, previous_line = address, line
+                    table = b'\x04\0' + len(prologue).to_bytes(4, 'little')
+                    table += prologue + program
+                    sections = {'.debug_abbrev': abbrev, '.debug_info': info,
+                                '.debug_line': len(table).to_bytes(4, 'little') + table}
+                    input_wasm = wasm
+                    for name, contents in sections.items():
+                        input_wasm += custom_section(name, contents)
+
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        input_file = os.path.join(temp_dir, 'input.wasm')
+                        output_file = os.path.join(temp_dir, 'output.wasm')
+                        with open(input_file, 'wb') as f:
+                            f.write(input_wasm)
+                        for source in (input_file, output_file):
+                            shared.run_process(shared.WASM_OPT +
+                                               [source, '-g', '-o', output_file])
+                            dump = shared.run_process(shared.WASM_OPT +
+                                                      [output_file, '--dwarfdump'],
+                                                      capture_output=True).stdout
+                            rows = re.findall(r'^\s*0x([0-9a-f]+)\s+(\d+)\s+',
+                                              dump.split('.debug_line contents:', 1)[1],
+                                              re.MULTILINE)
+                            self.assertEqual([(int(addr, 16), int(line))
+                                              for addr, line in rows],
+                                             list(zip((3, 5, 7, 9), lines, strict=True)))
+                            self.assertEqual(dump.count('DW_LNE_end_sequence'), 1)
+
     def test_overlapping_inline_siblings(self):
         # Make the outer lexical block valid and move one inlined call onto
         # its sibling's range. Both siblings must become unavailable: keeping
