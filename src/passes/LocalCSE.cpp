@@ -470,10 +470,9 @@ struct Checker
   // long as their operands evaluate to the same values), so we split their
   // shallow effects into |idempotentCallEffects| and put all other shallow
   // effects (operands and enclosing expressions) into |copyEffects|.
-  void
-  collectCopyEffects(Expression* expr,
-                     EffectAnalyzer& copyEffects,
-                     std::optional<EffectAnalyzer>& idempotentCallEffects) {
+  void collectEffects(Expression* expr,
+                      EffectAnalyzer& copyEffects,
+                      std::optional<EffectAnalyzer>& idempotentCallEffects) {
     SmallVector<Expression*, 16> worklist{expr};
     while (!worklist.empty()) {
       auto* curr = worklist.back();
@@ -589,7 +588,7 @@ struct Checker
     // noting idempotent effect separately.
     EffectAnalyzer copyEffects(options, *getModule());
     std::optional<EffectAnalyzer> idempotentCallEffects;
-    collectCopyEffects(curr, copyEffects, idempotentCallEffects);
+    collectEffects(curr, copyEffects, idempotentCallEffects);
 
     // We can ignore traps here, as we replace a repeating expression with a
     // single appearance of it, a store to a local, and gets in the other
