@@ -762,27 +762,23 @@
   )
 
   ;; CHECK:      (func $return-call (type $3) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (return_call $idempotent
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (return_call $idempotent
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (return_call $idempotent
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   (func $return-call (result i32)
-    ;; A return_call transfers control out of the caller, so even though the
-    ;; callee is idempotent (and the wrapping typed blocks have concrete type
-    ;; i32, to make it appear optimizable), we do not treat it as an optimizable
-    ;; idempotent call (replacing the second with a local.get would remove the
-    ;; return; in this testcase that does not matter, as the original returns
-    ;; anyhow, but if the return_call were nested in an if arm, say, then this
-    ;; would be a possible change in behavior).
+    ;; A return_call transfers control out of the caller, so we can safely
+    ;; optimize the duplicate typed block containing it into a local.get: if
+    ;; the first return_call is reached, it returns out of the caller and the
+    ;; second is never reached anyhow (just like with traps).
     (drop
       (block (result i32)
         (return_call $idempotent

@@ -218,11 +218,7 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
 // TODO if users want the call annotation, handle that too.
 bool isIdempotent(Expression* curr, Module& wasm) {
   if (auto* call = curr->dynCast<Call>()) {
-    // Exclude return calls: even if the callee is idempotent, a return_call
-    // also transfers control out of the caller (branchesOut), which is not an
-    // idempotent operation.
-    if (!call->isReturn &&
-        Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
+    if (Intrinsics::getAnnotations(wasm.getFunction(call->target)).idempotent) {
       return true;
     }
   }
