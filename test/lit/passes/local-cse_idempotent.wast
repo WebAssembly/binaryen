@@ -289,6 +289,74 @@
     )
   )
 
+  ;; CHECK:      (func $idem-effects-interact-3 (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (call $idempotent
+  ;; CHECK-NEXT:      (global.get $immutable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:    (global.get $mutable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $idem-effects-interact-3
+    ;; Just like $idem-effects-interact-2, except the idempotent call is nested
+    ;; inside an i32.add. Both repeated i32.add expressions can be optimized.
+    ;; TODO: This is not yet handled. The problem is that the nested idempotent
+    ;;       call is not identified as having no effects: we know the effects of
+    ;;       the entire i32.add containing it, but as we do the post-order walk,
+    ;;       we visit the idempotent call and do not know if it is a copy of
+    ;;       another (at that point, we only know the entire add containing it
+    ;;       is a copy). However, a second call to --local-cse would handle this
+    ;;       atm, as after the first, the subsequent idempotent call vanishes.
+    (drop
+      (i32.add
+        (call $idempotent
+          (global.get $immutable)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+    (drop
+      (i32.add
+        (call $idempotent
+          (global.get $immutable)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.add
+        (global.get $mutable)
+        (global.get $mutable)
+      )
+    )
+  )
+
   ;; CHECK:      (func $intervening-call (type $0) (param $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (call $use1
