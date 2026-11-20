@@ -616,3 +616,159 @@ TEST_F(SourceMapTest, InliningCreatesCallStackScopes) {
   ASSERT_TRUE(locs2[1].symbolNameIndex.has_value());
   EXPECT_EQ(m2.debugInfoSymbolNames[*locs2[1].symbolNameIndex], "calleeFunc");
 }
+
+TEST_F(SourceMapTest, UnnamedInlinedScopesRoundTrip) {
+  Module m1;
+  m1.debugInfoFileNames = {"caller.c", "callee.c"};
+
+  Builder builder(m1);
+  auto* nop1 = builder.makeNop();
+  auto* nop2 = builder.makeNop();
+  auto* nop3 = builder.makeNop();
+  auto* body = builder.makeBlock({nop1, nop2, nop3});
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, body);
+
+  // nop1: unnamed location in caller.c:12:4
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 12, 4, std::nullopt}};
+  // nop2 and nop3: two instructions inside an unnamed inlined callee called
+  // from caller.c:15:8, at callee.c:32:6 and callee.c:33:2. They should share
+  // a single synthesized unnamed OriginalScope (flags=0x4 => 'BE') and stay in
+  // one GeneratedRange with a non-null Definition ('EC' => flags=0x2).
+  func->debugLocations[nop2] = {
+    Function::DebugLocation{0, 15, 8, std::nullopt},
+    Function::DebugLocation{1, 32, 6, std::nullopt}};
+  func->debugLocations[nop3] = {
+    Function::DebugLocation{0, 15, 8, std::nullopt},
+    Function::DebugLocation{1, 33, 2, std::nullopt}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setNamesSection(true);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // caller.c only appears at j == 0 unnamed -> null in "scopes".
+  // callee.c has an unnamed inlined scope at 0-based line 31 ('f'), col 6 ('G')
+  // encoded as "BEfG,CAA".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"names\":[]"));
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"scopes\":[null,\"BEfG,CAA\"]"));
+  // Outer unnamed stack frame uses flags=0x4 ('EE'), inner inlined frame uses
+  // flags=0x2 ('EC') with Definition (source 1, scope 0) and CallSite at
+  // caller.c (0='A'), line 14 ('O'), col 8 ('I') => "IAOI".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"ranges\":[\"EE"));
+  EXPECT_THAT(mapStr, ::testing::HasSubstr(",ECBCA,IAOI,FC,FA\"]"));
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  auto* block2 = f2->body->cast<Block>();
+  ASSERT_EQ(block2->list.size(), 3u);
+
+  const auto& dl1 = f2->debugLocations.at(block2->list[0]);
+  ASSERT_EQ(dl1.size(), 1u);
+  EXPECT_EQ(dl1[0].fileIndex, 0u);
+  EXPECT_EQ(dl1[0].lineNumber, 12u);
+  EXPECT_EQ(dl1[0].columnNumber, 4u);
+  EXPECT_EQ(dl1[0].symbolNameIndex, std::nullopt);
+
+  const auto& dl2 = f2->debugLocations.at(block2->list[1]);
+  ASSERT_EQ(dl2.size(), 2u);
+  EXPECT_EQ(dl2[0].fileIndex, 0u);
+  EXPECT_EQ(dl2[0].lineNumber, 15u);
+  EXPECT_EQ(dl2[0].columnNumber, 8u);
+  EXPECT_EQ(dl2[0].symbolNameIndex, std::nullopt);
+  EXPECT_EQ(dl2[1].fileIndex, 1u);
+  EXPECT_EQ(dl2[1].lineNumber, 32u);
+  EXPECT_EQ(dl2[1].columnNumber, 6u);
+  EXPECT_EQ(dl2[1].symbolNameIndex, std::nullopt);
+
+  const auto& dl3 = f2->debugLocations.at(block2->list[2]);
+  ASSERT_EQ(dl3.size(), 2u);
+  EXPECT_EQ(dl3[0].fileIndex, 0u);
+  EXPECT_EQ(dl3[0].lineNumber, 15u);
+  EXPECT_EQ(dl3[0].columnNumber, 8u);
+  EXPECT_EQ(dl3[0].symbolNameIndex, std::nullopt);
+  EXPECT_EQ(dl3[1].fileIndex, 1u);
+  EXPECT_EQ(dl3[1].lineNumber, 33u);
+  EXPECT_EQ(dl3[1].columnNumber, 2u);
+  EXPECT_EQ(dl3[1].symbolNameIndex, std::nullopt);
+}
+
+TEST_F(SourceMapTest, MixedNamedAndUnnamedInlinedStackRoundTrip) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"Outer", "Inner"};
+
+  Builder builder(m1);
+  auto* nop = builder.makeNop();
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, nop);
+
+  // 3-level stack in the same source file: Named Outer -> unnamed middle ->
+  // Named Inner. Verifies that an unnamed scope sorted between two named scopes
+  // does not perturb relative name indices and that all frames round-trip.
+  func->debugLocations[nop] = {
+    Function::DebugLocation{0, 10, 5, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 3, std::nullopt},
+    Function::DebugLocation{0, 30, 1, std::optional<BinaryLocation>(1)}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // Scope 0 (Outer at 9:5, name 0): BFJFA,CAA
+  // Scope 1 (unnamed at 19:3): BEKD,CAA (leaves lastNameIdx = 0)
+  // Scope 2 (Inner at 29:1, name 1 -> diff +1 = 'C'): BFKBC,CAA
+  EXPECT_THAT(
+    mapStr,
+    ::testing::HasSubstr("\"scopes\":[\"BFJFA,CAA,BEKD,CAA,BFKBC,CAA\"]"));
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  ASSERT_TRUE(f2->debugLocations.count(f2->body));
+  const auto& locs = f2->debugLocations.at(f2->body);
+  ASSERT_EQ(locs.size(), 3u);
+
+  EXPECT_EQ(locs[0].fileIndex, 0u);
+  EXPECT_EQ(locs[0].lineNumber, 10u);
+  EXPECT_EQ(locs[0].columnNumber, 5u);
+  ASSERT_TRUE(locs[0].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs[0].symbolNameIndex], "Outer");
+
+  EXPECT_EQ(locs[1].fileIndex, 0u);
+  EXPECT_EQ(locs[1].lineNumber, 20u);
+  EXPECT_EQ(locs[1].columnNumber, 3u);
+  EXPECT_EQ(locs[1].symbolNameIndex, std::nullopt);
+
+  EXPECT_EQ(locs[2].fileIndex, 0u);
+  EXPECT_EQ(locs[2].lineNumber, 30u);
+  EXPECT_EQ(locs[2].columnNumber, 1u);
+  ASSERT_TRUE(locs[2].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs[2].symbolNameIndex], "Inner");
+}

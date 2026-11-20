@@ -10,15 +10,18 @@
 
 ;; Verify that inlining a call with debug locations emits "scopes" and "ranges"
 ;; (including the 'I' CallSite record at caller.cpp:10:5 -> I, src=0 ('A'),
-;; 0-based line=9 ('J'), col=5 ('F') => "IAJF"), and preserves them across both
-;; binary + source map and WAT text roundtrips.
+;; 0-based line=9 ('J'), col=5 ('F') => "IAJF"), synthesizes an unnamed
+;; OriginalScope ("BEBD,CAA", flags=0x4) for unnamed inlined frames so every
+;; range with a CallSite has a non-null Definition, and preserves them across
+;; both binary + source map and WAT text roundtrips.
 
-;; MAP: "sources":["caller.cpp","callee.cpp"]
+;; MAP: "sources":["caller.cpp","callee.cpp","unnamed_caller.cpp","unnamed_callee.cpp"]
 ;; MAP-SAME: "names":["CallerFunc","CalleeFunc"]
-;; MAP-SAME: "scopes":["BFJFA,CAA","BFBDC,CAA"]
-;; MAP-SAME: "ranges":["EGjBAA,ECACA,IAJF,FB,FA"]
+;; MAP-SAME: "scopes":["BFJFA,CAA","BFBDC,CAA",null,"BEBD,CAA"]
+;; MAP-SAME: "ranges":["EG1BAA,ECACA,IAJF,FB,FA,EED,ECAEA,ICJF,FB,FA"]
 
 ;; WAT:      (export "caller" (func $caller))
+;; WAT-NEXT: (export "caller_unnamed" (func $caller_unnamed))
 
 ;; WAT:      (func $caller
 ;; WAT-NEXT:  ;;@ caller.cpp:10:5:CallerFunc
@@ -26,8 +29,15 @@
 ;; WAT-NEXT:  (nop)
 ;; WAT-NEXT: )
 
+;; WAT:      (func $caller_unnamed
+;; WAT-NEXT:  ;;@ unnamed_caller.cpp:10:5
+;; WAT-NEXT:  ;;@ unnamed_callee.cpp:2:3
+;; WAT-NEXT:  (nop)
+;; WAT-NEXT: )
+
 (module
   (export "caller" (func $caller))
+  (export "caller_unnamed" (func $caller_unnamed))
 
   (func $caller
     ;;@ caller.cpp:10:5:CallerFunc
@@ -36,6 +46,16 @@
 
   (func $callee
     ;;@ callee.cpp:2:3:CalleeFunc
+    (nop)
+  )
+
+  (func $caller_unnamed
+    ;;@ unnamed_caller.cpp:10:5
+    (call $callee_unnamed)
+  )
+
+  (func $callee_unnamed
+    ;;@ unnamed_callee.cpp:2:3
     (nop)
   )
 )

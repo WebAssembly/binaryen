@@ -1593,24 +1593,26 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   }
 
   if (hasInlinedScopes) {
-    // Synthesize OriginalScope entries per source file for all named frames.
+    // Synthesize OriginalScope entries per source file for all named frames,
+    // plus an unnamed OriginalScope (name=null, isStackFrame=true) per source
+    // file for unnamed inlined frames (j > 0) so every GeneratedRange with a
+    // CallSite has a non-null Definition as required by the Scopes spec.
     struct SynthesizedScope {
       BinaryLocation line = 1;
       BinaryLocation col = 0;
-      BinaryLocation nameIndex = 0;
+      std::optional<BinaryLocation> nameIndex;
     };
-    std::map<std::pair<BinaryLocation, BinaryLocation>,
-             std::pair<BinaryLocation, BinaryLocation>>
-      minPos;
+    using ScopeKey = std::pair<BinaryLocation, std::optional<BinaryLocation>>;
+    std::map<ScopeKey, std::pair<BinaryLocation, BinaryLocation>> minPos;
     for (const auto& [_, locs] : sourceMapLocations) {
       if (!locs) {
         continue;
       }
-      for (const auto& dl : *locs) {
-        if (dl.symbolNameIndex &&
+      for (size_t j = 0; j < locs->size(); ++j) {
+        const auto& dl = (*locs)[j];
+        if ((dl.symbolNameIndex || j > 0) &&
             dl.fileIndex < wasm->debugInfoFileNames.size()) {
-          std::pair<BinaryLocation, BinaryLocation> key{dl.fileIndex,
-                                                        *dl.symbolNameIndex};
+          ScopeKey key{dl.fileIndex, dl.symbolNameIndex};
           std::pair<BinaryLocation, BinaryLocation> pos{dl.lineNumber,
                                                         dl.columnNumber};
           auto it = minPos.find(key);
@@ -1628,15 +1630,16 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
         SynthesizedScope{pos.first, pos.second, key.second});
     }
 
-    std::map<std::pair<BinaryLocation, BinaryLocation>, BinaryLocation>
-      scopeIndices;
+    std::map<ScopeKey, BinaryLocation> scopeIndices;
     for (size_t fileIdx = 0; fileIdx < perFileScopes.size(); ++fileIdx) {
       auto& scopes = perFileScopes[fileIdx];
       std::sort(scopes.begin(),
                 scopes.end(),
                 [](const SynthesizedScope& a, const SynthesizedScope& b) {
-                  return std::tie(a.line, a.col, a.nameIndex) <
-                         std::tie(b.line, b.col, b.nameIndex);
+                  uint32_t aLine0 = a.line > 0 ? a.line - 1 : 0;
+                  uint32_t bLine0 = b.line > 0 ? b.line - 1 : 0;
+                  return std::tie(aLine0, a.col, a.nameIndex) <
+                         std::tie(bLine0, b.col, b.nameIndex);
                 });
       for (size_t i = 0; i < scopes.size(); ++i) {
         scopeIndices[{BinaryLocation(fileIdx), scopes[i].nameIndex}] =
@@ -1663,9 +1666,9 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
           *sourceMap << ",";
         }
         const auto& scope = scopes[j];
-        // 'B' (OriginalScopeStart) with flags = 0x1 (has name) | 0x4 (is stack
-        // frame) => 'F'.
-        *sourceMap << "BF";
+        // 'B' (OriginalScopeStart) with flags = 0x4 (is stack frame) => 'E',
+        // or 0x1 (has name) | 0x4 (is stack frame) => 'F'.
+        *sourceMap << (scope.nameIndex ? "BF" : "BE");
         uint32_t line0 = scope.line > 0 ? scope.line - 1 : 0;
         uint32_t lineDiff = line0 - lastLine;
         uint32_t colDiff = (lineDiff == 0) ? (scope.col - lastCol) : scope.col;
@@ -1673,8 +1676,10 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
         lastCol = scope.col;
         writeBase64VLQUnsigned(*sourceMap, lineDiff);
         writeBase64VLQUnsigned(*sourceMap, colDiff);
-        writeBase64VLQ(*sourceMap, int32_t(scope.nameIndex) - lastNameIdx);
-        lastNameIdx = int32_t(scope.nameIndex);
+        if (scope.nameIndex) {
+          writeBase64VLQ(*sourceMap, int32_t(*scope.nameIndex) - lastNameIdx);
+          lastNameIdx = int32_t(*scope.nameIndex);
+        }
         // 'C' (OriginalScopeEnd) at the same position (lineDiff=0, colDiff=0).
         *sourceMap << ",CAA";
       }
@@ -1730,14 +1735,15 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
         for (size_t j = 0; j < locs->size(); ++j) {
           const auto& dl = (*locs)[j];
           TargetFrame tf;
-          if (dl.symbolNameIndex) {
-            auto it = scopeIndices.find({dl.fileIndex, *dl.symbolNameIndex});
+          if (dl.symbolNameIndex || j > 0) {
+            auto it = scopeIndices.find({dl.fileIndex, dl.symbolNameIndex});
             if (it != scopeIndices.end()) {
               tf.def = ScopeDef{dl.fileIndex, it->second};
             }
           }
           tf.isStackFrame = (j == 0);
-          if (j > 0) {
+          if (j > 0 && tf.def &&
+              (*locs)[j - 1].fileIndex < wasm->debugInfoFileNames.size()) {
             tf.callSite = CallSite{(*locs)[j - 1].fileIndex,
                                    (*locs)[j - 1].lineNumber,
                                    (*locs)[j - 1].columnNumber};
