@@ -244,6 +244,9 @@ struct RootFuncTypeInfo {
 };
 
 struct DAE2 : public Pass {
+  // This pass changes locals and parameters.
+  bool invalidatesDWARF() override { return true; }
+
   // Analysis lattice.
   Used used;
 
