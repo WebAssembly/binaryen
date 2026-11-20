@@ -600,6 +600,9 @@ void WasmBinaryWriter::writeFunctions() {
         }
       }
     }
+    if (sourceMap) {
+      functionEndOffsets.push_back(o.size());
+    }
     // We need to track the function location if we are tracking the locations
     // of expressions inside it, or, if it has code annotations (the function
     // itself may be annotated, even if nothing inside it is).
@@ -623,7 +626,16 @@ void WasmBinaryWriter::writeFunctions() {
                 << "number of locals in function " << func->name << ".\n";
     }
   });
+  size_t sizeBeforeFinish = o.size();
   finishSection(sectionStart);
+  if (sourceMap) {
+    size_t sectionLEBShrink = sizeBeforeFinish - o.size();
+    if (sectionLEBShrink) {
+      for (auto& endOff : functionEndOffsets) {
+        endOff -= sectionLEBShrink;
+      }
+    }
+  }
 
   // Code annotations must come before the code section (see comment on
   // writeCodeAnnotations).
@@ -645,6 +657,9 @@ void WasmBinaryWriter::writeFunctions() {
     if (sourceMap) {
       for (auto& location : sourceMapLocations) {
         location.first += annotationsSectionSize;
+      }
+      for (auto& endOff : functionEndOffsets) {
+        endOff += annotationsSectionSize;
       }
     }
   }
@@ -1400,9 +1415,7 @@ void WasmBinaryWriter::writeSymbolMap() {
   file.close();
 }
 
-void WasmBinaryWriter::initializeDebugInfo() {
-  lastDebugLocation = {0, /* lineNumber = */ 1, 0, std::nullopt};
-}
+void WasmBinaryWriter::initializeDebugInfo() { lastDebugLocation.clear(); }
 
 void WasmBinaryWriter::writeSourceMapProlog() {
   *sourceMap << "{\"version\":3,";
@@ -1429,20 +1442,21 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
   }
 
-  // Remove unused function names from 'names' field.
+  // Remove unused function/scope names from 'names' field.
   if (!wasm->debugInfoSymbolNames.empty()) {
     std::vector<std::string> newSymbolNames;
     std::map<Index, Index> oldToNewIndex;
 
-    // Collect all used symbol name indexes.
-    auto prepareIndexMap =
-      [&](const std::optional<Function::DebugLocation>& location) {
-        if (location && location->symbolNameIndex) {
-          uint32_t oldIndex = *location->symbolNameIndex;
+    // Collect all used symbol name indexes from debugLocations.
+    auto prepareIndexMap = [&](const Function::DebugLocations& locations) {
+      for (const auto& loc : locations) {
+        if (loc.symbolNameIndex) {
+          uint32_t oldIndex = *loc.symbolNameIndex;
           assert(oldIndex < wasm->debugInfoSymbolNames.size());
           oldToNewIndex[oldIndex] = 0; // placeholder
         }
-      };
+      }
+    };
     for (auto& func : wasm->functions) {
       for (auto& [_, location] : func->debugLocations) {
         prepareIndexMap(location);
@@ -1459,10 +1473,11 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
 
     // Update all debug locations to point to the new indices.
-    auto updateIndex = [&](std::optional<Function::DebugLocation>& location) {
-      if (location && location->symbolNameIndex) {
-        uint32_t oldIndex = *location->symbolNameIndex;
-        location->symbolNameIndex = oldToNewIndex[oldIndex];
+    auto updateIndex = [&](Function::DebugLocations& locations) {
+      for (auto& loc : locations) {
+        if (loc.symbolNameIndex) {
+          loc.symbolNameIndex = oldToNewIndex[*loc.symbolNameIndex];
+        }
       }
     };
     for (auto& func : wasm->functions) {
@@ -1509,8 +1524,7 @@ void WasmBinaryWriter::writeSourceMapProlog() {
   *sourceMap << "\"mappings\":\"";
 }
 
-static void writeBase64VLQ(std::ostream& out, int32_t n) {
-  uint32_t value = n >= 0 ? n << 1 : ((-n) << 1) | 1;
+static void writeBase64VLQUnsigned(std::ostream& out, uint32_t value) {
   while (1) {
     uint32_t digit = value & 0x1F;
     value >>= 5;
@@ -1519,13 +1533,18 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
       out << char(digit < 26 ? 'A' + digit : 'a' + digit - 26);
       break;
     }
-    // more VLG digit will follow -- add continuation bit (0x20),
+    // more VLQ digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
     out << char(digit < 20    ? 'g' + digit
                 : digit < 30  ? '0' + digit - 20
                 : digit == 30 ? '+'
                               : '/');
   }
+}
+
+static void writeBase64VLQ(std::ostream& out, int32_t n) {
+  uint32_t value = n >= 0 ? uint32_t(n) << 1 : (uint32_t(-n) << 1) | 1;
+  writeBase64VLQUnsigned(out, value);
 }
 
 void WasmBinaryWriter::writeSourceMapEpilog() {
@@ -1535,13 +1554,22 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   BinaryLocation lastLineNumber = 1;
   BinaryLocation lastColumnNumber = 0;
   BinaryLocation lastSymbolNameIndex = 0;
-  for (const auto& [offset, loc] : sourceMapLocations) {
-    if (lastOffset > 0) {
-      *sourceMap << ",";
-    }
-    writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
-    lastOffset = offset;
+  std::optional<Function::DebugLocation> activeMapping;
+  bool firstMapping = true;
+  for (const auto& [offset, locs] : sourceMapLocations) {
+    const Function::DebugLocation* loc =
+      (locs && !locs->empty()) ? &locs->back() : nullptr;
     if (loc) {
+      if (activeMapping && *loc == *activeMapping) {
+        continue;
+      }
+      if (!firstMapping) {
+        *sourceMap << ",";
+      }
+      firstMapping = false;
+      writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
+      lastOffset = offset;
+
       writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastFileIndex));
       lastFileIndex = loc->fileIndex;
 
@@ -1556,9 +1584,288 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
                        int32_t(*loc->symbolNameIndex - lastSymbolNameIndex));
         lastSymbolNameIndex = *loc->symbolNameIndex;
       }
+      activeMapping = *loc;
+    } else if (activeMapping) {
+      if (!firstMapping) {
+        *sourceMap << ",";
+      }
+      firstMapping = false;
+      writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
+      lastOffset = offset;
+      activeMapping.reset();
     }
   }
-  *sourceMap << "\"}";
+  *sourceMap << "\"";
+
+  bool hasInlinedScopes = false;
+  for (const auto& [_, locs] : sourceMapLocations) {
+    if (locs && locs->size() > 1) {
+      hasInlinedScopes = true;
+      break;
+    }
+  }
+
+  if (hasInlinedScopes) {
+    // Synthesize OriginalScope entries per source file for all named frames,
+    // plus an unnamed OriginalScope (name=null, isStackFrame=true) per source
+    // file for unnamed inlined frames (j > 0) so every GeneratedRange with a
+    // CallSite has a non-null Definition as required by the Scopes spec.
+    struct SynthesizedScope {
+      BinaryLocation line = 1;
+      BinaryLocation col = 0;
+      std::optional<BinaryLocation> nameIndex;
+    };
+    using ScopeKey = std::pair<BinaryLocation, std::optional<BinaryLocation>>;
+    std::map<ScopeKey, std::pair<BinaryLocation, BinaryLocation>> minPos;
+    for (const auto& [_, locs] : sourceMapLocations) {
+      if (!locs) {
+        continue;
+      }
+      for (size_t j = 0; j < locs->size(); ++j) {
+        const auto& dl = (*locs)[j];
+        if ((dl.symbolNameIndex || j > 0) &&
+            dl.fileIndex < wasm->debugInfoFileNames.size()) {
+          ScopeKey key{dl.fileIndex, dl.symbolNameIndex};
+          std::pair<BinaryLocation, BinaryLocation> pos{dl.lineNumber,
+                                                        dl.columnNumber};
+          auto it = minPos.find(key);
+          if (it == minPos.end() || pos < it->second) {
+            minPos[key] = pos;
+          }
+        }
+      }
+    }
+
+    std::vector<std::vector<SynthesizedScope>> perFileScopes(
+      wasm->debugInfoFileNames.size());
+    for (const auto& [key, pos] : minPos) {
+      perFileScopes[key.first].push_back(
+        SynthesizedScope{pos.first, pos.second, key.second});
+    }
+
+    std::map<ScopeKey, BinaryLocation> scopeIndices;
+    for (size_t fileIdx = 0; fileIdx < perFileScopes.size(); ++fileIdx) {
+      auto& scopes = perFileScopes[fileIdx];
+      std::sort(scopes.begin(),
+                scopes.end(),
+                [](const SynthesizedScope& a, const SynthesizedScope& b) {
+                  uint32_t aLine0 = a.line > 0 ? a.line - 1 : 0;
+                  uint32_t bLine0 = b.line > 0 ? b.line - 1 : 0;
+                  return std::tie(aLine0, a.col, a.nameIndex) <
+                         std::tie(bLine0, b.col, b.nameIndex);
+                });
+      for (size_t i = 0; i < scopes.size(); ++i) {
+        scopeIndices[{BinaryLocation(fileIdx), scopes[i].nameIndex}] =
+          BinaryLocation(i);
+      }
+    }
+
+    *sourceMap << ",\"scopes\":[";
+    for (size_t i = 0; i < perFileScopes.size(); ++i) {
+      if (i > 0) {
+        *sourceMap << ",";
+      }
+      const auto& scopes = perFileScopes[i];
+      if (scopes.empty()) {
+        *sourceMap << "null";
+        continue;
+      }
+      *sourceMap << "\"";
+      uint32_t lastLine = 0;
+      uint32_t lastCol = 0;
+      int32_t lastNameIdx = 0;
+      for (size_t j = 0; j < scopes.size(); ++j) {
+        if (j > 0) {
+          *sourceMap << ",";
+        }
+        const auto& scope = scopes[j];
+        // 'B' (OriginalScopeStart) with flags = 0x4 (is stack frame) => 'E',
+        // or 0x1 (has name) | 0x4 (is stack frame) => 'F'.
+        *sourceMap << (scope.nameIndex ? "BF" : "BE");
+        uint32_t line0 = scope.line > 0 ? scope.line - 1 : 0;
+        uint32_t lineDiff = line0 - lastLine;
+        uint32_t colDiff = (lineDiff == 0) ? (scope.col - lastCol) : scope.col;
+        lastLine = line0;
+        lastCol = scope.col;
+        writeBase64VLQUnsigned(*sourceMap, lineDiff);
+        writeBase64VLQUnsigned(*sourceMap, colDiff);
+        if (scope.nameIndex) {
+          writeBase64VLQ(*sourceMap, int32_t(*scope.nameIndex) - lastNameIdx);
+          lastNameIdx = int32_t(*scope.nameIndex);
+        }
+        // 'C' (OriginalScopeEnd) at the same position (lineDiff=0, colDiff=0).
+        *sourceMap << ",CAA";
+      }
+      *sourceMap << "\"";
+    }
+    *sourceMap << "]";
+
+    // The caller source position for an inlined GeneratedRange.
+    struct CallSite {
+      BinaryLocation fileIndex = 0;
+      BinaryLocation lineNumber = 1;
+      BinaryLocation columnNumber = 0;
+      bool operator==(const CallSite& other) const = default;
+    };
+    struct ScopeDef {
+      BinaryLocation fileIndex = 0;
+      BinaryLocation scopeIndex = 0;
+      bool operator==(const ScopeDef& other) const = default;
+    };
+    struct TargetFrame {
+      std::optional<ScopeDef> def;
+      bool isStackFrame = false;
+      std::optional<CallSite> callSite;
+      bool operator==(const TargetFrame& other) const = default;
+    };
+    // A GeneratedRange node constructed from DebugLocations to be serialized to
+    // the source map's "ranges" field.
+    struct OutRange {
+      size_t startOffset = 0;
+      size_t endOffset = 0;
+      TargetFrame frame;
+      std::vector<OutRange> children;
+    };
+
+    std::vector<OutRange> rootRanges;
+    std::vector<OutRange> openStack;
+    auto closeTopRange = [&](size_t endOff) {
+      auto finished = std::move(openStack.back());
+      openStack.pop_back();
+      finished.endOffset = endOff;
+      if (finished.endOffset > finished.startOffset) {
+        if (openStack.empty()) {
+          rootRanges.push_back(std::move(finished));
+        } else {
+          openStack.back().children.push_back(std::move(finished));
+        }
+      }
+    };
+
+    size_t funcIdx = 0;
+    std::optional<size_t> gapOffset;
+    for (const auto& [offset, locs] : sourceMapLocations) {
+      // Close all open ranges when crossing a function boundary so ranges never
+      // merge or smear across distinct Wasm functions.
+      while (funcIdx < functionEndOffsets.size() &&
+             offset >= functionEndOffsets[funcIdx]) {
+        size_t closeOff = gapOffset ? *gapOffset : functionEndOffsets[funcIdx];
+        while (!openStack.empty()) {
+          closeTopRange(closeOff);
+        }
+        gapOffset.reset();
+        ++funcIdx;
+      }
+      if (!locs) {
+        // Defer closing open ranges across intra-function gaps so ranges that
+        // continue after the gap stay merged, while any range that does not
+        // continue closes at gapOffset without smearing into the gap.
+        if (!gapOffset && !openStack.empty()) {
+          gapOffset = offset;
+        }
+        continue;
+      }
+      SmallVector<TargetFrame, 4> targetFrames;
+      for (size_t j = 0; j < locs->size(); ++j) {
+        const auto& dl = (*locs)[j];
+        TargetFrame tf;
+        if (dl.symbolNameIndex || j > 0) {
+          auto it = scopeIndices.find({dl.fileIndex, dl.symbolNameIndex});
+          if (it != scopeIndices.end()) {
+            tf.def = ScopeDef{dl.fileIndex, it->second};
+          }
+        }
+        tf.isStackFrame = (j == 0);
+        if (j > 0 && tf.def &&
+            (*locs)[j - 1].fileIndex < wasm->debugInfoFileNames.size()) {
+          tf.callSite = CallSite{(*locs)[j - 1].fileIndex,
+                                 (*locs)[j - 1].lineNumber,
+                                 (*locs)[j - 1].columnNumber};
+        }
+        targetFrames.push_back(tf);
+      }
+      size_t common = 0;
+      while (common < openStack.size() && common < targetFrames.size() &&
+             openStack[common].frame == targetFrames[common]) {
+        ++common;
+      }
+      size_t closeOff = gapOffset ? *gapOffset : offset;
+      while (openStack.size() > common) {
+        closeTopRange(closeOff);
+      }
+      gapOffset.reset();
+      for (size_t d = common; d < targetFrames.size(); ++d) {
+        OutRange r;
+        r.startOffset = offset;
+        r.endOffset = offset;
+        r.frame = targetFrames[d];
+        openStack.push_back(std::move(r));
+      }
+    }
+    size_t finalCloseOff =
+      gapOffset ? *gapOffset
+                : (functionEndOffsets.empty() ? 0 : functionEndOffsets.back());
+    while (!openStack.empty()) {
+      closeTopRange(finalCloseOff);
+    }
+
+    *sourceMap << ",\"ranges\":[\"";
+    size_t lastRangeCol = 0;
+    int32_t lastDefSource = 0;
+    int32_t lastDefScope = 0;
+    bool firstRangeItem = true;
+    auto emitRangeTree = [&](const OutRange& r, auto& self) -> void {
+      if (!firstRangeItem) {
+        *sourceMap << ",";
+      }
+      firstRangeItem = false;
+      *sourceMap << 'E';
+      uint32_t flags = 0;
+      if (r.frame.def) {
+        flags |= 0x2;
+      }
+      if (r.frame.isStackFrame) {
+        flags |= 0x4;
+      }
+      writeBase64VLQUnsigned(*sourceMap, flags);
+      writeBase64VLQUnsigned(*sourceMap,
+                             uint32_t(r.startOffset - lastRangeCol));
+      lastRangeCol = r.startOffset;
+      if (r.frame.def) {
+        int32_t srcDiff = int32_t(r.frame.def->fileIndex) - lastDefSource;
+        lastDefSource = int32_t(r.frame.def->fileIndex);
+        writeBase64VLQ(*sourceMap, srcDiff);
+        if (srcDiff == 0) {
+          int32_t scpDiff = int32_t(r.frame.def->scopeIndex) - lastDefScope;
+          writeBase64VLQ(*sourceMap, scpDiff);
+        } else {
+          writeBase64VLQUnsigned(*sourceMap, r.frame.def->scopeIndex);
+        }
+        lastDefScope = int32_t(r.frame.def->scopeIndex);
+      }
+      if (r.frame.callSite) {
+        *sourceMap << ",I";
+        writeBase64VLQUnsigned(*sourceMap, r.frame.callSite->fileIndex);
+        uint32_t csLine0 = r.frame.callSite->lineNumber > 0
+                             ? r.frame.callSite->lineNumber - 1
+                             : 0;
+        writeBase64VLQUnsigned(*sourceMap, csLine0);
+        writeBase64VLQUnsigned(*sourceMap, r.frame.callSite->columnNumber);
+      }
+      for (const auto& child : r.children) {
+        self(child, self);
+      }
+      *sourceMap << ",F";
+      writeBase64VLQUnsigned(*sourceMap, uint32_t(r.endOffset - lastRangeCol));
+      lastRangeCol = r.endOffset;
+    };
+    for (const auto& r : rootRanges) {
+      emitRangeTree(r, emitRangeTree);
+    }
+    *sourceMap << "\"]";
+  }
+
+  *sourceMap << "}";
 }
 
 void WasmBinaryWriter::writeLateCustomSections() {
@@ -1728,8 +2035,8 @@ void WasmBinaryWriter::writeDylinkSection() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
-  if (loc == lastDebugLocation) {
+void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocations& loc) {
+  if (loc.empty() || loc == lastDebugLocation) {
     return;
   }
   auto offset = o.size();
@@ -1751,7 +2058,7 @@ void WasmBinaryWriter::writeNoDebugLocation() {
     sourceMapLocations.emplace_back(o.size(), nullptr);
 
     // Initialize the state of debug info to indicate there is no current
-    // debug info relevant. This sets |lastDebugLocation| to a dummy value,
+    // debug info relevant. This sets |lastDebugLocation| to an empty vector,
     // so that later places with debug info can see that they differ from
     // it (without this, if we had some debug info, then a nullptr for none,
     // and then the same debug info, we could get confused).
@@ -1765,9 +2072,9 @@ void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
 
   auto& debugLocations = func->debugLocations;
   auto iter = debugLocations.find(curr);
-  if (iter != debugLocations.end() && iter->second) {
+  if (iter != debugLocations.end() && !iter->second.empty()) {
     // There is debug information here, write it out.
-    writeDebugLocation(*(iter->second));
+    writeDebugLocation(iter->second);
   } else {
     // This expression has no debug location.
     writeNoDebugLocation();
@@ -3634,7 +3941,7 @@ Result<> WasmBinaryReader::readStore(unsigned bytes, Type type) {
 }
 
 Result<> WasmBinaryReader::readInst() {
-  if (auto loc = sourceMapReader.readDebugLocationAt(pos)) {
+  if (auto loc = sourceMapReader.readDebugLocationAt(pos); !loc.empty()) {
     builder.setDebugLocation(loc);
   }
   uint8_t code = getInt8();

@@ -137,7 +137,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // not yet printed any debug location, or that we last printed an
   // annotation indicating that the expression had no associated
   // debug location.
-  std::optional<Function::DebugLocation> lastPrintedLocation;
+  Function::DebugLocations lastPrintedLocation;
   bool debugInfo;
 
   // Used to print delegate's depth argument when it throws to the caller
@@ -270,8 +270,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     return o;
   }
 
-  void
-  printDebugLocation(const std::optional<Function::DebugLocation>& location);
+  void printDebugLocation(const Function::DebugLocations& locations);
 
   // Prints debug info for a delimiter in an expression.
   void printDebugDelimiterLocation(Expression* curr, Index i);
@@ -2770,33 +2769,36 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 }
 
 void PrintSExpression::printDebugLocation(
-  const std::optional<Function::DebugLocation>& location) {
+  const Function::DebugLocations& locations) {
   if (minify) {
     return;
   }
   // Do not skip repeated debug info in full mode, for less-confusing debugging:
   // full mode prints out everything in the most verbose manner.
-  if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
+  if (lastPrintedLocation == locations && indent > lastPrintIndent && !full) {
     return;
   }
-  lastPrintedLocation = location;
+  lastPrintedLocation = locations;
   lastPrintIndent = indent;
-  if (!location) {
+  if (locations.empty()) {
     o << ";;@\n";
+    doIndent(o, indent);
   } else {
-    auto fileName = currModule->debugInfoFileNames[location->fileIndex];
-    o << ";;@ " << fileName << ":" << location->lineNumber << ":"
-      << location->columnNumber;
+    for (const auto& loc : locations) {
+      auto fileName = currModule->debugInfoFileNames[loc.fileIndex];
+      o << ";;@ " << fileName << ":" << loc.lineNumber << ":"
+        << loc.columnNumber;
 
-    if (location->symbolNameIndex) {
-      auto symbolName =
-        currModule->debugInfoSymbolNames[*(location->symbolNameIndex)];
-      o << ":" << symbolName;
+      if (loc.symbolNameIndex) {
+        auto symbolName =
+          currModule->debugInfoSymbolNames[*(loc.symbolNameIndex)];
+        o << ":" << symbolName;
+      }
+
+      o << '\n';
+      doIndent(o, indent);
     }
-
-    o << '\n';
   }
-  doIndent(o, indent);
 }
 
 void PrintSExpression::printMetadata(Expression* curr) {
@@ -2806,7 +2808,7 @@ void PrintSExpression::printMetadata(Expression* curr) {
         iter != currFunction->debugLocations.end()) {
       printDebugLocation(iter->second);
     } else {
-      printDebugLocation(std::nullopt);
+      printDebugLocation({});
     }
 
     // Show a binary position, if there is one.
@@ -3341,7 +3343,7 @@ void PrintSExpression::visitFunction(Function* curr) {
 void PrintSExpression::visitImportedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = std::nullopt;
+  lastPrintedLocation.clear();
   o << '(';
   emitImportHeader(curr);
   printCodeAnnotations(curr->funcAnnotations);
@@ -3353,10 +3355,10 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
 void PrintSExpression::visitDefinedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = std::nullopt;
+  lastPrintedLocation.clear();
   lastPrintIndent = 0;
-  if (currFunction->prologLocation) {
-    printDebugLocation(*currFunction->prologLocation);
+  if (!currFunction->prologLocation.empty()) {
+    printDebugLocation(currFunction->prologLocation);
   }
   printCodeAnnotations(curr->funcAnnotations);
   handleSignature(curr, true);
@@ -3391,14 +3393,14 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     }
     assert(controlFlowDepth == 0);
   }
-  if (currFunction->epilogLocation) {
+  if (!currFunction->epilogLocation.empty()) {
     // Print last debug location: mix of decIndent and printDebugLocation
     // logic.
     doIndent(o, indent);
     if (!minify) {
       indent--;
     }
-    printDebugLocation(*currFunction->epilogLocation);
+    printDebugLocation(currFunction->epilogLocation);
     o << ')';
   } else {
     decIndent();

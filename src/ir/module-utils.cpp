@@ -30,19 +30,21 @@ namespace wasm::ModuleUtils {
 
 // Update the file name indices when moving a set of debug locations from one
 // module to another.
-static void updateLocation(std::optional<Function::DebugLocation>& location,
-                           std::vector<Index>& fileIndexMap) {
-  if (location) {
-    location->fileIndex = fileIndexMap[location->fileIndex];
+static void updateLocation(Function::DebugLocations& locations,
+                           const std::vector<Index>& fileIndexMap) {
+  for (auto& loc : locations) {
+    loc.fileIndex = fileIndexMap[loc.fileIndex];
   }
 }
 
 // Update the symbol name indices when moving a set of debug locations from one
 // module to another.
-static void updateSymbol(std::optional<Function::DebugLocation>& location,
-                         std::vector<Index>& symbolIndexMap) {
-  if (location && location->symbolNameIndex) {
-    location->symbolNameIndex = symbolIndexMap[*location->symbolNameIndex];
+static void updateSymbol(Function::DebugLocations& locations,
+                         const std::vector<Index>& symbolIndexMap) {
+  for (auto& loc : locations) {
+    if (loc.symbolNameIndex) {
+      loc.symbolNameIndex = symbolIndexMap[*loc.symbolNameIndex];
+    }
   }
 }
 
@@ -84,21 +86,14 @@ copyFunctionWithoutAdd(Function* func,
   // Update file indices if needed
   if (fileIndexMap) {
     for (auto& iter : ret->debugLocations) {
-      if (iter.second) {
-        iter.second->fileIndex = (*fileIndexMap)[iter.second->fileIndex];
-      }
+      updateLocation(iter.second, *fileIndexMap);
     }
     updateLocation(ret->prologLocation, *fileIndexMap);
     updateLocation(ret->epilogLocation, *fileIndexMap);
   }
   if (symbolNameIndexMap) {
     for (auto& iter : ret->debugLocations) {
-      if (iter.second) {
-        if (iter.second->symbolNameIndex.has_value()) {
-          iter.second->symbolNameIndex =
-            (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
-        }
-      }
+      updateSymbol(iter.second, *symbolNameIndexMap);
     }
     updateSymbol(ret->prologLocation, *symbolNameIndexMap);
     updateSymbol(ret->epilogLocation, *symbolNameIndexMap);

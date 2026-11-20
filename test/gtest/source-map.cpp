@@ -16,7 +16,9 @@
 
 #include "source-map.h"
 #include "ir/module-utils.h"
+#include "pass.h"
 #include "print-test.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
@@ -50,11 +52,11 @@ protected:
     auto loc_str = std::stringstream() << "location: " << location;
     SCOPED_TRACE(loc_str.str());
     auto loc = reader->readDebugLocationAt(location);
-    ASSERT_TRUE(loc.has_value());
-    EXPECT_EQ(loc->fileIndex, file);
-    EXPECT_EQ(loc->lineNumber, line);
-    EXPECT_EQ(loc->columnNumber, col);
-    EXPECT_EQ(loc->symbolNameIndex, sym);
+    ASSERT_EQ(loc.size(), 1);
+    EXPECT_EQ(loc[0].fileIndex, file);
+    EXPECT_EQ(loc[0].lineNumber, line);
+    EXPECT_EQ(loc[0].columnNumber, col);
+    EXPECT_EQ(loc[0].symbolNameIndex, sym);
   }
 
   void ExpectParseError(std::string& mapString, const char* expectedError) {
@@ -83,7 +85,7 @@ TEST_F(SourceMapTest, SourceMappingSingleSegment) {
   parseMap(sourceMap);
 
   auto loc = reader->readDebugLocationAt(0);
-  EXPECT_FALSE(loc.has_value());
+  EXPECT_TRUE(loc.empty());
 }
 
 TEST_F(SourceMapTest, BadSourceMaps) {
@@ -189,7 +191,7 @@ TEST_F(SourceMapTest, Fibonacci) {
 
   // Location before the first record has no value
   auto loc = reader->readDebugLocationAt(642);
-  EXPECT_FALSE(loc.has_value());
+  EXPECT_TRUE(loc.empty());
 
   // TODO: These column numbers show as 0 but emsymbolizer.py prints them as 1.
   // Figure out which is right.
@@ -260,10 +262,10 @@ TEST(SourceMapCopyTest, UpdateSymbolOutsideLoop) {
 
   // Set prologLocation and epilogLocation with symbolNameIndex values,
   // but leave debugLocations empty.
-  func->prologLocation =
-    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)};
-  func->epilogLocation =
-    Function::DebugLocation{0, 2, 1, std::optional<BinaryLocation>(1)};
+  func->prologLocation = {
+    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)}};
+  func->epilogLocation = {
+    Function::DebugLocation{0, 2, 1, std::optional<BinaryLocation>(1)}};
 
   // Symbol name index map: 0->10, 1->11.
   std::vector<Index> symbolNameIndexMap = {10, 11};
@@ -271,13 +273,13 @@ TEST(SourceMapCopyTest, UpdateSymbolOutsideLoop) {
   auto copied = ModuleUtils::copyFunctionWithoutAdd(
     func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
 
-  ASSERT_TRUE(copied->prologLocation.has_value());
-  ASSERT_TRUE(copied->prologLocation->symbolNameIndex.has_value());
-  EXPECT_EQ(*copied->prologLocation->symbolNameIndex, 10u);
+  ASSERT_EQ(copied->prologLocation.size(), 1);
+  ASSERT_TRUE(copied->prologLocation[0].symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 10u);
 
-  ASSERT_TRUE(copied->epilogLocation.has_value());
-  ASSERT_TRUE(copied->epilogLocation->symbolNameIndex.has_value());
-  EXPECT_EQ(*copied->epilogLocation->symbolNameIndex, 11u);
+  ASSERT_EQ(copied->epilogLocation.size(), 1);
+  ASSERT_TRUE(copied->epilogLocation[0].symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->epilogLocation[0].symbolNameIndex, 11u);
 }
 
 // When debugLocations has multiple entries, updateSymbol should only run once
@@ -290,16 +292,16 @@ TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
   auto func = builder.makeFunction(
     "test", {}, Signature(Type::none, Type::none), {}, builder.makeNop());
 
-  func->prologLocation =
-    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)};
+  func->prologLocation = {
+    Function::DebugLocation{0, 1, 1, std::optional<BinaryLocation>(0)}};
 
   // Add multiple debug locations so the loop runs multiple times.
   auto* nop1 = srcModule.allocator.alloc<Nop>();
   auto* nop2 = srcModule.allocator.alloc<Nop>();
-  func->debugLocations[nop1] =
-    Function::DebugLocation{0, 10, 1, std::optional<BinaryLocation>(0)};
-  func->debugLocations[nop2] =
-    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(1)};
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 10, 1, std::optional<BinaryLocation>(0)}};
+  func->debugLocations[nop2] = {
+    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(1)}};
 
   // Map: 0->5, 1->6.
   std::vector<Index> symbolNameIndexMap = {5, 6};
@@ -308,7 +310,674 @@ TEST(SourceMapCopyTest, UpdateSymbolNotDoubleRemapped) {
     func.get(), dstModule, Name(), std::nullopt, symbolNameIndexMap);
 
   // Should be remapped exactly once: 0 -> 5.
-  ASSERT_TRUE(copied->prologLocation.has_value());
-  ASSERT_TRUE(copied->prologLocation->symbolNameIndex.has_value());
-  EXPECT_EQ(*copied->prologLocation->symbolNameIndex, 5u);
+  ASSERT_EQ(copied->prologLocation.size(), 1);
+  ASSERT_TRUE(copied->prologLocation[0].symbolNameIndex.has_value());
+  EXPECT_EQ(*copied->prologLocation[0].symbolNameIndex, 5u);
+}
+
+TEST_F(SourceMapTest, ScopesAndRangesParsing) {
+  // names:
+  //   0: "outerFunc"
+  //   1: "function"
+  //   2: "x"
+  //   3: "y"
+  //   4: "inlinedFunc"
+  //   5: "a"
+  //   6: "local_x"
+  //   7: "local_y"
+  //   8: "local_a"
+  //
+  // scopes[0] (for "main.dart"):
+  //   Scope 0 (outerFunc):
+  //     B: flags=7 (name|kind|stackFrame), line=0 (+0 -> line 1), col=0,
+  //        nameIdx=0 (+0), kindIdx=1 (+1 -> 'C')
+  //     D: vars=[2 (+2 -> 'E'), 3 (+1 -> 'C')]
+  //     C: endLine=20 (+20 -> 'U'), endCol=0 ('A')
+  //   Scope 1 (inlinedFunc):
+  //     B: flags=5 (name|stackFrame), line=30 (+10 -> 'K'), col=2 ('C'),
+  //        nameIdx=4 (+4 -> 'I')
+  //     D: vars=[5 (+2 -> 'E')]
+  //     C: endLine=40 (+10 -> 'K'), endCol=0 ('A')
+  //
+  // ranges:
+  //   Outer range [10, 50) referencing source 0, scope 0:
+  //     E: flags=6 (def|stackFrame -> 'G'), col=10 ('K'), srcDiff=0 ('A'),
+  //        scpDiff=0 ('A')
+  //     G: bindings for [x, y] -> [local_x (6+1=7 -> 'H'), unavail (0 -> 'A')]
+  //     H: sub-range binding for var 1 (y): at offset 10+15=25 ('AA' + 'P'),
+  //        becomes local_y (7+1=8 -> 'I')
+  //     Child inlined range [20, 35) referencing source 0, scope 1:
+  //       E: flags=2 (def -> 'C'), colDiff=10 (10+10=20 -> 'K'),
+  //          srcDiff=0 ('A'), scpDiff=+1 ('C')
+  //       G: bindings for [a] -> [local_a (8+1=9 -> 'J')]
+  //       I: callSite in source 0 ('A'), line 9 (0-based -> 10 in 1-based,
+  //          'J'), col 4 ('E')
+  //       F: end at 20+15=35 ('P')
+  //     F: end at 35+15=50 ('P')
+  //
+  // mappings:
+  //   at offset 10 ('U'): file=0 ('A'), line=1+4=5 ('I'), col=2 ('E')
+  //   at offset 20 ('U'): file=0 ('A'), line=5+27=32 ('2B'), col=4 ('E')
+  //   at offset 30 ('U'): 1-element unmapped segment
+  //   at offset 35 ('K'): file=0 ('A'), line=32-20=12 ('pB'), col=6 ('E')
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["main.dart", "other.dart"],
+      "names": ["outerFunc", "function", "x", "y", "inlinedFunc", "a", "local_x", "local_y", "local_a"],
+      "mappings": "UAIE,UA2BE,U,KApBE",
+      "scopes": ["BHAAAC,DEC,CUA,BFKCI,DE,CKA", null],
+      "ranges": ["EGKAA,GHA,HBAPI,ECKAC,GJ,IAJE,FP,FP"]
+    }
+  )";
+  parseMap(sourceMap);
+
+  // At offset 10: inside outer range only; symbol resolved from outerFunc
+  // scope.
+  auto loc10 = reader->readDebugLocationAt(10);
+  ASSERT_EQ(loc10.size(), 1u);
+  EXPECT_EQ(loc10[0].fileIndex, 0u);
+  EXPECT_EQ(loc10[0].lineNumber, 5u);
+  EXPECT_EQ(loc10[0].columnNumber, 2u);
+  EXPECT_EQ(loc10[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  // At offset 20: inside outer range AND inlined child range.
+  auto loc20 = reader->readDebugLocationAt(20);
+  ASSERT_EQ(loc20.size(), 2u);
+  // Outer frame holds callsite position (file 0, line 10, col 4) and outerFunc.
+  EXPECT_EQ(loc20[0].fileIndex, 0u);
+  EXPECT_EQ(loc20[0].lineNumber, 10u);
+  EXPECT_EQ(loc20[0].columnNumber, 4u);
+  EXPECT_EQ(loc20[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+  // Inner frame holds inlined instruction position (file 0, line 32, col 4) and
+  // inlinedFunc.
+  EXPECT_EQ(loc20[1].fileIndex, 0u);
+  EXPECT_EQ(loc20[1].lineNumber, 32u);
+  EXPECT_EQ(loc20[1].columnNumber, 4u);
+  EXPECT_EQ(loc20[1].symbolNameIndex, std::optional<BinaryLocation>(4));
+
+  // At offset 30: unmapped 1-element segment.
+  auto loc30 = reader->readDebugLocationAt(30);
+  EXPECT_TRUE(loc30.empty());
+
+  // At offset 35: back in outer range only.
+  auto loc35 = reader->readDebugLocationAt(35);
+  ASSERT_EQ(loc35.size(), 1u);
+  EXPECT_EQ(loc35[0].fileIndex, 0u);
+  EXPECT_EQ(loc35[0].lineNumber, 12u);
+  EXPECT_EQ(loc35[0].columnNumber, 6u);
+  EXPECT_EQ(loc35[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+}
+
+TEST_F(SourceMapTest, RelativeCallSiteParsing) {
+  // Test 'J' (GeneratedRangeRelativeCallSite) with 1, 2, and 3 values:
+  // Scope 0 in source 0 starts at line 11 (0-based 10 -> 'K'), col 5 ('F').
+  // Scope 1 in source 0 starts at line 51 (0-based 50 -> +40 = 'oB'), col 0
+  // ('A'). Outer range [10, 40) has definition (source 0, scope 0). Child range
+  // 1 [12, 18): J with 1 arg (colOffset=3 -> 'D') => callSite=(0, 11, 8). Child
+  // range 2 [20, 26): J with 2 args (lineOffset=4 -> 'E', col=7 -> 'H') =>
+  // callSite=(0, 15, 7). Nested grandchild range [21, 25) inside child range 2:
+  //   J with 3 args (parentIdx=1 -> 'B', lineOffset=2 -> 'C', col=9 -> 'J')
+  //   parentIdx=1 refers to Outer range (scope 0 at line 11, col 5) =>
+  //   callSite=(0, 13, 9).
+  // mappings: at offset 12 ('Y'), file=0 ('A'), line=1 ('A'), col=0 ('A').
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["rel.dart"],
+      "names": ["f0", "f1"],
+      "mappings": "YAAA",
+      "scopes": ["BFKFA,CKA,BFoBAA,CKA"],
+      "ranges": ["EGKAA,ECCAC,JD,FG,ECCAA,JEH,ECBAC,JBCJ,FE,FB,FO"]
+    }
+  )";
+  parseMap(sourceMap);
+
+  auto loc12 = reader->readDebugLocationAt(12);
+  ASSERT_EQ(loc12.size(), 2u);
+  EXPECT_EQ(loc12[0].fileIndex, 0u);
+  EXPECT_EQ(loc12[0].lineNumber, 11u);
+  EXPECT_EQ(loc12[0].columnNumber, 8u);
+  EXPECT_EQ(loc12[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  auto loc20 = reader->readDebugLocationAt(20);
+  ASSERT_EQ(loc20.size(), 2u);
+  EXPECT_EQ(loc20[0].fileIndex, 0u);
+  EXPECT_EQ(loc20[0].lineNumber, 15u);
+  EXPECT_EQ(loc20[0].columnNumber, 7u);
+  EXPECT_EQ(loc20[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  auto loc21 = reader->readDebugLocationAt(21);
+  ASSERT_EQ(loc21.size(), 3u);
+  EXPECT_EQ(loc21[1].fileIndex, 0u);
+  EXPECT_EQ(loc21[1].lineNumber, 13u);
+  EXPECT_EQ(loc21[1].columnNumber, 9u);
+  EXPECT_EQ(loc21[1].symbolNameIndex, std::optional<BinaryLocation>(0));
+}
+
+TEST_F(SourceMapTest, ScopesAndRangesBinaryRoundTrip) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.dart"};
+  m1.debugInfoSymbolNames = {"caller", "callee"};
+
+  Builder builder(m1);
+  auto* nop1 = builder.makeNop();
+  auto* nop2 = builder.makeNop();
+  auto* nop3 = builder.makeNop();
+  auto* body = builder.makeBlock({nop1, nop2, nop3});
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, body);
+
+  // nop1: in caller at app.dart:12:4
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)}};
+  // nop2: inlined callee called from app.dart:15:8, body at app.dart:32:6.
+  func->debugLocations[nop2] = {
+    Function::DebugLocation{0, 15, 8, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 32, 6, std::optional<BinaryLocation>(1)}};
+  // nop3: back in caller at app.dart:16:4
+  func->debugLocations[nop3] = {
+    Function::DebugLocation{0, 16, 4, std::optional<BinaryLocation>(0)}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setNamesSection(true);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::string mapStr = mapStream.str();
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  auto* block2 = f2->body->cast<Block>();
+  ASSERT_EQ(block2->list.size(), 3u);
+
+  const auto& dl1 = f2->debugLocations.at(block2->list[0]);
+  ASSERT_EQ(dl1.size(), 1u);
+  EXPECT_EQ(dl1[0].lineNumber, 12u);
+  EXPECT_EQ(dl1[0].columnNumber, 4u);
+  EXPECT_EQ(dl1[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+
+  const auto& dl2 = f2->debugLocations.at(block2->list[1]);
+  ASSERT_EQ(dl2.size(), 2u);
+  EXPECT_EQ(dl2[0].lineNumber, 15u);
+  EXPECT_EQ(dl2[0].columnNumber, 8u);
+  EXPECT_EQ(dl2[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+  EXPECT_EQ(dl2[1].lineNumber, 32u);
+  EXPECT_EQ(dl2[1].columnNumber, 6u);
+  EXPECT_EQ(dl2[1].symbolNameIndex, std::optional<BinaryLocation>(1));
+
+  const auto& dl3 = f2->debugLocations.at(block2->list[2]);
+  ASSERT_EQ(dl3.size(), 1u);
+  EXPECT_EQ(dl3[0].lineNumber, 16u);
+  EXPECT_EQ(dl3[0].columnNumber, 4u);
+  EXPECT_EQ(dl3[0].symbolNameIndex, std::optional<BinaryLocation>(0));
+}
+
+TEST(SourceMapCopyTest, RemapInlinedStackLocations) {
+  Module srcModule;
+  Module dstModule;
+  Builder builder(srcModule);
+
+  auto* nop = builder.makeNop();
+  auto func = builder.makeFunction(
+    "test", {}, Signature(Type::none, Type::none), {}, nop);
+
+  func->debugLocations[nop] = {
+    Function::DebugLocation{0, 10, 5, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{1, 20, 3, std::optional<BinaryLocation>(1)}};
+
+  std::vector<Index> fileIndexMap = {3, 5};
+  std::vector<Index> symbolNameIndexMap = {7, 9};
+
+  auto copied = ModuleUtils::copyFunctionWithoutAdd(
+    func.get(), dstModule, Name(), fileIndexMap, symbolNameIndexMap);
+
+  const auto& locs = copied->debugLocations.at(copied->body);
+  ASSERT_EQ(locs.size(), 2u);
+  EXPECT_EQ(locs[0].fileIndex, 3u);
+  EXPECT_EQ(locs[0].symbolNameIndex, std::optional<BinaryLocation>(7));
+  EXPECT_EQ(locs[1].fileIndex, 5u);
+  EXPECT_EQ(locs[1].symbolNameIndex, std::optional<BinaryLocation>(9));
+}
+
+TEST_F(SourceMapTest, InliningCreatesCallStackScopes) {
+  auto text = R"wasm(
+    (module
+      (func $callee
+        ;;@ foo.cpp:10:2:calleeFunc
+        (nop)
+      )
+      (func $caller (export "caller")
+        ;;@ foo.cpp:50:4:callerFunc
+        (call $callee)
+      )
+    )
+  )wasm";
+  Module m1;
+  parseWast(m1, text);
+
+  PassRunner runner(&m1);
+  runner.add("inlining");
+  runner.run();
+
+  auto* caller1 = m1.getFunction("caller");
+  auto* block1 = caller1->body->cast<Block>();
+  ASSERT_EQ(block1->list.size(), 1u);
+  auto* inlinedNop1 = block1->list[0];
+  ASSERT_TRUE(caller1->debugLocations.count(inlinedNop1));
+  const auto& locs1 = caller1->debugLocations.at(inlinedNop1);
+  ASSERT_EQ(locs1.size(), 2u);
+  // Outer frame is the call site in callerFunc.
+  EXPECT_EQ(locs1[0].lineNumber, 50u);
+  EXPECT_EQ(locs1[0].columnNumber, 4u);
+  // Inner frame is the inlined instruction in calleeFunc.
+  EXPECT_EQ(locs1[1].lineNumber, 10u);
+  EXPECT_EQ(locs1[1].columnNumber, 2u);
+
+  // Write binary + source map and read back to verify synthesized scopes/ranges
+  // preserve the full inlined call stack.
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::string mapStr = mapStream.str();
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* caller2 = m2.functions[0].get();
+  ASSERT_TRUE(caller2->debugLocations.count(caller2->body));
+  const auto& locs2 = caller2->debugLocations.at(caller2->body);
+  ASSERT_EQ(locs2.size(), 2u);
+  EXPECT_EQ(locs2[0].lineNumber, 50u);
+  EXPECT_EQ(locs2[0].columnNumber, 4u);
+  ASSERT_TRUE(locs2[0].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs2[0].symbolNameIndex], "callerFunc");
+  EXPECT_EQ(locs2[1].lineNumber, 10u);
+  EXPECT_EQ(locs2[1].columnNumber, 2u);
+  ASSERT_TRUE(locs2[1].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs2[1].symbolNameIndex], "calleeFunc");
+}
+
+TEST_F(SourceMapTest, UnnamedInlinedScopesRoundTrip) {
+  Module m1;
+  m1.debugInfoFileNames = {"caller.c", "callee.c"};
+
+  Builder builder(m1);
+  auto* nop1 = builder.makeNop();
+  auto* nop2 = builder.makeNop();
+  auto* nop3 = builder.makeNop();
+  auto* body = builder.makeBlock({nop1, nop2, nop3});
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, body);
+
+  // nop1: unnamed location in caller.c:12:4
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 12, 4, std::nullopt}};
+  // nop2 and nop3: two instructions inside an unnamed inlined callee called
+  // from caller.c:15:8, at callee.c:32:6 and callee.c:33:2. They should share
+  // a single synthesized unnamed OriginalScope (flags=0x4 => 'BE') and stay in
+  // one GeneratedRange with a non-null Definition ('EC' => flags=0x2).
+  func->debugLocations[nop2] = {
+    Function::DebugLocation{0, 15, 8, std::nullopt},
+    Function::DebugLocation{1, 32, 6, std::nullopt}};
+  func->debugLocations[nop3] = {
+    Function::DebugLocation{0, 15, 8, std::nullopt},
+    Function::DebugLocation{1, 33, 2, std::nullopt}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setNamesSection(true);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // caller.c only appears at j == 0 unnamed -> null in "scopes".
+  // callee.c has an unnamed inlined scope at 0-based line 31 ('f'), col 6 ('G')
+  // encoded as "BEfG,CAA".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"names\":[]"));
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"scopes\":[null,\"BEfG,CAA\"]"));
+  // Outer unnamed stack frame uses flags=0x4 ('EE'), inner inlined frame uses
+  // flags=0x2 ('EC') with Definition (source 1, scope 0) and CallSite at
+  // caller.c (0='A'), line 14 ('O'), col 8 ('I') => "IAOI".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"ranges\":[\"EE"));
+  EXPECT_THAT(mapStr, ::testing::HasSubstr(",ECBCA,IAOI,FC,FA\"]"));
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  auto* block2 = f2->body->cast<Block>();
+  ASSERT_EQ(block2->list.size(), 3u);
+
+  const auto& dl1 = f2->debugLocations.at(block2->list[0]);
+  ASSERT_EQ(dl1.size(), 1u);
+  EXPECT_EQ(dl1[0].fileIndex, 0u);
+  EXPECT_EQ(dl1[0].lineNumber, 12u);
+  EXPECT_EQ(dl1[0].columnNumber, 4u);
+  EXPECT_EQ(dl1[0].symbolNameIndex, std::nullopt);
+
+  const auto& dl2 = f2->debugLocations.at(block2->list[1]);
+  ASSERT_EQ(dl2.size(), 2u);
+  EXPECT_EQ(dl2[0].fileIndex, 0u);
+  EXPECT_EQ(dl2[0].lineNumber, 15u);
+  EXPECT_EQ(dl2[0].columnNumber, 8u);
+  EXPECT_EQ(dl2[0].symbolNameIndex, std::nullopt);
+  EXPECT_EQ(dl2[1].fileIndex, 1u);
+  EXPECT_EQ(dl2[1].lineNumber, 32u);
+  EXPECT_EQ(dl2[1].columnNumber, 6u);
+  EXPECT_EQ(dl2[1].symbolNameIndex, std::nullopt);
+
+  const auto& dl3 = f2->debugLocations.at(block2->list[2]);
+  ASSERT_EQ(dl3.size(), 2u);
+  EXPECT_EQ(dl3[0].fileIndex, 0u);
+  EXPECT_EQ(dl3[0].lineNumber, 15u);
+  EXPECT_EQ(dl3[0].columnNumber, 8u);
+  EXPECT_EQ(dl3[0].symbolNameIndex, std::nullopt);
+  EXPECT_EQ(dl3[1].fileIndex, 1u);
+  EXPECT_EQ(dl3[1].lineNumber, 33u);
+  EXPECT_EQ(dl3[1].columnNumber, 2u);
+  EXPECT_EQ(dl3[1].symbolNameIndex, std::nullopt);
+}
+
+TEST_F(SourceMapTest, MixedNamedAndUnnamedInlinedStackRoundTrip) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"Outer", "Inner"};
+
+  Builder builder(m1);
+  auto* nop = builder.makeNop();
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, nop);
+
+  // 3-level stack in the same source file: Named Outer -> unnamed middle ->
+  // Named Inner. Verifies that an unnamed scope sorted between two named scopes
+  // does not perturb relative name indices and that all frames round-trip.
+  func->debugLocations[nop] = {
+    Function::DebugLocation{0, 10, 5, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 3, std::nullopt},
+    Function::DebugLocation{0, 30, 1, std::optional<BinaryLocation>(1)}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // Scope 0 (Outer at 9:5, name 0): BFJFA,CAA
+  // Scope 1 (unnamed at 19:3): BEKD,CAA (leaves lastNameIdx = 0)
+  // Scope 2 (Inner at 29:1, name 1 -> diff +1 = 'C'): BFKBC,CAA
+  EXPECT_THAT(
+    mapStr,
+    ::testing::HasSubstr("\"scopes\":[\"BFJFA,CAA,BEKD,CAA,BFKBC,CAA\"]"));
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  ASSERT_TRUE(f2->debugLocations.count(f2->body));
+  const auto& locs = f2->debugLocations.at(f2->body);
+  ASSERT_EQ(locs.size(), 3u);
+
+  EXPECT_EQ(locs[0].fileIndex, 0u);
+  EXPECT_EQ(locs[0].lineNumber, 10u);
+  EXPECT_EQ(locs[0].columnNumber, 5u);
+  ASSERT_TRUE(locs[0].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs[0].symbolNameIndex], "Outer");
+
+  EXPECT_EQ(locs[1].fileIndex, 0u);
+  EXPECT_EQ(locs[1].lineNumber, 20u);
+  EXPECT_EQ(locs[1].columnNumber, 3u);
+  EXPECT_EQ(locs[1].symbolNameIndex, std::nullopt);
+
+  EXPECT_EQ(locs[2].fileIndex, 0u);
+  EXPECT_EQ(locs[2].lineNumber, 30u);
+  EXPECT_EQ(locs[2].columnNumber, 1u);
+  ASSERT_TRUE(locs[2].symbolNameIndex.has_value());
+  EXPECT_EQ(m2.debugInfoSymbolNames[*locs[2].symbolNameIndex], "Inner");
+}
+
+TEST_F(SourceMapTest, RangesBridgeIntraFunctionGaps) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"Caller", "Callee"};
+
+  Builder builder(m1);
+  auto* nop1 = builder.makeNop();
+  auto* nop2 = builder.makeNop(); // unmapped gap inside Caller
+  auto* nop3 = builder.makeNop(); // start of inlined Callee
+  auto* nop4 = builder.makeNop(); // unmapped gap inside inlined Callee
+  auto* nop5 = builder.makeNop(); // continuation of same inlined Callee
+  auto* nop6 = builder.makeNop(); // unmapped gap after inlined Callee
+  auto* nop7 = builder.makeNop(); // back in Caller
+  auto* body = builder.makeBlock({nop1, nop2, nop3, nop4, nop5, nop6, nop7});
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, body);
+
+  func->debugLocations[nop1] = {
+    Function::DebugLocation{0, 10, 4, std::optional<BinaryLocation>(0)}};
+  func->debugLocations[nop3] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 1, std::optional<BinaryLocation>(1)}};
+  func->debugLocations[nop5] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 21, 1, std::optional<BinaryLocation>(1)}};
+  func->debugLocations[nop7] = {
+    Function::DebugLocation{0, 15, 4, std::optional<BinaryLocation>(0)}};
+
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // There must be only ONE outer Caller range ('EG') spanning all 7 nops, and
+  // ONE inner Callee range ('EC') starting at +2 ('C', nop3) with length 3
+  // ('FD', covering nop3..nop5 and closing before nop6 at gapOffset), followed
+  // by Caller closing +2 bytes later ('FC', after nop7).
+  // CallSite is app.cpp (0='A'), 0-based line 11 ('L'), col 4 ('E') => "IALE".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr(",ECCAC,IALE,FD,FC\"]"));
+  // Verify only one top-level range ('EG') was emitted.
+  auto rangesStart = mapStr.find("\"ranges\":[\"");
+  ASSERT_NE(rangesStart, std::string::npos);
+  rangesStart += strlen("\"ranges\":[\"");
+  auto rangesEnd = mapStr.find("\"]", rangesStart);
+  ASSERT_NE(rangesEnd, std::string::npos);
+  std::string rangesStr = mapStr.substr(rangesStart, rangesEnd - rangesStart);
+  EXPECT_EQ(rangesStr.rfind("EG", 0), 0u);
+  EXPECT_EQ(rangesStr.find(",EG"), std::string::npos);
+
+  // Round-trip: unmapped gap instructions must remain unmapped (via mappings),
+  // while located instructions keep their exact call stacks.
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  auto* block2 = f2->body->cast<Block>();
+  ASSERT_EQ(block2->list.size(), 7u);
+
+  EXPECT_EQ(f2->debugLocations.at(block2->list[0]).size(), 1u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[0])[0].lineNumber, 10u);
+  EXPECT_FALSE(f2->debugLocations.count(block2->list[1]));
+
+  ASSERT_EQ(f2->debugLocations.at(block2->list[2]).size(), 2u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[2])[0].lineNumber, 12u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[2])[1].lineNumber, 20u);
+  EXPECT_FALSE(f2->debugLocations.count(block2->list[3]));
+
+  ASSERT_EQ(f2->debugLocations.at(block2->list[4]).size(), 2u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[4])[0].lineNumber, 12u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[4])[1].lineNumber, 21u);
+  EXPECT_FALSE(f2->debugLocations.count(block2->list[5]));
+
+  ASSERT_EQ(f2->debugLocations.at(block2->list[6]).size(), 1u);
+  EXPECT_EQ(f2->debugLocations.at(block2->list[6])[0].lineNumber, 15u);
+}
+
+TEST_F(SourceMapTest, RangesDoNotMergeAcrossFunctions) {
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"SharedName", "Callee"};
+
+  Builder builder(m1);
+
+  // f1: named SharedName with an inlined Callee and an epilogLocation (so
+  // there is no intra-function nullptr before f1's end opcode).
+  auto* f1Nop = builder.makeNop();
+  auto f1 = builder.makeFunction(
+    "f1", {}, Signature(Type::none, Type::none), {}, f1Nop);
+  f1->debugLocations[f1Nop] = {
+    Function::DebugLocation{0, 10, 4, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 2, std::optional<BinaryLocation>(1)}};
+  f1->epilogLocation = {
+    Function::DebugLocation{0, 11, 1, std::optional<BinaryLocation>(0)}};
+  m1.addFunction(std::move(f1));
+
+  // f_unmapped: has no debug locations at all; f1's range must not smear into
+  // it.
+  auto fUnmapped = builder.makeFunction(
+    "f_unmapped", {}, Signature(Type::none, Type::none), {}, builder.makeNop());
+  m1.addFunction(std::move(fUnmapped));
+
+  // f2: ALSO uses SharedName at j == 0; must be a separate top-level range from
+  // f1.
+  auto* f2Nop = builder.makeNop();
+  auto f2 = builder.makeFunction(
+    "f2", {}, Signature(Type::none, Type::none), {}, f2Nop);
+  f2->debugLocations[f2Nop] = {
+    Function::DebugLocation{0, 12, 4, std::optional<BinaryLocation>(0)}};
+  m1.addFunction(std::move(f2));
+
+  // f3 and f4: two adjacent functions with unnamed j == 0 frames; must also
+  // emit two distinct top-level 'EE' ranges rather than merging across
+  // functions.
+  auto* f3Nop = builder.makeNop();
+  auto f3 = builder.makeFunction(
+    "f3", {}, Signature(Type::none, Type::none), {}, f3Nop);
+  f3->debugLocations[f3Nop] = {Function::DebugLocation{0, 30, 1, std::nullopt},
+                               Function::DebugLocation{0, 40, 2, std::nullopt}};
+  m1.addFunction(std::move(f3));
+
+  auto* f4Nop = builder.makeNop();
+  auto f4 = builder.makeFunction(
+    "f4", {}, Signature(Type::none, Type::none), {}, f4Nop);
+  f4->debugLocations[f4Nop] = {Function::DebugLocation{0, 50, 1, std::nullopt},
+                               Function::DebugLocation{0, 40, 2, std::nullopt}};
+  m1.addFunction(std::move(f4));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  auto rangesStart = mapStr.find("\"ranges\":[\"");
+  ASSERT_NE(rangesStart, std::string::npos);
+  rangesStart += strlen("\"ranges\":[\"");
+  auto rangesEnd = mapStr.find("\"]", rangesStart);
+  ASSERT_NE(rangesEnd, std::string::npos);
+  std::string rangesStr = mapStr.substr(rangesStart, rangesEnd - rangesStart);
+  // Count comma-separated items starting with a given 2-char range prefix.
+  auto countItemsWithPrefix = [&](const char* prefix) {
+    size_t count = 0;
+    size_t p = 0;
+    while (p < rangesStr.size()) {
+      if (rangesStr.compare(p, strlen(prefix), prefix) == 0) {
+        ++count;
+      }
+      auto comma = rangesStr.find(',', p);
+      if (comma == std::string::npos) {
+        break;
+      }
+      p = comma + 1;
+    }
+    return count;
+  };
+  // f1 and f2 are two separate 'EG' ranges (not merged across f_unmapped).
+  EXPECT_EQ(countItemsWithPrefix("EG"), 2u);
+  // f3 and f4 are two separate 'EE' ranges (not merged across function
+  // boundary).
+  EXPECT_EQ(countItemsWithPrefix("EE"), 2u);
+
+  // Round-trip verification.
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 5u);
+  // f1
+  ASSERT_EQ(m2.functions[0]->debugLocations.at(m2.functions[0]->body).size(),
+            2u);
+  ASSERT_EQ(m2.functions[0]->epilogLocation.size(), 1u);
+  EXPECT_EQ(m2.functions[0]->epilogLocation[0].lineNumber, 11u);
+  // f_unmapped
+  EXPECT_TRUE(m2.functions[1]->debugLocations.empty());
+  // f2
+  ASSERT_EQ(m2.functions[2]->debugLocations.at(m2.functions[2]->body).size(),
+            1u);
+  EXPECT_EQ(
+    m2.functions[2]->debugLocations.at(m2.functions[2]->body)[0].lineNumber,
+    12u);
+  // f3
+  ASSERT_EQ(m2.functions[3]->debugLocations.at(m2.functions[3]->body).size(),
+            2u);
+  EXPECT_EQ(
+    m2.functions[3]->debugLocations.at(m2.functions[3]->body)[0].lineNumber,
+    30u);
+  // f4
+  ASSERT_EQ(m2.functions[4]->debugLocations.at(m2.functions[4]->body).size(),
+            2u);
+  EXPECT_EQ(
+    m2.functions[4]->debugLocations.at(m2.functions[4]->body)[0].lineNumber,
+    50u);
 }

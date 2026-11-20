@@ -568,8 +568,8 @@ public:
 
   void emit(Expression* curr) { writer.visit(curr); }
   void emitHeader() {
-    if (func->prologLocation) {
-      parent.writeDebugLocation(*func->prologLocation);
+    if (!func->prologLocation.empty()) {
+      parent.writeDebugLocation(func->prologLocation);
     }
     writer.mapLocalsAndEmitHeader();
   }
@@ -581,8 +581,8 @@ public:
   void emitFunctionEnd() {
     // Indicate the debug location corresponding to the end opcode
     // that terminates the function code.
-    if (func->epilogLocation) {
-      parent.writeDebugLocation(*func->epilogLocation);
+    if (!func->epilogLocation.empty()) {
+      parent.writeDebugLocation(func->epilogLocation);
     } else {
       // The end opcode has no debug location.
       parent.writeNoDebugLocation();

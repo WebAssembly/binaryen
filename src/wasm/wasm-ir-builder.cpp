@@ -271,16 +271,16 @@ Result<Expression*> IRBuilder::build() {
   return expr;
 }
 
-void IRBuilder::setDebugLocation(
-  const std::optional<Function::DebugLocation>& loc) {
-  if (loc) {
-    DBG(std::cerr << "setting debugloc " << loc->fileIndex << ":"
-                  << loc->lineNumber << ":" << loc->columnNumber << "\n";);
+void IRBuilder::setDebugLocation(const Function::DebugLocations& loc) {
+  if (!loc.empty()) {
+    DBG(std::cerr << "setting debugloc " << loc.back().fileIndex << ":"
+                  << loc.back().lineNumber << ":" << loc.back().columnNumber
+                  << "\n";);
   } else {
     DBG(std::cerr << "setting debugloc to none\n";);
   }
-  if (loc) {
-    debugLoc = *loc;
+  if (!loc.empty()) {
+    debugLoc = loc;
   } else {
     debugLoc = NoDebug();
   }
@@ -289,16 +289,17 @@ void IRBuilder::setDebugLocation(
 void IRBuilder::applyDebugLoc(Expression* expr) {
   if (!std::get_if<CanReceiveDebug>(&debugLoc)) {
     if (func) {
-      if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
-        DBG(std::cerr << "applying debugloc " << loc->fileIndex << ":"
-                      << loc->lineNumber << ":" << loc->columnNumber
-                      << " to expression " << ShallowExpression{expr} << "\n");
+      if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
+        DBG(std::cerr << "applying debugloc " << loc->back().fileIndex << ":"
+                      << loc->back().lineNumber << ":"
+                      << loc->back().columnNumber << " to expression "
+                      << ShallowExpression{expr} << "\n");
         func->debugLocations[expr] = *loc;
       } else {
         assert(std::get_if<NoDebug>(&debugLoc));
         DBG(std::cerr << "applying debugloc to expression "
                       << ShallowExpression{expr} << "\n");
-        func->debugLocations[expr] = std::nullopt;
+        func->debugLocations[expr] = Function::DebugLocations{};
       }
     }
     debugLoc = CanReceiveDebug();
@@ -859,7 +860,7 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
   }
-  if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+  if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
     func->prologLocation = *loc;
   }
   debugLoc = CanReceiveDebug();
@@ -954,9 +955,10 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
 #if IR_BUILDER_DEBUG
-  if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
-    std::cerr << "discarding debugloc " << loc->fileIndex << ":"
-              << loc->lineNumber << ":" << loc->columnNumber << "\n";
+  if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
+    std::cerr << "discarding debugloc " << loc->back().fileIndex << ":"
+              << loc->back().lineNumber << ":" << loc->back().columnNumber
+              << "\n";
   }
 #endif
   debugLoc = CanReceiveDebug();
@@ -1197,7 +1199,7 @@ Result<> IRBuilder::visitEnd() {
     return Err{"unexpected end"};
   }
   if (auto* func = scope.getFunction()) {
-    if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+    if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
       func->epilogLocation = *loc;
     }
   }
@@ -1324,7 +1326,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try* tryy;
+  } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
