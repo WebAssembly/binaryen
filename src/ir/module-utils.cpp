@@ -306,7 +306,7 @@ void clearModule(Module& wasm) {
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this to redirect all of its uses.
-template<typename T> void renameFunctions(Module& wasm, T& map) {
+void renameFunctions(Module& wasm, const std::map<Name, Name>& map) {
   // Update the function itself.
   for (auto& [oldName, newName] : map) {
     if (Function* func = wasm.getFunctionOrNull(oldName)) {
@@ -320,7 +320,7 @@ template<typename T> void renameFunctions(Module& wasm, T& map) {
   struct Updater : public WalkerPass<PostWalker<Updater>> {
     bool isFunctionParallel() override { return true; }
 
-    T& map;
+    const std::map<Name, Name>& map;
 
     void maybeUpdate(Name& name) {
       if (auto iter = map.find(name); iter != map.end()) {
@@ -328,7 +328,7 @@ template<typename T> void renameFunctions(Module& wasm, T& map) {
       }
     }
 
-    Updater(T& map) : map(map) {}
+    Updater(const std::map<Name, Name>& map) : map(map) {}
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<Updater>(map);

@@ -74,7 +74,7 @@ void clearModule(Module& wasm);
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this to redirect all of its uses.
-template<typename T> void renameFunctions(Module& wasm, T& map);
+void renameFunctions(Module& wasm, const std::map<Name, Name>& map);
 
 void renameFunction(Module& wasm, Name oldName, Name newName);
 
