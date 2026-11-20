@@ -711,7 +711,10 @@
     ;; A return_call transfers control out of the caller, so even though the
     ;; callee is idempotent (and the wrapping typed blocks have concrete type
     ;; i32, to make it appear optimizable), we do not treat it as an optimizable
-    ;; idempotent call.
+    ;; idempotent call (replacing the second with a local.get would remove the
+    ;; return; in this testcase that does not matter, as the original returns
+    ;; anyhow, but if the return_call were nested in an if arm, say, then this
+    ;; would be a possible change in behavior).
     (drop
       (block (result i32)
         (return_call $idempotent
