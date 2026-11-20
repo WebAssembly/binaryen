@@ -1,6 +1,7 @@
 #include "ir/possible-contents.h"
 #include "ir/subtypes.h"
 #include "parser/wat-parser.h"
+#include "pass.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 
@@ -999,4 +1000,72 @@ TEST_F(PossibleContentsTest, TestTupleItems) {
   // depth info for it.
   EXPECT_EQ(tuple.getTupleItem(0), PossibleContents::coneType(Type::i32));
   EXPECT_EQ(tuple.getTupleItem(1), PossibleContents::coneType(funcref));
+}
+
+TEST_F(PossibleContentsTest, TestSubContentsGlobalFullCone) {
+  // A Global with an inexact type has FullDepth and must not be considered a
+  // subcontents of a finite-depth cone.
+  TypeBuilder builder(2);
+  builder.createRecGroup(0, 2);
+  builder[0].setOpen() = Struct(FieldList{});
+  builder[1].setOpen().subTypeOf(builder[0]) = Struct(FieldList{});
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto A = (*result)[0];
+  auto B = (*result)[1];
+
+  auto globalB =
+    PossibleContents::global("g", ExternalKind::Global, Type(B, NonNullable));
+  auto coneA1 = PossibleContents::coneType(Type(A, NonNullable), 1);
+  EXPECT_FALSE(PossibleContents::isSubContents(globalB, coneA1));
+}
+
+TEST_F(PossibleContentsTest, TestLocalOracle) {
+  auto wasm = parse(R"(
+    (module
+      (type $Open (sub (struct (field i32))))
+      (type $Final (sub final $Open (struct (field i32))))
+      (func $const (result i32)
+        (i32.const 42)
+      )
+      (func $test-local (param $open (ref $Open)) (param $final (ref $Final)) (result i32)
+        (local $x i32)
+        (local.set $x (i32.const 7))
+        (drop (local.get $open))
+        (drop (local.get $final))
+        (drop (call $const))
+        (local.get $x)
+      )
+    )
+  )");
+
+  auto* func = wasm->getFunction("test-local");
+  ContentOracle oracle(*wasm, func, options);
+
+  // Even though $test-local is never called, local analysis assumes params can
+  // hold any value of their declared types.
+  auto openParam = oracle.getContents(ParamLocation{func, 0});
+  ASSERT_TRUE(openParam.isConeType());
+  EXPECT_TRUE(openParam.hasFullCone());
+
+  // Final types have depth 0 even without whole-program SubTypes.
+  auto finalParam = oracle.getContents(ParamLocation{func, 1});
+  ASSERT_TRUE(finalParam.isConeType());
+  EXPECT_EQ(finalParam.getCone().depth, Index(0));
+
+  // Local constants still propagate.
+  auto bodyResult = oracle.getContents(ResultLocation{func, 0});
+  ASSERT_TRUE(bodyResult.isLiteral());
+  EXPECT_EQ(bodyResult.getLiteral(), Literal(int32_t(7)));
+
+  // Calls to other functions are NOT inferred from the callee body.
+  auto* block = func->body->cast<Block>();
+  auto* callDrop = block->list[3]->cast<Drop>();
+  auto callContents = oracle.getContents(callDrop->value);
+  EXPECT_FALSE(callContents.isLiteral());
+
+  // Verify the local-gufa pass is function-parallel.
+  auto pass = PassRegistry::get()->createPass("local-gufa");
+  ASSERT_TRUE(pass);
+  EXPECT_TRUE(pass->isFunctionParallel());
 }

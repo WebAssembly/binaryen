@@ -675,11 +675,14 @@ template<> struct hash<wasm::ConeReadLocation> {
 
 namespace wasm {
 
-// Analyze the entire wasm file to find which contents are possible in which
-// locations. This assumes a closed world and starts from roots - newly created
-// values - and propagates them to the locations they reach. After the
-// analysis the user of this class can ask which contents are possible at any
-// location.
+// Analyze a wasm module (or a single function) to find which contents are
+// possible in which locations. In whole-program mode, this assumes a closed
+// world (unless open world is configured) and starts from roots - newly created
+// values - and propagates them to the locations they reach. In single-function
+// (local) mode, only the given function is analyzed without whole-program
+// information, assuming worst-case values for parameters, calls to other
+// functions, heap data, mutable globals, and tags. After the analysis the user
+// of this class can ask which contents are possible at any location.
 //
 // This algorithm is so simple as to not really be worth a name, but if you are
 // familiar with Abstract Interpretation then it can be seen as an efficient way
@@ -719,12 +722,20 @@ class ContentOracle {
   Module& wasm;
   const PassOptions& options;
 
-  void analyze();
+  void analyze(Function* func = nullptr);
 
 public:
+  // Analyze the entire module.
   ContentOracle(Module& wasm, const PassOptions& options)
     : wasm(wasm), options(options) {
     analyze();
+  }
+
+  // Analyze a single function without whole-program information.
+  ContentOracle(Module& wasm, Function* func, const PassOptions& options)
+    : wasm(wasm), options(options) {
+    assert(func);
+    analyze(func);
   }
 
   // Get the contents possible at a location.

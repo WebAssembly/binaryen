@@ -2744,6 +2744,7 @@ opt_choices = [
     ("--gufa",),
     ("--gufa-cast-all",),
     ("--gufa-optimizing",),
+    ("--local-gufa",),
     ("--local-cse",),
     ("--heap2local",),
     ("--remove-unused-names", "--heap2local",),
