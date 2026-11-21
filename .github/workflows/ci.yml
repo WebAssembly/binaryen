@@ -50,9 +50,9 @@ jobs:
     strategy:
       matrix:
         # Test on the oldest support Ubuntu version in addition to `latest`.
-        # Build using the oldest support macOS version.  For emsdk this is
-        # currently macos-13, but unfortunately that doesn't exist in github
-        # actions so we settle for macos-15.
+        # Build using the oldest macOS runner available on GitHub Actions.
+        # emsdk CI currently uses Xcode 15.4 (macOS 14), which is unavailable
+        # here, so we also test Clang 15 + libc++ in `build-clang-15`.
         os: [ubuntu-22.04, ubuntu-latest, macos-15, windows-latest, windows-11-arm]
     steps:
     - uses: actions/setup-python@v5
@@ -439,3 +439,28 @@ jobs:
         cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DBYN_ENABLE_ASSERTIONS=OFF
     - name: build
       run: cmake --build out -v
+
+  # Ensures compatibility with Clang 15 and libc++ 15 (matching Xcode 15.4 in
+  # emsdk CI, which uses Apple Clang 15).
+  build-clang-15:
+    name: clang-15 (libc++)
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build clang-15 lld libc++-15-dev libc++abi-15-dev
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_CXX_FLAGS="-stdlib=libc++"
+    - name: build
+      run: cmake --build out -v
+    - name: unittest
+      run: ./out/bin/binaryen-unittests

@@ -2468,6 +2468,13 @@ public:
                    lineNumber = BinaryLocation(-1),
                    columnNumber = BinaryLocation(-1);
     std::optional<BinaryLocation> symbolNameIndex;
+    DebugLocation() = default;
+    DebugLocation(BinaryLocation fileIndex,
+                  BinaryLocation lineNumber,
+                  BinaryLocation columnNumber,
+                  std::optional<BinaryLocation> symbolNameIndex = std::nullopt)
+      : fileIndex(fileIndex), lineNumber(lineNumber),
+        columnNumber(columnNumber), symbolNameIndex(symbolNameIndex) {}
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
              columnNumber == other.columnNumber &&
