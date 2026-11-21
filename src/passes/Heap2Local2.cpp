@@ -20,14 +20,14 @@
 //
 // Phase 1 builds a dataflow graph over reference expressions in a function,
 // collecting candidate StructNew, fixed-size ArrayNew, and ArrayNewFixed
-// allocations alongside identity edges and escaping uses.
+// allocations alongside identity and cast edges and escaping uses.
 //
 // Phase 2 solves a smallest fixed point over Flat<AllocId> origins (i.e. the
 // flat lattice of all allocation sites) across all candidate allocations
 // simultaneously:
 //   - Top: unknown / nullable / multiple merged allocations.
 //   - Val(a): definitely non-null reference to a single allocation `a`.
-//   - Bot: unreachable.
+//   - Bot: unreachable or statically trapping cast output.
 //
 // Phase 3 marks allocations escaped from escaping uses and identity-edge mixes
 // (Val(a) flowing into Top).
@@ -111,10 +111,14 @@ struct AnalysisState {
   std::vector<AllocInfo> allocs;
   // Maps tracked reference-typed expressions to their dataflow NodeId.
   std::unordered_map<Expression*, NodeId> exprNodes;
+  // Maps each NodeId back to its Expression* (nullptr for TopNode).
+  std::vector<Expression*> nodeExprs;
   // Current lattice value for each dataflow node, indexed by NodeId.
   std::vector<Origin> origins;
-  // Directed edges (from, to) along which reference values flow unchanged.
-  std::vector<std::pair<NodeId, NodeId>> identityEdges;
+  // Directed dataflow edges (from, to) between tracked nodes. Edges into
+  // RefCast nodes trigger cast re-evaluation; all other edges propagate
+  // reference values unchanged.
+  std::vector<std::pair<NodeId, NodeId>> edges;
   // Nodes whose values flow into contexts that escape the function or alias
   // heap memory.
   std::vector<NodeId> escapingNodes;
@@ -124,6 +128,7 @@ struct AnalysisState {
     // representing expressions absent from exprNodes that can never produce a
     // candidate allocation (e.g. call, global.get, struct.get, or ref.null).
     origins.push_back(originLattice.getTop());
+    nodeExprs.push_back(nullptr);
   }
 
   NodeId getNode(Expression* curr) {
@@ -132,6 +137,7 @@ struct AnalysisState {
     auto [it, inserted] = exprNodes.emplace(curr, NodeId(origins.size()));
     if (inserted) {
       origins.push_back(originLattice.getBottom());
+      nodeExprs.push_back(curr);
     }
     return it->second;
   }
@@ -143,34 +149,38 @@ struct AnalysisState {
     return it != exprNodes.end() ? it->second : TopNode;
   }
 
+  const Origin& getOrigin(Expression* curr) const {
+    return origins[getNodeOrTop(curr)];
+  }
+
   void join(Expression* curr, Origin val) {
     originLattice.join(origins[getNode(curr)], val);
   }
 
   void joinTop(Expression* curr) { join(curr, originLattice.getTop()); }
 
-  void addIdentityEdge(NodeId fromNode, NodeId toNode) {
+  void addEdge(NodeId fromNode, NodeId toNode) {
     if (fromNode == TopNode) {
       originLattice.join(origins[toNode], originLattice.getTop());
     } else {
-      identityEdges.emplace_back(fromNode, toNode);
+      edges.emplace_back(fromNode, toNode);
     }
   }
 
-  void addIdentityEdge(Expression* from, NodeId toNode) {
+  void addEdge(Expression* from, NodeId toNode) {
     // Since we are building up the graph via a post-order traversal, we will
     // have visited a child node (i.e. `from`) before its parent (i.e.
     // `toNode`). If the child is not already in the graph, then it must be
     // something we can't analyze, so we represent it as Top.
-    addIdentityEdge(getNodeOrTop(from), toNode);
+    addEdge(getNodeOrTop(from), toNode);
   }
 
-  void addIdentityEdge(NodeId fromNode, Expression* to) {
-    addIdentityEdge(fromNode, getNode(to));
+  void addEdge(NodeId fromNode, Expression* to) {
+    addEdge(fromNode, getNode(to));
   }
 
-  void addIdentityEdge(Expression* from, Expression* to) {
-    addIdentityEdge(getNodeOrTop(from), getNode(to));
+  void addEdge(Expression* from, Expression* to) {
+    addEdge(getNodeOrTop(from), getNode(to));
   }
 
   void escapeIfRef(Expression* curr) {
@@ -219,7 +229,7 @@ struct GraphBuilder
           state.joinTop(get);
         } else {
           assert(set->value->type.isRef() && "unexpected unreachable set");
-          state.addIdentityEdge(set->value, get);
+          state.addEdge(set->value, get);
         }
       }
     }
@@ -314,7 +324,7 @@ struct GraphBuilder
     if (curr->type.isRef()) {
       assert(!curr->list.empty());
       if (curr->list.back()->type.isRef()) {
-        state.addIdentityEdge(curr->list.back(), curr);
+        state.addEdge(curr->list.back(), curr);
       }
     }
   }
@@ -322,7 +332,7 @@ struct GraphBuilder
   void visitLoop(Loop* curr) {
     if (curr->type.isRef()) {
       if (curr->body->type.isRef()) {
-        state.addIdentityEdge(curr->body, curr);
+        state.addEdge(curr->body, curr);
       }
     }
   }
@@ -332,10 +342,10 @@ struct GraphBuilder
       assert(curr->ifFalse);
       NodeId outNode = state.getNode(curr);
       if (curr->ifTrue->type.isRef()) {
-        state.addIdentityEdge(curr->ifTrue, outNode);
+        state.addEdge(curr->ifTrue, outNode);
       }
       if (curr->ifFalse->type.isRef()) {
-        state.addIdentityEdge(curr->ifFalse, outNode);
+        state.addEdge(curr->ifFalse, outNode);
       }
     }
   }
@@ -345,8 +355,8 @@ struct GraphBuilder
       assert(curr->ifTrue->type.isRef());
       assert(curr->ifFalse->type.isRef());
       NodeId outNode = state.getNode(curr);
-      state.addIdentityEdge(curr->ifTrue, outNode);
-      state.addIdentityEdge(curr->ifFalse, outNode);
+      state.addEdge(curr->ifTrue, outNode);
+      state.addEdge(curr->ifFalse, outNode);
     }
   }
 
@@ -356,11 +366,11 @@ struct GraphBuilder
       assert(target);
       assert(target->type.isRef());
       NodeId valNode = state.getNodeOrTop(curr->value);
-      state.addIdentityEdge(valNode, target);
+      state.addEdge(valNode, target);
       // Reachable ref-typed br_if also returns its value (unconditional br has
       // unreachable type).
       if (curr->type.isRef()) {
-        state.addIdentityEdge(valNode, curr);
+        state.addEdge(valNode, curr);
       }
     }
   }
@@ -372,7 +382,7 @@ struct GraphBuilder
         auto* target = findBreakTarget(name);
         assert(target);
         assert(target->type.isRef());
-        state.addIdentityEdge(valNode, target);
+        state.addEdge(valNode, target);
       }
     }
   }
@@ -384,7 +394,7 @@ struct GraphBuilder
     // fallthrough value flows to its parent expression via this identity
     // edge.
     if (curr->isTee() && curr->value->type.isRef()) {
-      state.addIdentityEdge(curr->value, curr);
+      state.addEdge(curr->value, curr);
     }
   }
 
@@ -399,10 +409,36 @@ struct GraphBuilder
     if (curr->op == RefAsNonNull) {
       if (curr->type.isRef()) {
         assert(curr->value->type.isRef());
-        state.addIdentityEdge(curr->value, curr);
+        state.addEdge(curr->value, curr);
       }
     } else {
       visitExpression(curr);
+    }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    // Neither ref nor desc escapes through ref.cast{,_desc_eq}; if the cast
+    // is already unreachable, Optimizer will skip it.
+    if (curr->type.isRef()) {
+      assert(curr->ref->type.isRef());
+      NodeId refNode = state.getNodeOrTop(curr->ref);
+      if (refNode == TopNode) {
+        // We already know this cast is not optimizable, so we don't need to
+        // consider it further.
+        return;
+      }
+      NodeId outNode = state.getNode(curr);
+      state.addEdge(refNode, outNode);
+      if (curr->desc) {
+        assert(curr->desc->type.isRef());
+        NodeId descNode = state.getNodeOrTop(curr->desc);
+        if (descNode != TopNode) {
+          // Only add edges from tracked descriptors; a Top descriptor must
+          // not join Top into outNode because the cast result originates from
+          // ref.
+          state.addEdge(descNode, outNode);
+        }
+      }
     }
   }
 
@@ -446,11 +482,10 @@ struct GraphBuilder
 void computeOrigins(AnalysisState& state) {
   size_t numNodes = state.origins.size();
   // Build a compressed-sparse-row (CSR) forward-adjacency table from
-  // state.identityEdges: first count outgoing edges per node and compute prefix
-  // sums in outOffsets so node u's targets live in [outOffsets[u],
-  // outOffsets[u + 1]).
+  // state.edges: first count outgoing edges per node and compute prefix sums in
+  // outOffsets so node u's targets live in [outOffsets[u], outOffsets[u + 1]).
   std::vector<NodeId> outOffsets(numNodes + 1, 0);
-  for (const auto& [u, v] : state.identityEdges) {
+  for (const auto& [u, v] : state.edges) {
     ++outOffsets[u + 1];
   }
   for (size_t u = 0; u < numNodes; ++u) {
@@ -460,14 +495,14 @@ void computeOrigins(AnalysisState& state) {
   // at outOffsets[u] and advances as targets of u are written, tracking the
   // next slot to fill (i.e. outOffsets[u] plus the number of targets populated
   // for u so far).
-  std::vector<NodeId> outTargets(state.identityEdges.size());
+  std::vector<NodeId> outTargets(state.edges.size());
   std::vector<NodeId> nextTargetIdx(outOffsets.begin(),
                                     outOffsets.begin() + numNodes);
-  for (const auto& [u, v] : state.identityEdges) {
+  for (const auto& [u, v] : state.edges) {
     outTargets[nextTargetIdx[u]++] = v;
   }
 
-  // Skip sink nodes that have no outgoing identity edges to propagate into.
+  // Skip sink nodes that have no outgoing edges to propagate into.
   std::vector<bool> inWorklist(numNodes, false);
   std::vector<NodeId> worklist;
   auto pushNode = [&](NodeId u) {
@@ -494,7 +529,25 @@ void computeOrigins(AnalysisState& state) {
     Origin uOrigin = state.origins[u];
     for (NodeId i = outOffsets[u], end = outOffsets[u + 1]; i < end; ++i) {
       NodeId v = outTargets[i];
-      if (state.originLattice.join(state.origins[v], uOrigin)) {
+      Origin out = uOrigin;
+      if (auto* cast = state.nodeExprs[v]->dynCast<RefCast>()) {
+        // The cast flows through the reference value, unless we know it will
+        // fail, in which case we don't need to update the output at all.
+        out = state.getOrigin(cast->ref);
+        // Check failure due to missing descriptor.
+        // TODO: Consider the specific descriptor allocation once we can do
+        // better than always considering it to have escaped.
+        if (cast->desc && state.getOrigin(cast->desc).isBottom()) {
+          continue;
+        }
+        // Check failure due to type mismatch.
+        if (const auto* alloc = out.getVal()) {
+          if (!Type::isSubType(state.allocs[*alloc].expr->type, cast->type)) {
+            continue;
+          }
+        }
+      }
+      if (state.originLattice.join(state.origins[v], out)) {
         pushNode(v);
       }
     }
@@ -512,7 +565,12 @@ bool computeEscapes(AnalysisState& state) {
 
   // Mixing check: if an allocation flows into an identity edge whose target
   // became Top (e.g. mixed with null or another allocation), mark it escaped.
-  for (const auto& [u, v] : state.identityEdges) {
+  // Edges into RefCast nodes are excluded because a descriptor operand does not
+  // flow to the cast's output, so RefCast can never cause mixing.
+  for (const auto& [u, v] : state.edges) {
+    if (state.nodeExprs[v]->is<RefCast>()) {
+      continue;
+    }
     if (const auto* alloc = state.origins[u].getVal()) {
       if (state.origins[v].isTop()) {
         state.allocs[*alloc].escaped = true;
@@ -766,6 +824,91 @@ struct Optimizer : public PostWalker<Optimizer> {
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeConst(res)));
     }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    auto descAlloc = curr->desc ? getOptimizedAlloc(curr->desc) : std::nullopt;
+    if (!refAlloc && !descAlloc) {
+      return;
+    }
+
+    auto descTrap = [&]() {
+      assert(curr->desc);
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()}));
+    };
+
+    if (refAlloc && descAlloc) {
+      // An allocation's descriptor is currently always marked as escaping, so a
+      // non-escaping `desc` cannot match `ref`'s descriptor, and `ref` is
+      // non-null, so the cast always traps.
+      descTrap();
+      return;
+    }
+
+    if (refAlloc) {
+      const auto& info = state.allocs[*refAlloc];
+      if (!curr->desc) {
+        // Without a descriptor operand, the cast depends only on the static
+        // type of the non-null allocation.
+        if (Type::isSubType(info.expr->type, curr->type)) {
+          replaceCurrent(curr->ref);
+        } else {
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
+        }
+        return;
+      }
+      // `ref` is an optimized allocation while `desc` is not optimized. If
+      // origin propagation left the cast output Bot (either because the target
+      // type is incompatible or `desc` never produces a value), fold to a trap;
+      // otherwise check `desc` against the allocation's stored descriptor local
+      // at runtime.
+      auto outIt = state.exprNodes.find(curr);
+      assert(outIt != state.exprNodes.end());
+      if (state.origins[outIt->second].isBottom()) {
+        descTrap();
+        return;
+      }
+      assert(Type::isSubType(info.expr->type, curr->type));
+      assert(info.getDescHeapType().has_value());
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeIf(
+          builder.makeRefEq(
+            curr->desc,
+            builder.makeLocalGet(*info.descLocal, info.getDescLocalType())),
+          makeOptimizedNull(*refAlloc),
+          builder.makeUnreachable())));
+      return;
+    }
+
+    assert(descAlloc);
+    // `desc` is an optimized non-escaping allocation and `ref` is not
+    // optimized, so no non-null `ref` can have `desc` as its descriptor. A
+    // nullable cast can still succeed if `ref` is null, unless `curr->ref` was
+    // already rewritten to unreachable earlier in the post-order walk (before
+    // ReFinalize updates `curr->type`).
+    if (curr->type.isNullableRef() && curr->ref->type != Type::unreachable) {
+      // Stash `ref` in a scratch local before evaluating `desc` to preserve
+      // operand evaluation order while keeping only a null check on `ref`.
+      Type refType = curr->ref->type;
+      Index scratch = builder.addVar(func, refType);
+      replaceCurrent(
+        builder.makeBlock({builder.makeLocalSet(scratch, curr->ref),
+                           builder.makeDrop(curr->desc),
+                           curr}));
+      curr->desc = nullptr;
+      curr->type = curr->type.with(curr->type.getHeapType().getBottom());
+      curr->ref = builder.makeLocalGet(scratch, refType);
+      return;
+    }
+    descTrap();
   }
 
   void visitRefGetDesc(RefGetDesc* curr) {
