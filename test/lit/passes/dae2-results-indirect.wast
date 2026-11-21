@@ -587,3 +587,255 @@
     (global.set $g (call $callee))
   )
 )
+
+(module
+  (rec
+    ;; CHECK:       (type $empty (sub (func)))
+
+    ;; CHECK:       (type $tail_sig (sub (func (param i32))))
+
+    ;; CHECK:       (type $mixed (sub (func)))
+
+    ;; CHECK:       (type $all_trap (sub (func)))
+    (type $all_trap (sub (func (param i32) (result i32))))
+    (type $mixed (sub (func (result i32))))
+    (type $empty (sub (func (param i64) (result i32))))
+    (type $tail_sig (sub (func (param i32) (result i32))))
+  )
+
+  ;; CHECK:      (import "env" "effect" (func $effect (type $10) (result i32)))
+  (import "env" "effect" (func $effect (result i32)))
+
+  ;; CHECK:      (table $t 6 6 funcref)
+  (table $t funcref (elem $trap1 $trap2 $ret $trap3 $tail_unreachable $tail_indirect_unreachable))
+
+  ;; CHECK:      (func $trap1 (type $all_trap)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $trap1 (type $all_trap) (param $x i32) (result i32)
+    ;; All referenced functions in $all_trap never return.
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $trap2 (type $all_trap)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $trap2 (type $all_trap) (param $x i32) (result i32)
+    ;; Exercises multi-operand hasUnreachableOperand hitting both false and true.
+    (return_call $trap_two
+      (local.get $x)
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $trap_two (type $0)
+  ;; CHECK-NEXT:  (local $b i32)
+  ;; CHECK-NEXT:  (local $a i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $trap_two (param $a i32) (param $b i32) (result i32)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $ret (type $mixed)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ret (type $mixed) (result i32)
+    ;; Returns normally, preventing noreturn inference for $mixed callers.
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $trap3 (type $mixed)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $trap3 (type $mixed) (result i32)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $tail_unreachable (type $tail_sig) (param $x i32)
+  ;; CHECK-NEXT:  (return_call_ref $tail_sig
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.func $tail_unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tail_unreachable (type $tail_sig) (param $x i32) (result i32)
+    ;; Unreachable operand in return_call_ref keeps neverReturns true.
+    (return_call_ref $tail_sig
+      (unreachable)
+      (ref.func $tail_unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $tail_indirect_unreachable (type $tail_sig) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return_call_indirect $t (type $tail_sig)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (return_call_indirect $t (type $tail_sig)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tail_indirect_unreachable (type $tail_sig) (param $x i32) (result i32)
+    ;; Unreachable target or operand in return_call_indirect keeps neverReturns true.
+    (if
+      (local.get $x)
+      (then
+        (return_call_indirect $t (type $tail_sig)
+          (i32.const 0)
+          (unreachable)
+        )
+      )
+      (else
+        (return_call_indirect $t (type $tail_sig)
+          (unreachable)
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $mixed_tail_indirect (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return_call_indirect $t (type $all_trap)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $mixed_tail_indirect (result i32)
+    ;; Reachable indirect tail call keeps neverReturns false even when its
+    ;; targets never return.
+    (return_call_indirect $t (type $all_trap)
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $mixed_tail_ref (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return_call_ref $all_trap
+  ;; CHECK-NEXT:   (ref.func $trap1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $mixed_tail_ref (result i32)
+    ;; Reachable return_call_ref keeps neverReturns false.
+    (return_call_ref $all_trap
+      (i32.const 0)
+      (ref.func $trap1)
+    )
+  )
+
+  ;; CHECK:      (func $caller_trap_ref (type $11) (param $ref_trap (ref null $all_trap))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_ref $all_trap
+  ;; CHECK-NEXT:    (local.get $ref_trap)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $caller_trap_ref (param $ref_trap (ref null $all_trap))
+    (drop
+      (call_ref $all_trap
+        (i32.const 0)
+        (local.get $ref_trap)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller_trap_indirect (type $0)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_indirect $t (type $all_trap)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $caller_trap_indirect
+    (drop
+      (call_indirect $t (type $all_trap)
+        (i32.const 0)
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller_mixed (type $12) (param $ref_mixed (ref null $mixed))
+  ;; CHECK-NEXT:  (call_ref $mixed
+  ;; CHECK-NEXT:   (local.get $ref_mixed)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller_mixed (param $ref_mixed (ref null $mixed))
+    (drop
+      (call_ref $mixed
+        (local.get $ref_mixed)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller_empty (type $13) (param $ref_empty (ref null $empty))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_ref $empty
+  ;; CHECK-NEXT:    (local.get $ref_empty)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $caller_empty (param $ref_empty (ref null $empty))
+    (drop
+      (call_ref $empty
+        (i64.const 0)
+        (local.get $ref_empty)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller_tail (type $14) (param $ref_tail (ref null $tail_sig))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call_ref $tail_sig
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $ref_tail)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $mixed_tail_indirect)
+  ;; CHECK-NEXT:  (call $mixed_tail_ref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller_tail (param $ref_tail (ref null $tail_sig))
+    (drop
+      (call_ref $tail_sig
+        (i32.const 0)
+        (local.get $ref_tail)
+      )
+    )
+    (drop (call $mixed_tail_indirect))
+    (drop (call $mixed_tail_ref))
+    (drop (call $effect))
+  )
+)

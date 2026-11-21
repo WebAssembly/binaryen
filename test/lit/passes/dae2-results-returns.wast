@@ -330,10 +330,13 @@
   ;; CHECK:      (global $g (mut f64) (f64.const 0))
   (global $g (mut f64) (f64.const 0))
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $g)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $callee)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $callee)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller (result f64)
     ;; Fallthrough call where callee and caller return types are eliminated.
@@ -356,14 +359,17 @@
   (global $g (mut f64) (f64.const 0))
   ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (global.get $g)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (global.get $g)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $callee)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $callee)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
@@ -384,6 +390,261 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $callee (param f64) (result f64)
+    (unreachable)
+  )
+)
+
+(module
+  ;; CHECK:      (import "env" "effect" (func $effect (type $0) (result i32)))
+  (import "env" "effect" (func $effect (result i32)))
+  ;; CHECK:      (import "env" "impossible" (func $impossible (type $3) (result (ref none))))
+  (import "env" "impossible" (func $impossible (result (ref none))))
+
+  ;; CHECK:      (func $noreturn (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $noreturn (result i32)
+    ;; Never returns normally: body is unreachable and there are no returns.
+    (block
+      (drop (call $effect))
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $uninhabited (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $impossible)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uninhabited (result (ref none))
+    ;; Result type is trivially uninhabitable, so the call can never return even
+    ;; though the body type is not unreachable.
+    (call $impossible)
+  )
+
+  ;; CHECK:      (@binaryen.noreturn)
+  ;; CHECK-NEXT: (func $annotated (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (@binaryen.noreturn)
+  (func $annotated (result i32)
+    ;; Marked @binaryen.noreturn, so callers should be marked unreachable even
+    ;; though the body computes a value.
+    (i32.const 7)
+  )
+
+  ;; CHECK:      (func $direct_return (type $4) (param $cond i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $cond)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $direct_return (param $cond i32) (result i32)
+    ;; Has a reachable return before unreachable, so neverReturns must stay false.
+    (if
+      (local.get $cond)
+      (then
+        (return (i32.const 1))
+      )
+    )
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $void_helper (type $4) (param $cond i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $cond)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $void_helper (param $cond i32)
+    ;; Exercises explicit void return (no value) keeping canReturn true.
+    (if
+      (local.get $cond)
+      (then
+        (return)
+      )
+    )
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $dead_return (type $1)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (return)
+  ;; CHECK-NEXT: )
+  (func $dead_return (result i32)
+    ;; Explicit return with an unreachable value cannot actually return.
+    (return (unreachable))
+  )
+
+  ;; CHECK:      (func $helper (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $helper (result i32)
+    (i32.const 42)
+  )
+
+  ;; CHECK:      (func $tail_return (type $1)
+  ;; CHECK-NEXT:  (return_call $helper)
+  ;; CHECK-NEXT: )
+  (func $tail_return (result i32)
+    ;; Reachable tail call can return, so neverReturns must stay false.
+    (return_call $helper)
+  )
+
+  ;; CHECK:      (func $dead_tail_return (type $1)
+  ;; CHECK-NEXT:  (return_call $direct_return
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dead_tail_return (result i32)
+    ;; Tail call with an unreachable operand cannot return.
+    (return_call $direct_return
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $caller_noreturn_add (type $0) (result i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $effect)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (call $noreturn)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_noreturn_add (export "caller_noreturn_add") (result i32)
+    ;; Multi-child dropped expression containing a noreturn call tests both
+    ;; call-site unreachable insertion and Collector preserving unreachable.
+    (drop
+      (i32.add
+        (call $effect)
+        (call $noreturn)
+      )
+    )
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_uninhabited (type $0) (result i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $uninhabited)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_uninhabited (export "caller_uninhabited") (result i32)
+    (drop (call $uninhabited))
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_annotated (type $0) (result i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $annotated)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_annotated (export "caller_annotated") (result i32)
+    (drop (call $annotated))
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_direct_return (type $0) (result i32)
+  ;; CHECK-NEXT:  (call $direct_return
+  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $void_helper
+  ;; CHECK-NEXT:   (call $effect)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_direct_return (export "caller_direct_return") (result i32)
+    (drop (call $direct_return (call $effect)))
+    (call $void_helper (call $effect))
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_dead_return (type $0) (result i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $dead_return)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_dead_return (export "caller_dead_return") (result i32)
+    (drop (call $dead_return))
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_tail_return (type $0) (result i32)
+  ;; CHECK-NEXT:  (call $tail_return)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_tail_return (export "caller_tail_return") (result i32)
+    (drop (call $tail_return))
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_dead_tail_return (type $0) (result i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (call $dead_tail_return)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_dead_tail_return (export "caller_dead_tail_return") (result i32)
+    (drop (call $dead_tail_return))
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $caller_nested_noreturn (type $0) (result i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (call $noreturn)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $caller_nested_noreturn (export "caller_nested_noreturn") (result i32)
+    ;; Passing a noreturn call directly into a parameter of another noreturn call
+    ;; leaves removeOperands's result already unreachable before the outer check.
+    (drop
+      (call $unused_param
+        (call $noreturn)
+      )
+    )
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $unused_param (type $1)
+  ;; CHECK-NEXT:  (local $unused i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $unused_param (param $unused i32) (result i32)
     (unreachable)
   )
 )
