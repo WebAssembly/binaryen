@@ -305,6 +305,10 @@
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks
 ;; CHECK-EMPTY:
+;; CHECK-NEXT:   --local-gufa                                  Grand Unified Flow Analysis: 
+;; CHECK-NEXT:                                                 optimize each function locally 
+;; CHECK-NEXT:                                                 without whole-program analysis
+;; CHECK-EMPTY:
 ;; CHECK-NEXT:   --local-subtyping                             apply more specific subtypes to 
 ;; CHECK-NEXT:                                                 locals where possible
 ;; CHECK-EMPTY:

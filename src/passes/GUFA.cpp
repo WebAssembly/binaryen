@@ -36,6 +36,10 @@
 // A variation of this pass will add casts anywhere we can infer a more specific
 // type, see |castAll| below.
 //
+// There is also a local variant (--local-gufa) which runs the same analysis
+// restricted to a single function at a time, without whole-program information,
+// allowing it to run in parallel across functions.
+//
 // TODO: GUFA + polymorphic devirtualization + traps-never-happen. If we see
 //       that the possible call targets are {A, B, C}, and GUFA info lets us
 //       prove that A, C will trap if called - say, if they cast the first
@@ -412,10 +416,34 @@ struct GUFAPass : public Pass {
   }
 };
 
+struct LocalGUFAPass : public Pass {
+  bool isFunctionParallel() override { return true; }
+
+  bool optimizing;
+  bool castAll;
+
+  LocalGUFAPass(bool optimizing, bool castAll)
+    : optimizing(optimizing), castAll(castAll) {}
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<LocalGUFAPass>(optimizing, castAll);
+  }
+
+  void runOnFunction(Module* module, Function* func) override {
+    if (func->imported()) {
+      return;
+    }
+    ContentOracle oracle(*module, func, getPassOptions());
+    GUFAOptimizer(oracle, optimizing, castAll)
+      .runOnFunction(getPassRunner(), module, func);
+  }
+};
+
 } // anonymous namespace
 
 Pass* createGUFAPass() { return new GUFAPass(false, false); }
 Pass* createGUFAOptimizingPass() { return new GUFAPass(true, false); }
 Pass* createGUFACastAllPass() { return new GUFAPass(false, true); }
+Pass* createLocalGUFAPass() { return new LocalGUFAPass(false, false); }
 
 } // namespace wasm
