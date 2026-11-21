@@ -32,7 +32,7 @@ endif()
 option(BYN_ENABLE_LTO "Build with LTO" ${DEFAULT_LTO})
 
 option(BYN_PGO_GENERATE "Build with IR PGO instrumentation" OFF)
-set(BYN_PGO_PROFILE_FILE "" CACHE FILEPATH "Profile data file for IR PGO (-fprofile-instr-use)")
+set(BYN_PGO_PROFILE_USE_FILE "" CACHE FILEPATH "Profile data file for IR PGO (-fprofile-instr-use)")
 
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
@@ -275,8 +275,8 @@ if(BYN_ENABLE_LTO)
   endif()
 endif()
 
-if(BYN_PGO_GENERATE AND BYN_PGO_PROFILE_FILE)
-  message(FATAL_ERROR "BYN_PGO_GENERATE and BYN_PGO_PROFILE_FILE cannot both be set")
+if(BYN_PGO_GENERATE AND BYN_PGO_PROFILE_USE_FILE)
+  message(FATAL_ERROR "BYN_PGO_GENERATE and BYN_PGO_PROFILE_USE_FILE cannot both be set")
 endif()
 
 if(BYN_PGO_GENERATE)
@@ -303,14 +303,14 @@ if(BYN_PGO_GENERATE)
   endif()
 endif()
 
-if(BYN_PGO_PROFILE_FILE)
+if(BYN_PGO_PROFILE_USE_FILE)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "PGO profile use is only supported by clang")
   endif()
-  if(NOT EXISTS "${BYN_PGO_PROFILE_FILE}")
-    message(FATAL_ERROR "PGO profile file not found: ${BYN_PGO_PROFILE_FILE}")
+  if(NOT EXISTS "${BYN_PGO_PROFILE_USE_FILE}")
+    message(FATAL_ERROR "PGO profile file not found: ${BYN_PGO_PROFILE_USE_FILE}")
   endif()
-  file(TO_CMAKE_PATH "${BYN_PGO_PROFILE_FILE}" byn_pgo_profile_path)
+  file(TO_CMAKE_PATH "${BYN_PGO_PROFILE_USE_FILE}" byn_pgo_profile_path)
   add_compile_flag("-fprofile-instr-use=\"${byn_pgo_profile_path}\"")
   # Multiple tools (e.g. wasm-as, wasm-reduce) define main(), which collides
   # with wasm-opt's main() entry in the IR profile and triggers a harmless CFG
