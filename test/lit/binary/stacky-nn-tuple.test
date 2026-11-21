@@ -57,64 +57,58 @@
 ;; CHECK-NEXT:  (local $scratch_4 (ref null $0))
 ;; CHECK-NEXT:  (local $scratch_5 (ref null $0))
 ;; CHECK-NEXT:  (local $scratch_6 (ref null $0))
-;; CHECK-NEXT:  (local $7 (tuple (ref null $0) (ref null $1)))
 ;; CHECK-NEXT:  (try
 ;; CHECK-NEXT:   (do
 ;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (catch $tag$0
-;; CHECK-NEXT:    (local.set $7
-;; CHECK-NEXT:     (pop (tuple (ref null $0) (ref null $1)))
+;; CHECK-NEXT:    (local.set $0
+;; CHECK-NEXT:     (block (result (ref null $0))
+;; CHECK-NEXT:      (local.set $scratch_4
+;; CHECK-NEXT:       (tuple.extract 2 0
+;; CHECK-NEXT:        (local.tee $scratch
+;; CHECK-NEXT:         (pop (tuple (ref null $0) (ref null $1)))
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (local.set $1
+;; CHECK-NEXT:       (tuple.extract 2 1
+;; CHECK-NEXT:        (local.get $scratch)
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (local.get $scratch_4)
+;; CHECK-NEXT:     )
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (block
-;; CHECK-NEXT:     (local.set $0
+;; CHECK-NEXT:    (drop
+;; CHECK-NEXT:     (ref.as_non_null
 ;; CHECK-NEXT:      (block (result (ref null $0))
-;; CHECK-NEXT:       (local.set $scratch_4
-;; CHECK-NEXT:        (tuple.extract 2 0
-;; CHECK-NEXT:         (local.tee $scratch
-;; CHECK-NEXT:          (local.get $7)
-;; CHECK-NEXT:         )
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (local.set $1
-;; CHECK-NEXT:        (tuple.extract 2 1
-;; CHECK-NEXT:         (local.get $scratch)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (local.get $scratch_4)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (drop
-;; CHECK-NEXT:      (ref.as_non_null
-;; CHECK-NEXT:       (block (result (ref null $0))
-;; CHECK-NEXT:        (local.set $scratch_5
-;; CHECK-NEXT:         (local.get $0)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:        (drop
-;; CHECK-NEXT:         (local.get $1)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:        (local.get $scratch_5)
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (drop
-;; CHECK-NEXT:      (block (result (ref null $0))
-;; CHECK-NEXT:       (local.set $scratch_6
+;; CHECK-NEXT:       (local.set $scratch_5
 ;; CHECK-NEXT:        (local.get $0)
 ;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (local.set $2
+;; CHECK-NEXT:       (drop
 ;; CHECK-NEXT:        (local.get $1)
 ;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (local.get $scratch_6)
+;; CHECK-NEXT:       (local.get $scratch_5)
 ;; CHECK-NEXT:      )
 ;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (drop
-;; CHECK-NEXT:      (ref.as_non_null
-;; CHECK-NEXT:       (local.get $2)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (unreachable)
 ;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (drop
+;; CHECK-NEXT:     (block (result (ref null $0))
+;; CHECK-NEXT:      (local.set $scratch_6
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (local.set $2
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (local.get $scratch_6)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (drop
+;; CHECK-NEXT:     (ref.as_non_null
+;; CHECK-NEXT:      (local.get $2)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (unreachable)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

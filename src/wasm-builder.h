@@ -1434,12 +1434,23 @@ public:
     ret->finalize();
     return ret;
   }
-  StackSwitch*
-  makeStackSwitch(Name tag, ExpressionList&& operands, Expression* cont) {
+  StackSwitch* makeStackSwitch(Name tag,
+                               ExpressionList&& operands,
+                               Expression* cont,
+                               HeapType contType) {
     auto* ret = wasm.allocator.alloc<StackSwitch>();
     ret->tag = tag;
     ret->operands = std::move(operands);
     ret->cont = cont;
+    // Compute the result type from the type immediate so
+    // `getMaximallyUninhabitable` called from `finalize` has a valid starting
+    // point in case `cont` is null.
+    auto params = contType.getContinuation().type.getSignature().params;
+    assert(params.size() > 0);
+    auto lastParam = params[params.size() - 1];
+    assert(lastParam.isContinuation());
+    ret->type =
+      lastParam.getHeapType().getContinuation().type.getSignature().params;
     ret->finalize();
     return ret;
   }
@@ -1506,6 +1517,12 @@ public:
     if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
       return makeRefI31(makeConst(value.geti31()),
                         type.getHeapType().getShared());
+    }
+    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::any)) {
+      // The only constant anyrefs are internalized strings.
+      auto externalized = value.externalize();
+      assert(externalized.isString());
+      return makeRefAs(AnyConvertExtern, makeConstantExpression(externalized));
     }
     if (type.isString()) {
       // The string is already WTF-16, but we need to convert from `Literals` to

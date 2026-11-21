@@ -2,6 +2,7 @@
 ;; NOTE: This test was ported using port_passes_tests_to_lit.py and could be cleaned up.
 
 ;; RUN: foreach %s %t wasm-opt --stack-check --enable-memory64 -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --stack-check --enable-memory64 --pass-arg=stack-check-handler@__handle_stack_overflow -S -o - | filecheck %s --check-prefix=HANDLER
 
 (module
  (memory i64 0 0)
@@ -10,6 +11,15 @@
  ;; CHECK:      (type $1 (func (param i64 i64)))
 
  ;; CHECK:      (global $__stack_pointer (mut i64) (i64.const 0))
+ ;; HANDLER:      (type $0 (func (result i64)))
+
+ ;; HANDLER:      (type $1 (func (param i64)))
+
+ ;; HANDLER:      (type $2 (func (param i64 i64)))
+
+ ;; HANDLER:      (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow (param i64)))
+
+ ;; HANDLER:      (global $__stack_pointer (mut i64) (i64.const 0))
  (global $__stack_pointer (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_base (mut i64) (i64.const 0))
 
@@ -47,6 +57,44 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.get $__stack_pointer)
  ;; CHECK-NEXT: )
+ ;; HANDLER:      (global $__stack_base (mut i64) (i64.const 0))
+
+ ;; HANDLER:      (global $__stack_limit (mut i64) (i64.const 0))
+
+ ;; HANDLER:      (memory $0 i64 0 0)
+
+ ;; HANDLER:      (export "use_stack" (func $use_stack))
+
+ ;; HANDLER:      (export "__set_stack_limits" (func $__set_stack_limits))
+
+ ;; HANDLER:      (func $use_stack (result i64)
+ ;; HANDLER-NEXT:  (local $0 i64)
+ ;; HANDLER-NEXT:  (block
+ ;; HANDLER-NEXT:   (if
+ ;; HANDLER-NEXT:    (i32.or
+ ;; HANDLER-NEXT:     (i64.gt_u
+ ;; HANDLER-NEXT:      (local.tee $0
+ ;; HANDLER-NEXT:       (i64.const 42)
+ ;; HANDLER-NEXT:      )
+ ;; HANDLER-NEXT:      (global.get $__stack_base)
+ ;; HANDLER-NEXT:     )
+ ;; HANDLER-NEXT:     (i64.lt_u
+ ;; HANDLER-NEXT:      (local.get $0)
+ ;; HANDLER-NEXT:      (global.get $__stack_limit)
+ ;; HANDLER-NEXT:     )
+ ;; HANDLER-NEXT:    )
+ ;; HANDLER-NEXT:    (then
+ ;; HANDLER-NEXT:     (call $__handle_stack_overflow
+ ;; HANDLER-NEXT:      (local.get $0)
+ ;; HANDLER-NEXT:     )
+ ;; HANDLER-NEXT:    )
+ ;; HANDLER-NEXT:   )
+ ;; HANDLER-NEXT:   (global.set $__stack_pointer
+ ;; HANDLER-NEXT:    (local.get $0)
+ ;; HANDLER-NEXT:   )
+ ;; HANDLER-NEXT:  )
+ ;; HANDLER-NEXT:  (global.get $__stack_pointer)
+ ;; HANDLER-NEXT: )
  (func $use_stack (export "use_stack") (result i64)
   (global.set $__stack_pointer (i64.const 42))
   (global.get $__stack_pointer)
@@ -60,6 +108,15 @@
 ;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+
+;; HANDLER:      (func $__set_stack_limits (param $0 i64) (param $1 i64)
+;; HANDLER-NEXT:  (global.set $__stack_base
+;; HANDLER-NEXT:   (local.get $0)
+;; HANDLER-NEXT:  )
+;; HANDLER-NEXT:  (global.set $__stack_limit
+;; HANDLER-NEXT:   (local.get $1)
+;; HANDLER-NEXT:  )
+;; HANDLER-NEXT: )
 (module
  ;; if the global names are taken we should not crash
  (memory i64 0 0)
@@ -68,10 +125,21 @@
  ;; CHECK:      (type $1 (func (param i64 i64)))
 
  ;; CHECK:      (global $__stack_pointer (mut i64) (i64.const 0))
+ ;; HANDLER:      (type $0 (func (result i64)))
+
+ ;; HANDLER:      (type $1 (func (param i64)))
+
+ ;; HANDLER:      (type $2 (func (param i64 i64)))
+
+ ;; HANDLER:      (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow (param i64)))
+
+ ;; HANDLER:      (global $__stack_pointer (mut i64) (i64.const 0))
  (global $__stack_pointer (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_base (mut i64) (i64.const 0))
+ ;; HANDLER:      (global $__stack_base (mut i64) (i64.const 0))
  (global $__stack_base (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_limit (mut i64) (i64.const 0))
+ ;; HANDLER:      (global $__stack_limit (mut i64) (i64.const 0))
  (global $__stack_limit (mut i64) (i64.const 0))
  ;; CHECK:      (global $__stack_base_3 (mut i64) (i64.const 0))
 
@@ -80,12 +148,24 @@
  ;; CHECK:      (memory $0 i64 0 0)
 
  ;; CHECK:      (export "use_stack" (func $0))
+ ;; HANDLER:      (global $__stack_base_3 (mut i64) (i64.const 0))
+
+ ;; HANDLER:      (global $__stack_limit_3 (mut i64) (i64.const 0))
+
+ ;; HANDLER:      (memory $0 i64 0 0)
+
+ ;; HANDLER:      (export "use_stack" (func $0))
  (export "use_stack" (func $0))
  ;; CHECK:      (export "__set_stack_limits" (func $__set_stack_limits))
 
  ;; CHECK:      (func $0 (result i64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
+ ;; HANDLER:      (export "__set_stack_limits" (func $__set_stack_limits))
+
+ ;; HANDLER:      (func $0 (result i64)
+ ;; HANDLER-NEXT:  (unreachable)
+ ;; HANDLER-NEXT: )
  (func $0 (result i64)
   (unreachable)
  )
@@ -98,3 +178,12 @@
 ;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+
+;; HANDLER:      (func $__set_stack_limits (param $0 i64) (param $1 i64)
+;; HANDLER-NEXT:  (global.set $__stack_base_3
+;; HANDLER-NEXT:   (local.get $0)
+;; HANDLER-NEXT:  )
+;; HANDLER-NEXT:  (global.set $__stack_limit_3
+;; HANDLER-NEXT:   (local.get $1)
+;; HANDLER-NEXT:  )
+;; HANDLER-NEXT: )

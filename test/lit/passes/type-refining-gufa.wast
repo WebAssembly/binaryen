@@ -845,6 +845,8 @@
     ;; $sub receives a non-null $cont. Propagating $sub's field type to $super
     ;; widens $super's LUB from nullcontref to (ref null $cont), which is not
     ;; castable, so $super's field must remain contref.
+    ;; TODO: Also allow GUFA to refine $sub's field to (ref (exact $cont)) like
+    ;; normal TypeRefining does, since no cast is required at $sub's write site.
     (local $c contref)
     (drop
       (struct.new $super
@@ -925,8 +927,113 @@
   )
 )
 
-;; Handle block-nested pops created when updating writes to and reads from
-;; refined fields.
+(module
+  ;; NRML:      (type $func (func))
+  ;; GUFA:      (type $func (func))
+  ;; O3O3:      (type $func (func))
+  (type $func (func))
+  ;; NRML:      (type $cont (cont $func))
+  ;; GUFA:      (type $cont (cont $func))
+  ;; O3O3:      (type $cont (cont $func))
+  (type $cont (cont $func))
+  ;; NRML:      (type $struct (struct (field (ref $cont))))
+  ;; GUFA:      (type $struct (struct (field (ref $cont))))
+  (type $struct (struct (field (ref $cont))))
+  ;; NRML:      (type $3 (func (param (ref $cont))))
+
+  ;; NRML:      (elem declare func $f)
+  ;; GUFA:      (type $3 (func (param (ref $cont))))
+
+  ;; GUFA:      (elem declare func $f)
+  (elem declare func $f)
+  ;; NRML:      (tag $e (type $func))
+  ;; GUFA:      (tag $e (type $func))
+  (tag $e)
+  ;; NRML:      (export "test" (func $test))
+
+  ;; NRML:      (func $f (type $func)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (export "test" (func $test))
+
+  ;; GUFA:      (func $f (type $func)
+  ;; GUFA-NEXT: )
+  (func $f (type $func))
+  ;; NRML:      (func $test (type $3) (param $c (ref $cont))
+  ;; NRML-NEXT:  (drop
+  ;; NRML-NEXT:   (struct.new $struct
+  ;; NRML-NEXT:    (try (result (ref $cont))
+  ;; NRML-NEXT:     (do
+  ;; NRML-NEXT:      (struct.get $struct 0
+  ;; NRML-NEXT:       (struct.new $struct
+  ;; NRML-NEXT:        (cont.new $cont
+  ;; NRML-NEXT:         (ref.func $f)
+  ;; NRML-NEXT:        )
+  ;; NRML-NEXT:       )
+  ;; NRML-NEXT:      )
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:     (catch $e
+  ;; NRML-NEXT:      (local.get $c)
+  ;; NRML-NEXT:     )
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $test (type $3) (param $c (ref $cont))
+  ;; GUFA-NEXT:  (drop
+  ;; GUFA-NEXT:   (struct.new $struct
+  ;; GUFA-NEXT:    (try (result (ref $cont))
+  ;; GUFA-NEXT:     (do
+  ;; GUFA-NEXT:      (struct.get $struct 0
+  ;; GUFA-NEXT:       (struct.new $struct
+  ;; GUFA-NEXT:        (cont.new $cont
+  ;; GUFA-NEXT:         (ref.func $f)
+  ;; GUFA-NEXT:        )
+  ;; GUFA-NEXT:       )
+  ;; GUFA-NEXT:      )
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:     (catch $e
+  ;; GUFA-NEXT:      (local.get $c)
+  ;; GUFA-NEXT:     )
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  ;; O3O3:      (type $2 (func (param (ref $cont))))
+
+  ;; O3O3:      (export "test" (func $test))
+
+  ;; O3O3:      (func $test (type $2) (param $0 (ref $cont))
+  ;; O3O3-NEXT:  (nop)
+  ;; O3O3-NEXT: )
+  (func $test (export "test") (param $c (ref $cont))
+    ;; The try body does not throw, so its fallthrough is a self-copy
+    ;; struct.get. Because continuation types are not castable, FieldInfoScanner
+    ;; must not look through the try fallthrough and ignore the catch arm, which
+    ;; would refine $struct's field to (ref (exact $cont)) and require an
+    ;; invalid ref.cast on the try.
+    (drop
+      (struct.new $struct
+        (try (result (ref $cont))
+          (do
+            (struct.get $struct 0
+              (struct.new $struct
+                (cont.new $cont
+                  (ref.func $f)
+                )
+              )
+            )
+          )
+          (catch $e
+            (local.get $c)
+          )
+        )
+      )
+    )
+  )
+)
+
+;; Verify that blocks created around pops when updating writes to and reads from
+;; refined fields are unnamed and validate properly.
 (module
   ;; NRML:      (rec
   ;; NRML-NEXT:  (type $struct (struct (field eqref) (field nullref)))
@@ -978,7 +1085,6 @@
   ;; GUFA:      (export "read" (func $read))
 
   ;; GUFA:      (func $write (type $3)
-  ;; GUFA-NEXT:  (local $0 eqref)
   ;; GUFA-NEXT:  (drop
   ;; GUFA-NEXT:   (struct.new_default $struct)
   ;; GUFA-NEXT:  )
@@ -986,14 +1092,11 @@
   ;; GUFA-NEXT:   (do
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $ref
-  ;; GUFA-NEXT:    (local.set $0
-  ;; GUFA-NEXT:     (pop eqref)
-  ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (struct.new $struct
   ;; GUFA-NEXT:      (block (result nullref)
   ;; GUFA-NEXT:       (drop
-  ;; GUFA-NEXT:        (local.get $0)
+  ;; GUFA-NEXT:        (pop eqref)
   ;; GUFA-NEXT:       )
   ;; GUFA-NEXT:       (ref.null none)
   ;; GUFA-NEXT:      )
@@ -1014,8 +1117,8 @@
   ;; O3O3-NEXT: )
   (func $write (export "write")
     ;; In GUFA, the first field is refined to nullref, so the write operand in
-    ;; the catch block is replaced with a block that drops the pop and produces
-    ;; a null. The newly nested pop must be fixed up.
+    ;; the catch block is replaced with an unnamed block that drops the pop and
+    ;; produces a null, which validates properly even with a pop.
     (drop
       (struct.new_default $struct)
     )
@@ -1033,18 +1136,14 @@
   )
 
   ;; NRML:      (func $read (type $3)
-  ;; NRML-NEXT:  (local $0 nullref)
   ;; NRML-NEXT:  (try
   ;; NRML-NEXT:   (do
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:   (catch $null
-  ;; NRML-NEXT:    (local.set $0
-  ;; NRML-NEXT:     (pop nullref)
-  ;; NRML-NEXT:    )
   ;; NRML-NEXT:    (drop
   ;; NRML-NEXT:     (block
   ;; NRML-NEXT:      (drop
-  ;; NRML-NEXT:       (local.get $0)
+  ;; NRML-NEXT:       (pop nullref)
   ;; NRML-NEXT:      )
   ;; NRML-NEXT:      (unreachable)
   ;; NRML-NEXT:     )
@@ -1053,18 +1152,14 @@
   ;; NRML-NEXT:  )
   ;; NRML-NEXT: )
   ;; GUFA:      (func $read (type $3)
-  ;; GUFA-NEXT:  (local $0 nullref)
   ;; GUFA-NEXT:  (try
   ;; GUFA-NEXT:   (do
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:   (catch $null
-  ;; GUFA-NEXT:    (local.set $0
-  ;; GUFA-NEXT:     (pop nullref)
-  ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:    (drop
   ;; GUFA-NEXT:     (block
   ;; GUFA-NEXT:      (drop
-  ;; GUFA-NEXT:       (local.get $0)
+  ;; GUFA-NEXT:       (pop nullref)
   ;; GUFA-NEXT:      )
   ;; GUFA-NEXT:      (unreachable)
   ;; GUFA-NEXT:     )
@@ -1073,8 +1168,8 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT: )
   (func $read (export "read")
-    ;; Reading from a null reference is replaced with a block that drops the pop
-    ;; and traps. The newly nested pop must be fixed up.
+    ;; Reading from a null reference is replaced with an unnamed block that
+    ;; drops the pop and traps, which validates properly even with a pop.
     (try
       (do)
       (catch $null

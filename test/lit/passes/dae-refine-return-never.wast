@@ -598,3 +598,78 @@
   (ref.func $referenced)
  )
 )
+
+;; When all calls to a non-returning function are dropped, its result is first
+;; refined to (ref none) and then removed in the same iteration, replacing the
+;; drop of the call with a sequence ending in unreachable. The caller must be
+;; refinalized again after that replacement so enclosing control flow updates
+;; its type from none to unreachable.
+(module
+ ;; NOOPT:      (type $0 (func))
+
+ ;; NOOPT:      (type $1 (func (param i32)))
+
+ ;; NOOPT:      (export "caller" (func $caller))
+
+ ;; NOOPT:      (func $callee (type $0)
+ ;; NOOPT-NEXT:  (unreachable)
+ ;; NOOPT-NEXT: )
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (param i32)))
+
+ ;; CHECK:      (export "caller" (func $caller))
+
+ ;; CHECK:      (func $callee (type $0)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $callee (result (ref any))
+  (unreachable)
+ )
+
+ ;; NOOPT:      (func $caller (type $1) (param $x i32)
+ ;; NOOPT-NEXT:  (if
+ ;; NOOPT-NEXT:   (local.get $x)
+ ;; NOOPT-NEXT:   (then
+ ;; NOOPT-NEXT:    (unreachable)
+ ;; NOOPT-NEXT:   )
+ ;; NOOPT-NEXT:   (else
+ ;; NOOPT-NEXT:    (loop $l
+ ;; NOOPT-NEXT:     (call $callee)
+ ;; NOOPT-NEXT:     (unreachable)
+ ;; NOOPT-NEXT:    )
+ ;; NOOPT-NEXT:   )
+ ;; NOOPT-NEXT:  )
+ ;; NOOPT-NEXT: )
+ ;; CHECK:      (func $caller (type $1) (param $0 i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (call $callee)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller (export "caller") (param $x i32)
+  ;; Without refinalizing after removing the result of $callee, the loop and if
+  ;; keep type none, and after remove-unused-names unwraps $l in
+  ;; --dae-optimizing, SimplifyLocals asserts because the if has type none while
+  ;; both of its arms are unreachable.
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+   (else
+    (loop $l
+     (drop
+      (call $callee)
+     )
+    )
+   )
+  )
+ )
+)

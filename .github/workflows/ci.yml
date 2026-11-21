@@ -50,10 +50,10 @@ jobs:
     strategy:
       matrix:
         # Test on the oldest support Ubuntu version in addition to `latest`.
-        # Build using the oldest support macOS version.  For emsdk this is
-        # currently macos-13, but unfortunately that doesn't exist in github
-        # actions so we settle for macos-14.
-        os: [ubuntu-22.04, ubuntu-latest, macos-14, windows-latest, windows-11-arm]
+        # Build using the oldest macOS runner available on GitHub Actions.
+        # emsdk CI currently uses Xcode 15.4 (macOS 14), which is unavailable
+        # here, so we also test Clang 15 + libc++ in `build-clang-15`.
+        os: [ubuntu-22.04, ubuntu-latest, macos-15, windows-latest, windows-11-arm]
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -94,7 +94,7 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install '-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install
       if: startsWith(matrix.os, 'macos')
 
     - name: cmake (win)
@@ -188,8 +188,8 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
-      CC: "clang-18"
-      CXX: "clang++-18"
+      CC: "clang"
+      CXX: "clang++"
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -208,7 +208,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
@@ -306,8 +306,8 @@ jobs:
     env:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
-      CC: "clang-18"
-      CXX: "clang++-18"
+      CC: "clang"
+      CXX: "clang++"
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -326,11 +326,47 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
       run: python check.py --binaryen-bin=out/bin
+
+  # Duplicates build-asan.  Please keep in sync
+  coverage:
+    name: coverage
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-26.04
+    env:
+      COMPILER_FLAGS: "-fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc"
+      LLVM_VERSION: 21
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: install tools
+      run: sudo apt-get install ninja-build clang-${LLVM_VERSION} llvm-${LLVM_VERSION}
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-${LLVM_VERSION} -DCMAKE_CXX_COMPILER=clang++-${LLVM_VERSION} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+    - name: build
+      run: cmake --build out
+    - name: coverage-diff
+      run: |
+        MERGE_BASE=$(git merge-base "origin/$GITHUB_BASE_REF" HEAD)
+        ./scripts/experimental/coverage-diff.py --base "$MERGE_BASE" -B out --lit test/lit --gtest -a --github-annotations
+        ./scripts/experimental/coverage-diff.py --base "$MERGE_BASE" -B out -a --markdown >> "$GITHUB_STEP_SUMMARY"
 
   # Build the .js outputs using emcc
   build-emscripten:
@@ -432,3 +468,28 @@ jobs:
         cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DBYN_ENABLE_ASSERTIONS=OFF
     - name: build
       run: cmake --build out -v
+
+  # Ensures compatibility with Clang 15 and libc++ 15 (matching Xcode 15.4 in
+  # emsdk CI, which uses Apple Clang 15).
+  build-clang-15:
+    name: clang-15 (libc++)
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build clang-15 lld libc++-15-dev libc++abi-15-dev
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_CXX_FLAGS="-stdlib=libc++"
+    - name: build
+      run: cmake --build out -v
+    - name: unittest
+      run: ./out/bin/binaryen-unittests

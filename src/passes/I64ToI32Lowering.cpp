@@ -296,6 +296,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
             params.push_back(param);
           }
         }
+        // A return call has type unreachable, so take the results from the
+        // original signature rather than from the call's type.
+        if (curr->isReturn) {
+          results = curr->heapType.getSignature().results;
+        }
         return builder->makeCallIndirect(curr->table,
                                          curr->target,
                                          args,

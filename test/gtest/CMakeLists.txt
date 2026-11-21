@@ -29,6 +29,7 @@ set(unittest_SOURCES
   lattices.cpp
   leaves.cpp
   local-graph.cpp
+  module-utils.cpp
   possible-contents.cpp
   principal-type.cpp
   printing.cpp

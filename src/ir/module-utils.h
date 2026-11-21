@@ -22,6 +22,10 @@
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
+namespace wasm {
+class ModuleStackIR;
+} // namespace wasm
+
 namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
@@ -70,7 +74,7 @@ void clearModule(Module& wasm);
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this to redirect all of its uses.
-template<typename T> void renameFunctions(Module& wasm, T& map);
+void renameFunctions(Module& wasm, const std::map<Name, Name>& map);
 
 void renameFunction(Module& wasm, Name oldName, Name newName);
 
@@ -471,11 +475,16 @@ struct HeapTypeInfo {
   Visibility visibility = Visibility::Unknown;
 };
 
+// Collect heap type usage information across the module. If `stackIR` is
+// provided (e.g. during binary writing or StackIR printing), control flow
+// signatures (including control flow input parameters) are collected from each
+// function's up-to-date StackIR instead of its Binaryen IR control flow nodes.
 InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm,
   WorldMode worldMode,
   TypeInclusion inclusion = TypeInclusion::AllTypes,
-  VisibilityHandling visibility = VisibilityHandling::NoVisibility);
+  VisibilityHandling visibility = VisibilityHandling::NoVisibility,
+  const ModuleStackIR* stackIR = nullptr);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
@@ -502,8 +511,19 @@ struct IndexedHeapTypes {
 
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
 // type as well. Also orders the types to be valid and sorts the types by
-// frequency of use to minimize code size.
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
+// frequency of use to minimize code size. See `collectHeapTypeInfo` regarding
+// `stackIR`.
+IndexedHeapTypes
+getOptimizedIndexedHeapTypes(Module& wasm,
+                             const ModuleStackIR* stackIR = nullptr);
+
+// Returns the set of functions that can potentially be the target of a call_ref
+// or call_indirect. These are:
+//  * Functions that appear in a ref.func in the module.
+//  * Functions that are `elem declare`d (which is represented as ref.func in
+//  the IR).
+//  * Exported functions, since they can flow back to us as a reference.
+std::unordered_set<Function*> getReferencedFuncs(Module& module);
 
 } // namespace wasm::ModuleUtils
 

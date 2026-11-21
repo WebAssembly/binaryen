@@ -19,9 +19,9 @@
   ;; CHECK:      (type $6 (func (param i32 i64)))
 
   ;; CHECK:      (tag $e-empty (type $1))
-  ;; STACKIR-OPT:      (type $0 (func (result i32 i64)))
-
   ;; STACKIR-OPT:      (type $1 (func))
+
+  ;; STACKIR-OPT:      (type $0 (func (result i32 i64)))
 
   ;; STACKIR-OPT:      (type $2 (func (result i32)))
 

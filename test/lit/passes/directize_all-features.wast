@@ -2000,18 +2000,14 @@
  (elem (i32.const 0) $0)
 
  ;; CHECK:      (func $0 (type $ii) (param $0 i32) (result i32)
- ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
- ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (pop i32)
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block
  ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:       (pop i32)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
@@ -2021,18 +2017,14 @@
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $0 (type $ii) (param $0 i32) (result i32)
- ;; IMMUT-NEXT:  (local $1 i32)
  ;; IMMUT-NEXT:  (try
  ;; IMMUT-NEXT:   (do
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:   (catch $e
- ;; IMMUT-NEXT:    (local.set $1
- ;; IMMUT-NEXT:     (pop i32)
- ;; IMMUT-NEXT:    )
  ;; IMMUT-NEXT:    (drop
  ;; IMMUT-NEXT:     (block
  ;; IMMUT-NEXT:      (drop
- ;; IMMUT-NEXT:       (local.get $1)
+ ;; IMMUT-NEXT:       (pop i32)
  ;; IMMUT-NEXT:      )
  ;; IMMUT-NEXT:      (unreachable)
  ;; IMMUT-NEXT:     )
@@ -2046,7 +2038,7 @@
    (do)
    (catch $e
     ;; This is out of bounds (100 is far too large), so this will trap. We emit
-    ;; a block with the pop, and must handle that properly.
+    ;; an unnamed block with the pop, which validates properly.
     (drop
      (call_indirect (type $ii)
       (pop i32)

@@ -16,7 +16,6 @@
 
 #include "passes/param-utils.h"
 #include "cfg/liveness-traversal.h"
-#include "ir/eh-utils.h"
 #include "ir/function-utils.h"
 #include "ir/localize.h"
 #include "ir/possible-constant.h"
@@ -306,17 +305,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
       auto* replacement = localizer.getReplacement();
       if (replacement != curr) {
         replaceCurrent(replacement);
-        optimized = true;
         onChange(getFunction());
-      }
-    }
-
-    bool optimized = false;
-
-    void visitFunction(Function* curr) {
-      if (optimized) {
-        // Localization can add blocks, which might move pops.
-        EHUtils::handleBlockNestedPops(curr, *getModule());
       }
     }
   };
@@ -363,15 +352,6 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
       auto* replacement = localizer.getReplacement();
       if (replacement != call) {
         replaceCurrent(replacement);
-        optimized = true;
-      }
-    }
-
-    bool optimized = false;
-
-    void visitFunction(Function* curr) {
-      if (optimized) {
-        EHUtils::handleBlockNestedPops(curr, *getModule());
       }
     }
   };
