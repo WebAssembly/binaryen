@@ -566,7 +566,7 @@ bool computeEscapes(AnalysisState& state) {
   // Mixing check: if an allocation flows into an identity edge whose target
   // became Top (e.g. mixed with null or another allocation), mark it escaped.
   // Edges into RefCast nodes are excluded because a descriptor operand does not
-  // flow to the cast's output.
+  // flow to the cast's output, so RefCast can never cause mixing.
   for (const auto& [u, v] : state.edges) {
     if (state.nodeExprs[v]->is<RefCast>()) {
       continue;
