@@ -1,4 +1,5 @@
 #include "ir/local-graph.h"
+#include "ir/find_all.h"
 #include "parser/wat-parser.h"
 #include "wasm.h"
 
@@ -7,6 +8,89 @@
 using LocalGraphTest = ::testing::Test;
 
 using namespace wasm;
+
+TEST_F(LocalGraphTest, ReuseCompletedCrossBlockQueries) {
+  Module wasm;
+  ASSERT_FALSE(WATParser::parseModule(wasm, R"wasm(
+    (module
+      (func $overwritten (param $c i32) (local $x i32)
+        (local.set $x (i32.const 10))
+        (if (local.get $c) (then (drop (local.get $x))))
+        (if (local.get $c) (then (drop (local.get $x))))
+        (local.set $x (i32.const 20))
+        (if (local.get $c) (then (drop (local.get $x))))
+        (drop (local.get $x)))
+      (func $loop (param $c i32) (local $x i32)
+        (local.set $x (i32.const 10))
+        (loop $again
+          (drop (local.get $x))
+          (if (local.get $c)
+            (then (drop (local.get $x)))
+            (else (local.set $x (i32.const 20))))
+          (drop (local.get $x))
+          (br_if $again (local.get $c)))
+        (drop (local.get $x)))
+      (func $initial (param $c i32) (local $x i32)
+        (loop $again
+          (drop (local.get $x))
+          (if (local.get $c)
+            (then (drop (local.get $x)))
+            (else (local.set $x (i32.const 20))))
+          (drop (local.get $x))
+          (br_if $again (local.get $c)))
+        (drop (local.get $x)))
+      (func $unreachable (param $c i32) (local $x i32)
+        (local.set $x (i32.const 10))
+        (unreachable)
+        (if (local.get $c) (then (drop (local.get $x))))
+        (drop (local.get $x)))
+    )
+  )wasm")
+                 .getErr());
+
+  for (auto& func : wasm.functions) {
+    SCOPED_TRACE(func->name.toString());
+    FindAll<LocalSet> sets(func->body);
+    FindAll<LocalGet> allGets(func->body);
+    std::vector<LocalGet*> gets;
+    for (auto* get : allGets.list) {
+      if (get->index == 1) {
+        gets.push_back(get);
+      }
+    }
+    auto check = [&](const LocalGraphBase::Sets& actual, size_t i) {
+      SCOPED_TRACE(i);
+      if (func->name == "overwritten") {
+        ASSERT_EQ(actual.size(), 1U);
+        EXPECT_TRUE(actual.contains(sets.list[i < 2 ? 0 : 1]));
+      } else if (func->name == "loop") {
+        ASSERT_EQ(actual.size(), 2U);
+        EXPECT_TRUE(actual.contains(sets.list[0]));
+        EXPECT_TRUE(actual.contains(sets.list[1]));
+      } else if (func->name == "initial") {
+        ASSERT_EQ(actual.size(), 2U);
+        EXPECT_TRUE(actual.contains(nullptr));
+        EXPECT_TRUE(actual.contains(sets.list[0]));
+      } else {
+        EXPECT_TRUE(actual.empty());
+      }
+    };
+
+    LocalGraph eager(func.get(), &wasm);
+    for (size_t i = 0; i < gets.size(); ++i) {
+      check(eager.getSets(gets[i]), i);
+    }
+    // Lazy queries must give the same answers regardless of query order,
+    // including when a query traverses a loop before earlier gets are queried.
+    for (bool reverse : {false, true}) {
+      LazyLocalGraph lazy(func.get(), &wasm);
+      for (size_t j = 0; j < gets.size(); ++j) {
+        size_t i = reverse ? gets.size() - 1 - j : j;
+        check(lazy.getSets(gets[i]), i);
+      }
+    }
+  }
+}
 
 TEST_F(LocalGraphTest, ObstacleBasics) {
   auto moduleText = R"wasm(
