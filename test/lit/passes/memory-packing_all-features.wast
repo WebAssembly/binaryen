@@ -772,6 +772,11 @@
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (global.get $param)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.load8_u offset=133
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state)
   ;; CHECK-NEXT:    (then
@@ -2499,6 +2504,11 @@
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load8_u offset=60
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
