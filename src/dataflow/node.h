@@ -167,7 +167,7 @@ struct Node {
     }
   }
 
-  bool operator==(const Node& other) {
+  bool operator==(const Node& other) const {
     if (type != other.type) {
       return false;
     }
@@ -201,7 +201,7 @@ struct Node {
     return true;
   }
 
-  bool operator!=(const Node& other) { return !(*this == other); }
+  bool operator!=(const Node& other) const { return !(*this == other); }
 
   // As mentioned above, comparisons return i1. This checks
   // if an operation is of that sort.

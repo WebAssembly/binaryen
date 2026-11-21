@@ -232,6 +232,9 @@ void PassRegistry::registerPasses() {
                createTypeRefiningGUFAPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
+  registerPass("heap2local2",
+               "experimental reimplementation of heap2local",
+               createHeap2Local2Pass);
   registerPass("heap-store-optimization",
                "optimize heap (GC) stores",
                createHeapStoreOptimizationPass);
@@ -388,8 +391,6 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
-  registerPass(
-    "poppify", "Transform Binaryen IR into Poppy IR", createPoppifyPass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
@@ -433,6 +434,10 @@ void PassRegistry::registerPasses() {
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
+  registerPass("relax-nullability",
+               "make private function params, locals, struct fields, tags, and "
+               "globals nullable, inserting ref.as_non_null where demanded",
+               createRelaxNullabilityPass);
   registerPass("remove-relaxed-simd",
                "replaces relaxed SIMD instructions with unreachable",
                createRemoveRelaxedSIMDPass);
@@ -604,6 +609,8 @@ void PassRegistry::registerPasses() {
   registerPass("type-finalizing",
                "mark all leaf types as final",
                createTypeFinalizingPass);
+  registerPass(
+    "type-generalizing", "generalize types", createTypeGeneralizingPass);
   registerPass("type-merging",
                "merge types to their supertypes where possible",
                createTypeMergingPass);
@@ -633,9 +640,6 @@ void PassRegistry::registerPasses() {
   registerTestPass("delete-branch-hints",
                    "delete branch hints using a list of instrumented IDs",
                    createDeleteBranchHintsPass);
-  registerTestPass("experimental-type-generalizing",
-                   "generalize types (not yet sound)",
-                   createTypeGeneralizingPass);
   registerTestPass("randomize-branch-hints",
                    "randomize branch hints (for fuzzing)",
                    createRandomizeBranchHintsPass);
@@ -759,7 +763,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues(
     "remove-unused-brs"); // coalesce-locals opens opportunities
   addIfNoDWARFIssues(
-    "remove-unused-names");           // remove-unused-brs opens opportunities
+    "remove-unused-names"); // remove-unused-brs opens opportunities
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("constraint-analysis");
   }

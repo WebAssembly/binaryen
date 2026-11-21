@@ -34,3 +34,43 @@
   (call $1)
  )
 )
+
+;; When the call site itself has a debug location, inlining preserves both the
+;; caller's location and the inlined callee's location as nested scopes.
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (start $2)
+ (start $2)
+
+ (func $0
+  ;;@ foo.cpp:1:2:CalleeZero
+  (nop)
+ )
+
+ (func $1
+  ;;@ bar.cpp:3:4:MyFunction
+  (nop)
+ )
+
+ ;; CHECK:      (func $2 (type $0)
+ ;; CHECK-NEXT:  ;;@ caller.cpp:10:5:Caller
+ ;; CHECK-NEXT:  (block $__inlined_func$0
+ ;; CHECK-NEXT:   ;;@ caller.cpp:10:5:Caller
+ ;; CHECK-NEXT:   ;;@ foo.cpp:1:2:CalleeZero
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  ;;@ caller.cpp:20:6:Caller
+ ;; CHECK-NEXT:  (block $__inlined_func$1$1
+ ;; CHECK-NEXT:   ;;@ caller.cpp:20:6:Caller
+ ;; CHECK-NEXT:   ;;@ bar.cpp:3:4:MyFunction
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $2
+  ;;@ caller.cpp:10:5:Caller
+  (call $0)
+  ;;@ caller.cpp:20:6:Caller
+  (call $1)
+ )
+)

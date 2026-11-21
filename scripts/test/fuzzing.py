@@ -22,6 +22,7 @@ unfuzzable = [
     'strings.wast',
     'simplify-locals-strings.wast',
     'string-lowering-instructions.wast',
+    'type-generalizing-strings.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
@@ -105,6 +106,7 @@ unfuzzable = [
     'duplicate-function-elimination_annotations.wast',
     'once-reduction_idempotent.wast',
     'local-cse_idempotent.wast',
+    'local-cse-global-effects-idempotent.wast',
     'optimize-instructions-global-effects-idempotent.wast',
     'noreturn.wast',
     'optimize-noreturn.wast',

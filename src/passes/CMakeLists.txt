@@ -51,6 +51,7 @@ set(passes_SOURCES
   GUFA.cpp
   Outlining.cpp
   Heap2Local.cpp
+  Heap2Local2.cpp
   HeapStoreOptimization.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
@@ -92,7 +93,6 @@ set(passes_SOURCES
   OptimizeForJS.cpp
   OptimizeNoReturn.cpp
   PickLoadSigns.cpp
-  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -120,6 +120,7 @@ set(passes_SOURCES
   RemoveImports.cpp
   RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
+  RelaxNullability.cpp
   RemoveRelaxedSIMD.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp

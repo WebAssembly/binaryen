@@ -66,7 +66,7 @@ struct FilteredPass : public Pass {
     return pass->requiresNonNullableLocalFixups();
   }
 
-  bool runsOnFunction(Function* func) override {
+  bool runsOnFunction(Function* func) const override {
     return relevantFuncs.contains(func) && pass->runsOnFunction(func);
   }
 
@@ -85,6 +85,9 @@ struct FilteredPassRunner : public PassRunner {
                      const FuncSet& relevantFuncs,
                      const PassOptions& options)
     : PassRunner(wasm, options), relevantFuncs(relevantFuncs) {}
+
+  FilteredPassRunner(const PassRunner* outer, const FuncSet& relevantFuncs)
+    : PassRunner(outer), relevantFuncs(relevantFuncs) {}
 
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {

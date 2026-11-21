@@ -110,7 +110,8 @@ Result<Index> IRBuilder::addScratchLocal(Type type) {
 }
 
 MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
-  auto& stack = getScope().exprStack;
+  auto& scope = getScope();
+  auto& stack = scope.exprStack;
   int valIndex = stack.size() - 1;
   for (; valIndex >= 0; --valIndex) {
     if (stack[valIndex]->type != Type::none) {
@@ -137,6 +138,17 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue(bool greedy) {
   if (expr->type == Type::unreachable) {
     // No need for a scratch local to hoist an unreachable.
     return HoistedVal{Index(hoistIndex), nullptr};
+  }
+  if (auto* get = expr->dynCast<LocalGet>();
+      get && scope.isInputLocal(get->index)) {
+    // Input scratch locals are never modified while their initial `local.get`s
+    // remain on the stack, so we can hoist them directly across subsequent
+    // none-typed expressions without allocating a new scratch local or
+    // packaging those expressions into a block.
+    assert(hoistIndex == valIndex && get->type.isSingle());
+    stack.erase(stack.begin() + valIndex);
+    stack.push_back(get);
+    return HoistedVal{Index(stack.size() - 1), nullptr};
   }
   // Hoist with a scratch local. Normally the scratch local is the same type as
   // the hoisted expression, but we may need to adjust it given the enabled
@@ -259,16 +271,16 @@ Result<Expression*> IRBuilder::build() {
   return expr;
 }
 
-void IRBuilder::setDebugLocation(
-  const std::optional<Function::DebugLocation>& loc) {
-  if (loc) {
-    DBG(std::cerr << "setting debugloc " << loc->fileIndex << ":"
-                  << loc->lineNumber << ":" << loc->columnNumber << "\n";);
+void IRBuilder::setDebugLocation(const Function::DebugLocations& loc) {
+  if (!loc.empty()) {
+    DBG(std::cerr << "setting debugloc " << loc.back().fileIndex << ":"
+                  << loc.back().lineNumber << ":" << loc.back().columnNumber
+                  << "\n";);
   } else {
     DBG(std::cerr << "setting debugloc to none\n";);
   }
-  if (loc) {
-    debugLoc = *loc;
+  if (!loc.empty()) {
+    debugLoc = loc;
   } else {
     debugLoc = NoDebug();
   }
@@ -277,16 +289,17 @@ void IRBuilder::setDebugLocation(
 void IRBuilder::applyDebugLoc(Expression* expr) {
   if (!std::get_if<CanReceiveDebug>(&debugLoc)) {
     if (func) {
-      if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
-        DBG(std::cerr << "applying debugloc " << loc->fileIndex << ":"
-                      << loc->lineNumber << ":" << loc->columnNumber
-                      << " to expression " << ShallowExpression{expr} << "\n");
+      if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
+        DBG(std::cerr << "applying debugloc " << loc->back().fileIndex << ":"
+                      << loc->back().lineNumber << ":"
+                      << loc->back().columnNumber << " to expression "
+                      << ShallowExpression{expr} << "\n");
         func->debugLocations[expr] = *loc;
       } else {
         assert(std::get_if<NoDebug>(&debugLoc));
         DBG(std::cerr << "applying debugloc to expression "
                       << ShallowExpression{expr} << "\n");
-        func->debugLocations[expr] = std::nullopt;
+        func->debugLocations[expr] = Function::DebugLocations{};
       }
     }
     debugLoc = CanReceiveDebug();
@@ -847,12 +860,12 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
   }
-  if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+  if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
     func->prologLocation = *loc;
   }
   debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
-  this->func = func;
+  setFunction(func);
 
   if (binaryPos) {
     lastBinaryPos = *binaryPos;
@@ -907,10 +920,26 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
     CHECK_ERR(inputs);
     scope.inputLocals.reserve(inputs->size());
     for (size_t i = 0; i < inputs->size(); ++i) {
-      auto scratch = addScratchLocal(scope.inputType[i]);
-      CHECK_ERR(scratch);
-      scope.inputLocals.push_back(*scratch);
-      pushSynthetic(builder.makeLocalSet(*scratch, (*inputs)[i]));
+      // Reuse the enclosing scope's scratch local rather than allocating a new
+      // one when an input comes directly from an enclosing scope's input. This
+      // is safe even when other inputs for the new scope are copied into new
+      // scratch locals via `local.set`s emitted before the start of this scope
+      // (e.g. due to type widening or newly pushed expressions), because an
+      // enclosing scope's input scratch local is never modified while its
+      // initial `local.get` remains on the stack.
+      auto* input = (*inputs)[i];
+      auto* get = input->dynCast<LocalGet>();
+      bool isInputGet = get && get->type == scope.inputType[i] &&
+                        getScope().isInputLocal(get->index);
+      if (isInputGet) {
+        assert(!scope.isInputLocal(get->index));
+        scope.inputLocals.push_back(get->index);
+      } else {
+        auto scratch = addScratchLocal(scope.inputType[i]);
+        CHECK_ERR(scratch);
+        scope.inputLocals.push_back(*scratch);
+        pushSynthetic(builder.makeLocalSet(*scratch, input));
+      }
     }
   }
   scopeStack.emplace_back(std::move(scope));
@@ -926,9 +955,10 @@ Result<> IRBuilder::pushScope(ScopeCtx&& scope) {
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
 #if IR_BUILDER_DEBUG
-  if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
-    std::cerr << "discarding debugloc " << loc->fileIndex << ":"
-              << loc->lineNumber << ":" << loc->columnNumber << "\n";
+  if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
+    std::cerr << "discarding debugloc " << loc->back().fileIndex << ":"
+              << loc->back().lineNumber << ":" << loc->back().columnNumber
+              << "\n";
   }
 #endif
   debugLoc = CanReceiveDebug();
@@ -1169,7 +1199,7 @@ Result<> IRBuilder::visitEnd() {
     return Err{"unexpected end"};
   }
   if (auto* func = scope.getFunction()) {
-    if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+    if (auto* loc = std::get_if<Function::DebugLocations>(&debugLoc)) {
       func->epilogLocation = *loc;
     }
   }
@@ -1242,7 +1272,7 @@ Result<> IRBuilder::visitEnd() {
       EHUtils::handleBlockNestedPops(
         func, wasm, EHUtils::FeaturePolicy::RunIfNoEH);
     }
-    this->func = nullptr;
+    setFunction(nullptr);
     blockHint = 0;
     labelHint = 0;
   } else if (auto* block = scope.getBlock()) {
@@ -1296,7 +1326,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try* tryy;
+  } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
     setCatchBody(tryy, *expr, index);
@@ -1465,7 +1495,7 @@ void IRBuilder::fixLoopWithInput(Loop* loop,
     list.push_back(builder.makeLocalSet(scratch[0], inner));
   } else {
     auto tupleScratch = addScratchLocal(inputType);
-    ASSERT_OK(tupleScratch);
+    assertOk(tupleScratch);
     list.push_back(builder.makeLocalSet(*tupleScratch, inner));
     for (Index i = 0; i < scratch.size(); ++i) {
       list.push_back(builder.makeLocalSet(
@@ -1654,11 +1684,26 @@ Result<> IRBuilder::makeCallIndirect(Name table,
   return Ok{};
 }
 
+Result<> IRBuilder::makeScratchLocalGet(Index local) {
+  assert(func && local >= numDeclaredLocals && local < func->getNumLocals());
+  push(builder.makeLocalGet(local, func->getLocalType(local)));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeScratchLocalSet(Index local) {
+  assert(func && local >= numDeclaredLocals && local < func->getNumLocals());
+  LocalSet curr;
+  curr.index = local;
+  CHECK_ERR(visitLocalSet(&curr));
+  push(builder.makeLocalSet(local, curr.value));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeLocalGet(Index local) {
   if (!func) {
     return Err{"local.get is only valid in a function context"};
   }
-  if (local >= func->getNumLocals()) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.get index"};
   }
   push(builder.makeLocalGet(local, func->getLocalType(local)));
@@ -1669,7 +1714,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
   if (!func) {
     return Err{"local.set is only valid in a function context"};
   }
-  if (local >= func->getNumLocals()) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.set index"};
   }
   LocalSet curr;
@@ -1683,7 +1728,7 @@ Result<> IRBuilder::makeLocalTee(Index local) {
   if (!func) {
     return Err{"local.tee is only valid in a function context"};
   }
-  if (local >= func->getNumLocals()) {
+  if (local >= numDeclaredLocals) {
     return Err{"invalid local.tee index"};
   }
   LocalSet curr;
@@ -2402,16 +2447,16 @@ Result<> IRBuilder::makeBrOn(Index label,
 
   // Put the value under test back on the stack and stash it.
   getScope().exprStack.push_back(curr.ref);
-  CHECK_ERR(makeLocalSet(*testLocal));
+  CHECK_ERR(makeScratchLocalSet(*testLocal));
 
   // Now we can stash the extra values.
   auto info = getExtraOutputLocalAndLabel(label, extraArity);
   CHECK_ERR(info);
   auto [extraLocal, extraLabel] = *info;
-  CHECK_ERR(makeLocalSet(extraLocal));
+  CHECK_ERR(makeScratchLocalSet(extraLocal));
 
   // Restore the test value.
-  CHECK_ERR(makeLocalGet(*testLocal));
+  CHECK_ERR(makeScratchLocalGet(*testLocal));
 
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
@@ -2425,7 +2470,7 @@ Result<> IRBuilder::makeBrOn(Index label,
   // to be under the result value. br_on_non_null does not have a result
   // value, so it is simpler.
   if (op == BrOnNonNull) {
-    CHECK_ERR(makeLocalGet(extraLocal));
+    CHECK_ERR(makeScratchLocalGet(extraLocal));
     return Ok{};
   }
 
@@ -2457,9 +2502,9 @@ Result<> IRBuilder::makeBrOn(Index label,
   auto resultLocal = addScratchLocal(resultType);
   CHECK_ERR(resultLocal);
 
-  CHECK_ERR(makeLocalSet(*resultLocal));
-  CHECK_ERR(makeLocalGet(extraLocal));
-  CHECK_ERR(makeLocalGet(*resultLocal));
+  CHECK_ERR(makeScratchLocalSet(*resultLocal));
+  CHECK_ERR(makeScratchLocalGet(extraLocal));
+  CHECK_ERR(makeScratchLocalGet(*resultLocal));
   return Ok{};
 }
 

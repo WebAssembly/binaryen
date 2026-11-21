@@ -25,8 +25,6 @@
 
  ;; PRIMARY:      (export "table" (table $table))
 
- ;; PRIMARY:      (export "global" (global $base))
-
  ;; PRIMARY:      (export "keep" (func $keep))
 
  ;; PRIMARY:      (func $keep
@@ -42,7 +40,7 @@
  )
  ;; SECONDARY:      (import "primary" "table" (table $table 2 2 funcref))
 
- ;; SECONDARY:      (import "primary" "global" (global $base i32))
+ ;; SECONDARY:      (import "env" "base" (global $base i32))
 
  ;; SECONDARY:      (import "primary" "keep" (func $keep))
 

@@ -1696,16 +1696,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   // The index of the current module element.
   Index index = 0;
 
-  // The current function being parsed, used to create scratch locals, type
-  // local.get, etc.
-  Function* func = nullptr;
-
   IRBuilder irBuilder;
 
   Result<> visitFunctionStart(Function* func) {
-    this->func = func;
-    CHECK_ERR(irBuilder.visitFunctionStart(func));
-    return Ok{};
+    return irBuilder.visitFunctionStart(func);
   }
 
   ParseDefsCtx(
@@ -1818,10 +1812,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<Index> getLocalFromIdx(uint32_t idx) {
-    if (!func) {
+    if (!irBuilder.getFunction()) {
       return in.err("cannot access locals outside of a function");
     }
-    if (idx >= func->getNumLocals()) {
+    if (idx >= irBuilder.getNumDeclaredLocals()) {
       return in.err("local index out of bounds");
     }
     return idx;
@@ -1842,13 +1836,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<Index> getLocalFromName(Name name) {
+    auto* func = irBuilder.getFunction();
     if (!func) {
       return in.err("cannot access locals outside of a function");
     }
     if (!func->hasLocalIndex(name)) {
       return in.err("local $" + name.toString() + " does not exist");
     }
-    return func->getLocalIndex(name);
+    auto index = func->getLocalIndex(name);
+    if (index >= irBuilder.getNumDeclaredLocals()) {
+      return in.err("local $" + name.toString() + " does not exist");
+    }
+    return index;
   }
 
   Result<Name> getGlobalFromIdx(uint32_t idx) {
@@ -2014,15 +2013,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return Ok{};
   }
 
-  Result<Index> addScratchLocal(Index pos, Type type) {
-    if (!func) {
-      return in.err(pos,
-                    "scratch local required, but there is no function context");
-    }
-    Name name = Names::getValidLocalName(*func, "scratch");
-    return Builder::addVar(func, name, type);
-  }
-
   Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
@@ -2048,77 +2038,79 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   void setSrcLoc(const std::vector<Annotation>& annotations) {
-    const Annotation* annotation = nullptr;
+    bool hasSrcAnnotation = false;
+    Function::DebugLocations locs;
     for (auto& a : annotations) {
-      if (a.kind.view() == std::string_view("src")) {
-        annotation = &a;
+      if (a.kind.view() != std::string_view("src")) {
+        continue;
       }
-    }
-    if (!annotation) {
-      return;
-    }
-    Lexer lexer(annotation->contents);
-    if (lexer.empty()) {
-      irBuilder.setDebugLocation(std::nullopt);
-      return;
-    }
+      hasSrcAnnotation = true;
+      Lexer lexer(a.contents);
+      if (lexer.empty()) {
+        locs.clear();
+        continue;
+      }
 
-    auto contents = lexer.next();
+      auto contents = lexer.next();
 
-    auto fileSize = contents.find(':');
-    if (fileSize == 0 || fileSize == contents.npos) {
-      return;
-    }
-    auto file = contents.substr(0, fileSize);
-    contents = contents.substr(fileSize + 1);
-
-    auto lineSize = contents.find(':');
-    if (lineSize == contents.npos) {
-      return;
-    }
-    lexer = Lexer(contents.substr(0, lineSize));
-    auto line = lexer.takeU32();
-    if (!line || !lexer.empty()) {
-      return;
-    }
-    contents = contents.substr(lineSize + 1);
-
-    auto colSize = contents.find(':');
-    if (colSize == contents.npos) {
-      colSize = contents.size();
-      if (colSize == 0) {
+      auto fileSize = contents.find(':');
+      if (fileSize == 0 || fileSize == contents.npos) {
         return;
       }
+      auto file = contents.substr(0, fileSize);
+      contents = contents.substr(fileSize + 1);
+
+      auto lineSize = contents.find(':');
+      if (lineSize == contents.npos) {
+        return;
+      }
+      lexer = Lexer(contents.substr(0, lineSize));
+      auto line = lexer.takeU32();
+      if (!line || !lexer.empty()) {
+        return;
+      }
+      contents = contents.substr(lineSize + 1);
+
+      auto colSize = contents.find(':');
+      if (colSize == contents.npos) {
+        colSize = contents.size();
+        if (colSize == 0) {
+          return;
+        }
+      }
+      lexer = Lexer(contents.substr(0, colSize));
+      auto col = lexer.takeU32();
+      if (!col) {
+        return;
+      }
+
+      std::optional<BinaryLocation> symbolNameIndex;
+      if (colSize != contents.size()) {
+        contents = contents.substr(colSize + 1);
+        auto symbolName = contents;
+        auto [it, inserted] = debugSymbolNameIndices.insert(
+          {symbolName, debugSymbolNameIndices.size()});
+        if (inserted) {
+          assert(wasm.debugInfoSymbolNames.size() == it->second);
+          wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
+        }
+        symbolNameIndex = it->second;
+      }
+
+      // TODO: If we ever parallelize the parse, access to
+      // `wasm.debugInfoFileNames` will have to be protected by a lock.
+      auto [it, inserted] =
+        debugFileIndices.insert({file, debugFileIndices.size()});
+      if (inserted) {
+        assert(wasm.debugInfoFileNames.size() == it->second);
+        wasm.debugInfoFileNames.push_back(std::string(file));
+      }
+      locs.emplace_back(it->second, *line, *col, symbolNameIndex);
     }
-    lexer = Lexer(contents.substr(0, colSize));
-    auto col = lexer.takeU32();
-    if (!col) {
+    if (!hasSrcAnnotation) {
       return;
     }
-
-    std::optional<BinaryLocation> symbolNameIndex;
-    if (colSize != contents.size()) {
-      contents = contents.substr(colSize + 1);
-      auto symbolName = contents;
-      auto [it, inserted] = debugSymbolNameIndices.insert(
-        {symbolName, debugSymbolNameIndices.size()});
-      if (inserted) {
-        assert(wasm.debugInfoSymbolNames.size() == it->second);
-        wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
-      }
-      symbolNameIndex = it->second;
-    }
-
-    // TODO: If we ever parallelize the parse, access to
-    // `wasm.debugInfoFileNames` will have to be protected by a lock.
-    auto [it, inserted] =
-      debugFileIndices.insert({file, debugFileIndices.size()});
-    if (inserted) {
-      assert(wasm.debugInfoFileNames.size() == it->second);
-      wasm.debugInfoFileNames.push_back(std::string(file));
-    }
-    irBuilder.setDebugLocation(
-      Function::DebugLocation({it->second, *line, *col, symbolNameIndex}));
+    irBuilder.setDebugLocation(locs);
   }
 
   Result<> makeBlock(Index pos,

@@ -362,10 +362,12 @@ struct TypeTree {
     // DFS stack of (node index, child index) pairs.
     std::vector<std::pair<Index, Index>> stack;
 
-    bool operator==(const SubtypeIterator& other) {
+    bool operator==(const SubtypeIterator& other) const {
       return stack == other.stack;
     }
-    bool operator!=(const SubtypeIterator& other) { return !(*this == other); }
+    bool operator!=(const SubtypeIterator& other) const {
+      return !(*this == other);
+    }
     const HeapType& operator*() const {
       return parent->nodes[stack.back().first].type;
     }
