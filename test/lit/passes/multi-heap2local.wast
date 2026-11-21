@@ -654,17 +654,17 @@
   ;; H2L-NEXT:   (then
   ;; H2L-NEXT:    (drop
   ;; H2L-NEXT:     (block (result nullref)
-  ;; H2L-NEXT:      (local.set $6
+  ;; H2L-NEXT:      (local.set $8
   ;; H2L-NEXT:       (i32.const -1)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $7
+  ;; H2L-NEXT:      (local.set $9
   ;; H2L-NEXT:       (i32.const -2)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (local.set $4
-  ;; H2L-NEXT:       (local.get $6)
+  ;; H2L-NEXT:       (local.get $8)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (local.set $5
-  ;; H2L-NEXT:       (local.get $7)
+  ;; H2L-NEXT:       (local.get $9)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (ref.null none)
   ;; H2L-NEXT:     )
@@ -701,10 +701,10 @@
   ;; H2L-NEXT:      (local.set $11
   ;; H2L-NEXT:       (i32.const 70000)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $8
+  ;; H2L-NEXT:      (local.set $6
   ;; H2L-NEXT:       (local.get $10)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $9
+  ;; H2L-NEXT:      (local.set $7
   ;; H2L-NEXT:       (local.get $11)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (ref.null none)
@@ -716,7 +716,7 @@
   ;; H2L-NEXT:       (ref.null none)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (i32.and
-  ;; H2L-NEXT:       (local.get $8)
+  ;; H2L-NEXT:       (local.get $6)
   ;; H2L-NEXT:       (i32.const 255)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:     )
@@ -727,7 +727,7 @@
   ;; H2L-NEXT:       (ref.null none)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (i32.and
-  ;; H2L-NEXT:       (local.get $9)
+  ;; H2L-NEXT:       (local.get $7)
   ;; H2L-NEXT:       (i32.const 65535)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:     )
@@ -908,11 +908,11 @@
   ;; H2L-NEXT:  (block
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (block (result nullref)
-  ;; H2L-NEXT:     (local.set $3
+  ;; H2L-NEXT:     (local.set $4
   ;; H2L-NEXT:      (i32.const 42)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (local.set $2
-  ;; H2L-NEXT:      (local.get $3)
+  ;; H2L-NEXT:      (local.get $4)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
@@ -932,7 +932,7 @@
   ;; H2L-NEXT:     (local.set $5
   ;; H2L-NEXT:      (i32.const 42)
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.set $4
+  ;; H2L-NEXT:     (local.set $3
   ;; H2L-NEXT:      (local.get $5)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (ref.null none)
@@ -943,7 +943,7 @@
   ;; H2L-NEXT:     (drop
   ;; H2L-NEXT:      (ref.null none)
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:     (local.get $3)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
@@ -1080,11 +1080,11 @@
   ;; H2L-NEXT:  (local $4 i32)
   ;; H2L-NEXT:  (drop
   ;; H2L-NEXT:   (block (result nullref)
-  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:    (local.set $3
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (local.set $1
-  ;; H2L-NEXT:     (local.get $2)
+  ;; H2L-NEXT:     (local.get $3)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
   ;; H2L-NEXT:   )
@@ -1094,7 +1094,7 @@
   ;; H2L-NEXT:    (local.set $4
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.set $3
+  ;; H2L-NEXT:    (local.set $2
   ;; H2L-NEXT:     (local.get $4)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
@@ -1148,11 +1148,11 @@
   ;; H2L-NEXT:  (local $4 i32)
   ;; H2L-NEXT:  (drop
   ;; H2L-NEXT:   (block (result nullref)
-  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:    (local.set $3
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (local.set $1
-  ;; H2L-NEXT:     (local.get $2)
+  ;; H2L-NEXT:     (local.get $3)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
   ;; H2L-NEXT:   )
@@ -1162,7 +1162,7 @@
   ;; H2L-NEXT:    (local.set $4
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.set $3
+  ;; H2L-NEXT:    (local.set $2
   ;; H2L-NEXT:     (local.get $4)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
@@ -1176,13 +1176,13 @@
   ;; H2L-NEXT:    (drop
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $3)
+  ;; H2L-NEXT:    (local.get $2)
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:   (block (result i32)
   ;; H2L-NEXT:    (drop
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $3)
+  ;; H2L-NEXT:    (local.get $2)
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
@@ -1250,22 +1250,22 @@
   ;; H2L-NEXT:  (local $6 i32)
   ;; H2L-NEXT:  (drop
   ;; H2L-NEXT:   (block (result nullref)
-  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:    (local.set $4
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (local.set $1
-  ;; H2L-NEXT:     (local.get $2)
+  ;; H2L-NEXT:     (local.get $4)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT:  (drop
   ;; H2L-NEXT:   (block (result nullref)
-  ;; H2L-NEXT:    (local.set $4
+  ;; H2L-NEXT:    (local.set $5
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.set $3
-  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:    (local.set $2
+  ;; H2L-NEXT:     (local.get $5)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
   ;; H2L-NEXT:   )
@@ -1275,7 +1275,7 @@
   ;; H2L-NEXT:    (local.set $6
   ;; H2L-NEXT:     (i32.const 42)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.set $5
+  ;; H2L-NEXT:    (local.set $3
   ;; H2L-NEXT:     (local.get $6)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (ref.null none)
@@ -1286,13 +1286,13 @@
   ;; H2L-NEXT:    (drop
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $5)
+  ;; H2L-NEXT:    (local.get $3)
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:   (block (result i32)
   ;; H2L-NEXT:    (drop
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
-  ;; H2L-NEXT:    (local.get $5)
+  ;; H2L-NEXT:    (local.get $3)
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
   ;; H2L-NEXT: )
@@ -1386,17 +1386,17 @@
   ;; H2L-NEXT:  (block
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (block (result nullref)
-  ;; H2L-NEXT:     (local.set $5
+  ;; H2L-NEXT:     (local.set $7
   ;; H2L-NEXT:      (i32.const 42)
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.set $6
+  ;; H2L-NEXT:     (local.set $8
   ;; H2L-NEXT:      (i32.const 1337)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (local.set $3
-  ;; H2L-NEXT:      (local.get $5)
+  ;; H2L-NEXT:      (local.get $7)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (local.set $4
-  ;; H2L-NEXT:      (local.get $6)
+  ;; H2L-NEXT:      (local.get $8)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
@@ -1428,10 +1428,10 @@
   ;; H2L-NEXT:      (local.set $10
   ;; H2L-NEXT:       (i32.const 13370)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $7
+  ;; H2L-NEXT:      (local.set $5
   ;; H2L-NEXT:       (local.get $9)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $8
+  ;; H2L-NEXT:      (local.set $6
   ;; H2L-NEXT:       (local.get $10)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (ref.null none)
@@ -1442,7 +1442,7 @@
   ;; H2L-NEXT:      (drop
   ;; H2L-NEXT:       (ref.null none)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.get $7)
+  ;; H2L-NEXT:      (local.get $5)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (local.set $2
@@ -1450,7 +1450,7 @@
   ;; H2L-NEXT:      (drop
   ;; H2L-NEXT:       (ref.null none)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.get $8)
+  ;; H2L-NEXT:      (local.get $6)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:    (local.get $1)
@@ -1738,11 +1738,11 @@
   ;; H2L-NEXT:  (block
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (block (result nullref)
-  ;; H2L-NEXT:     (local.set $4
+  ;; H2L-NEXT:     (local.set $5
   ;; H2L-NEXT:      (i32.const 1)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (local.set $3
-  ;; H2L-NEXT:      (local.get $4)
+  ;; H2L-NEXT:      (local.get $5)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
@@ -1764,7 +1764,7 @@
   ;; H2L-NEXT:      (local.set $6
   ;; H2L-NEXT:       (i32.const 2)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:      (local.set $4
   ;; H2L-NEXT:       (local.get $6)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (ref.null none)
@@ -1775,7 +1775,7 @@
   ;; H2L-NEXT:      (drop
   ;; H2L-NEXT:       (ref.null none)
   ;; H2L-NEXT:      )
-  ;; H2L-NEXT:      (local.get $5)
+  ;; H2L-NEXT:      (local.get $4)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
@@ -1843,11 +1843,11 @@
   ;; H2L-NEXT:  (block
   ;; H2L-NEXT:   (drop
   ;; H2L-NEXT:    (block (result nullref)
-  ;; H2L-NEXT:     (local.set $3
+  ;; H2L-NEXT:     (local.set $4
   ;; H2L-NEXT:      (i32.const 42)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (local.set $2
-  ;; H2L-NEXT:      (local.get $3)
+  ;; H2L-NEXT:      (local.get $4)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (ref.null none)
   ;; H2L-NEXT:    )
@@ -1867,7 +1867,7 @@
   ;; H2L-NEXT:     (local.set $5
   ;; H2L-NEXT:      (i32.const 42)
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.set $4
+  ;; H2L-NEXT:     (local.set $3
   ;; H2L-NEXT:      (local.get $5)
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:     (ref.null none)
@@ -1878,7 +1878,7 @@
   ;; H2L-NEXT:     (drop
   ;; H2L-NEXT:      (ref.null none)
   ;; H2L-NEXT:     )
-  ;; H2L-NEXT:     (local.get $4)
+  ;; H2L-NEXT:     (local.get $3)
   ;; H2L-NEXT:    )
   ;; H2L-NEXT:   )
   ;; H2L-NEXT:  )
@@ -1985,11 +1985,11 @@
   ;; H2L-NEXT:   (do
   ;; H2L-NEXT:    (drop
   ;; H2L-NEXT:     (block (result nullref)
-  ;; H2L-NEXT:      (local.set $5
+  ;; H2L-NEXT:      (local.set $6
   ;; H2L-NEXT:       (i32.const 42)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (local.set $4
-  ;; H2L-NEXT:       (local.get $5)
+  ;; H2L-NEXT:       (local.get $6)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:      (ref.null none)
   ;; H2L-NEXT:     )
@@ -2010,7 +2010,7 @@
   ;; H2L-NEXT:       (local.set $7
   ;; H2L-NEXT:        (pop i32)
   ;; H2L-NEXT:       )
-  ;; H2L-NEXT:       (local.set $6
+  ;; H2L-NEXT:       (local.set $5
   ;; H2L-NEXT:        (local.get $7)
   ;; H2L-NEXT:       )
   ;; H2L-NEXT:       (ref.null none)
@@ -2021,7 +2021,7 @@
   ;; H2L-NEXT:       (drop
   ;; H2L-NEXT:        (ref.null none)
   ;; H2L-NEXT:       )
-  ;; H2L-NEXT:       (local.get $6)
+  ;; H2L-NEXT:       (local.get $5)
   ;; H2L-NEXT:      )
   ;; H2L-NEXT:     )
   ;; H2L-NEXT:    )
