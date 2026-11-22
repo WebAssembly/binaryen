@@ -31,7 +31,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-unshared-eq (type $6) (param $struct (ref $struct-unshared)) (param $eq eqref) (result eqref)
+  ;; CHECK:      (func $struct-unshared-eq (type $5) (param $struct (ref $struct-unshared)) (param $eq eqref) (result eqref)
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $struct-unshared 0
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $eq)
@@ -46,7 +46,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-shared-eq (type $5) (param $array (ref $array-shared)) (param $eq (ref null (shared eq))) (result (ref null (shared eq)))
+  ;; CHECK:      (func $array-shared-eq (type $3) (param $array (ref $array-shared)) (param $eq (ref null (shared eq))) (result (ref null (shared eq)))
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array-shared
   ;; CHECK-NEXT:   (local.get $array)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -63,7 +63,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-unshared-eq (type $4) (param $array (ref $array-unshared)) (param $eq eqref) (result eqref)
+  ;; CHECK:      (func $array-unshared-eq (type $1) (param $array (ref $array-unshared)) (param $eq eqref) (result eqref)
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array-unshared
   ;; CHECK-NEXT:   (local.get $array)
   ;; CHECK-NEXT:   (i32.const 0)

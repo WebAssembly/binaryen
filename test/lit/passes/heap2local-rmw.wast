@@ -10,9 +10,9 @@
 
   ;; CHECK:      (type $2 (func (result i64)))
 
-  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result (ref null $struct))))
-
   ;; CHECK:      (type $arr (array (mut i32)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result (ref null $struct))))
 
   ;; CHECK:      (type $i32 (struct (field (mut i32))))
   ;; HP2L2:      (type $struct (struct (field (mut (ref null $struct)))))
@@ -21,9 +21,9 @@
 
   ;; HP2L2:      (type $2 (func (result i64)))
 
-  ;; HP2L2:      (type $3 (func (param (ref null $struct)) (result (ref null $struct))))
-
   ;; HP2L2:      (type $arr (array (mut i32)))
+
+  ;; HP2L2:      (type $4 (func (param (ref null $struct)) (result (ref null $struct))))
 
   ;; HP2L2:      (type $i32 (struct (field (mut i32))))
   (type $i32 (struct (field (mut i32))))
@@ -41,7 +41,7 @@
 
   ;; CHECK:      (type $10 (func (param (ref null $i32) (ref null $arr))))
 
-  ;; CHECK:      (func $escape-rmw (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $escape-rmw (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -57,7 +57,7 @@
 
   ;; HP2L2:      (type $10 (func (param (ref null $i32) (ref null $arr))))
 
-  ;; HP2L2:      (func $escape-rmw (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $escape-rmw (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (struct.atomic.rmw.xchg $struct 0
   ;; HP2L2-NEXT:   (local.get $0)
   ;; HP2L2-NEXT:   (struct.new_default $struct)
@@ -71,14 +71,14 @@
     )
   )
 
-  ;; CHECK:      (func $escape-cmpxchg (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $escape-cmpxchg (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $escape-cmpxchg (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $escape-cmpxchg (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
   ;; HP2L2-NEXT:   (local.get $0)
   ;; HP2L2-NEXT:   (local.get $0)
@@ -94,7 +94,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-escape-cmpxchg-expected (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $no-escape-cmpxchg-expected (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local.set $2
@@ -115,7 +115,7 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $no-escape-cmpxchg-expected (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $no-escape-cmpxchg-expected (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (local $1 (ref null $struct))
   ;; HP2L2-NEXT:  (local $2 (ref null $struct))
   ;; HP2L2-NEXT:  (local.set $2
@@ -1079,7 +1079,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-ref (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $rmw-xchg-ref (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local $3 (ref null $struct))
@@ -1102,7 +1102,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  ;; HP2L2:      (func $rmw-xchg-ref (type $3) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; HP2L2:      (func $rmw-xchg-ref (type $4) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; HP2L2-NEXT:  (local $1 (ref null $struct))
   ;; HP2L2-NEXT:  (local $2 (ref null $struct))
   ;; HP2L2-NEXT:  (local $3 (ref null $struct))
@@ -4006,13 +4006,15 @@
 (module
   ;; CHECK:      (type $s1 (shared (struct)))
 
+  ;; CHECK:      (type $a0 (shared (array (mut (ref null (shared eq))))))
+
   ;; CHECK:      (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
   ;; HP2L2:      (type $s1 (shared (struct)))
 
+  ;; HP2L2:      (type $a0 (shared (array (mut (ref null (shared eq))))))
+
   ;; HP2L2:      (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
   (type $s0 (shared (struct (field (mut (ref null (shared eq)))))))
-  ;; CHECK:      (type $a0 (shared (array (mut (ref null (shared eq))))))
-  ;; HP2L2:      (type $a0 (shared (array (mut (ref null (shared eq))))))
   (type $a0 (shared (array (mut (ref null (shared eq))))))
   (type $s1 (shared (struct)))
 
