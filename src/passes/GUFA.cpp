@@ -44,7 +44,6 @@
 //
 
 #include "ir/drop.h"
-#include "ir/eh-utils.h"
 #include "ir/possible-contents.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
@@ -317,9 +316,6 @@ struct GUFAOptimizer
     if (!optimized) {
       return;
     }
-
-    // We may add blocks around pops, which we must fix up.
-    EHUtils::handleBlockNestedPops(func, *getModule());
 
     // If we are in "optimizing" mode, we'll also run some more passes on this
     // function that we just optimized. If not, leave now.

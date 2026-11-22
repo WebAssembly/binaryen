@@ -462,7 +462,7 @@ Most `get*Info()` functions have been replaced by their corresponding class cons
 
 Most of the `Module` class’s instance methods relating to module component manipulation have been moved.
 - `Module#addTag()`      &rarr; `Module#tags.add()`
-- `Module#setGlobal()`   &rarr; `Module#globals.set()`
+- `Module#getGlobal()`   &rarr; `Module#globals.get()`
 - `Module#removeTable()` &rarr; `Module#tables.remove()`
 - etc. Generally, the pattern is as follows (where `Thing` and `things` are component types (globals, tables, functions, etc.)):
 	- `Module#addThing()`        &rarr; `Module#things.add()`

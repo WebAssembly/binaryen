@@ -45,20 +45,23 @@ export default [
 			"@stylistic/type-annotation-spacing": "error",
 
 			/* ## Grouping Structure Style */
-			"@stylistic/array-bracket-newline": ["error", "consistent"],
-			"@stylistic/array-bracket-spacing": "error",
-			"@stylistic/array-element-newline": ["error", "consistent"],
 			"arrow-body-style": "error",
 			"@stylistic/brace-style": ["error", "1tbs", {allowSingleLine: true}],
 			"@stylistic/computed-property-spacing": "error",
 			curly: "error",
-			"@stylistic/function-call-argument-newline": ["error", "consistent"],
-			"@stylistic/function-paren-newline": "error",
 			"func-style": ["error", "declaration", {allowArrowFunctions: true}],
 			"@stylistic/lines-between-class-members": ["error", "always", {exceptAfterSingleLine: true}],
+			"@stylistic/list-style": ["error", {
+				empty: "never",
+				multiLine: {minItems: 1},
+				overrides: {
+					"{}": {singleLine: {spacing: "never"}},
+					TSInterfaceBody: {singleLine: {maxItems: 0}},
+					TSEnumBody: {singleLine: {maxItems: 0}},
+				},
+			}],
 			"@stylistic/member-delimiter-style": ["error", {
 				overrides: {
-					interface: {singleline: {requireLast: true}},
 					typeLiteral: {
 						multiline: {delimiter: "comma"},
 						singleline: {delimiter: "comma"},
@@ -66,21 +69,9 @@ export default [
 				},
 			}],
 			"no-useless-computed-key": "error",
-			"@stylistic/object-curly-newline": ["error", {
-				ObjectExpression: {multiline: true},
-				ObjectPattern: {multiline: true},
-				ImportDeclaration: "always",
-				ExportDeclaration: {multiline: true},
-				TSTypeLiteral: {multiline: true},
-				TSInterfaceBody: "always",
-				TSEnumBody: "always",
-			}],
-			"@stylistic/object-curly-spacing": "error",
-			"@stylistic/object-property-newline": ["error", {allowAllPropertiesOnSameLine: true}],
 			"object-shorthand": ["error", "properties", {avoidQuotes: true}],
 			"@stylistic/padded-blocks": ["error", "never"],
 			"@stylistic/quote-props": ["error", "as-needed"],
-			"@stylistic/space-in-parens": "error",
 
 			/* ## Operator Style */
 			"@stylistic/arrow-parens": "error",

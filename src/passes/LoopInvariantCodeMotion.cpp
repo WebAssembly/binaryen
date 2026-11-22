@@ -60,7 +60,7 @@ struct LoopInvariantCodeMotion
   void visitLoop(Loop* loop) {
     // We accumulate all the code we can move out, and will place it
     // in a block just preceding the loop.
-    std::vector<Expression*> movedCode;
+    std::vector<Expression**> movedCode;
     // Accumulate effects of things we can't move out - things
     // we move out later must cross them, so we must verify it
     // is ok to do so.
@@ -172,10 +172,11 @@ struct LoopInvariantCodeMotion
                 numSetsForIndex[set->index]++;
               }
             } else {
-              // We can move it! Leave the changes, move the code, and update
-              // loopSets.
-              movedCode.push_back(curr);
-              *currp = Builder(*getModule()).makeNop();
+              // We can move it! Leave the changes, record the code to move, and
+              // update loopSets. Do not replace *currp with a nop yet, as that
+              // would detach the expression from the function body before a
+              // potential lazy initialization of localGraph.
+              movedCode.push_back(currp);
               for (auto* set : currSets.list) {
                 loopSets.erase(set);
               }
@@ -195,10 +196,14 @@ struct LoopInvariantCodeMotion
     if (!movedCode.empty()) {
       // Finish the moving by emitting the code outside.
       Builder builder(*getModule());
-      auto* ret = builder.makeBlock(movedCode);
-      ret->list.push_back(loop);
-      ret->finalize(loop->type);
-      replaceCurrent(ret);
+      std::vector<Expression*> exprs;
+      exprs.reserve(movedCode.size() + 1);
+      for (auto** currp : movedCode) {
+        exprs.push_back(*currp);
+        *currp = builder.makeNop();
+      }
+      exprs.push_back(loop);
+      replaceCurrent(builder.makeBlock(exprs, loop->type));
       // Note that we do not need to modify the localGraph - we keep
       // each get in a position to be influenced by exactly the same
       // sets as before.

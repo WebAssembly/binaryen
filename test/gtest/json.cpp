@@ -69,3 +69,36 @@ TEST_F(JSONTest, StringifyNesting) {
  }
 ])");
 }
+
+TEST_F(JSONTest, GetString) {
+  using namespace std::string_view_literals;
+
+  // Construction from C string, std::string, and std::string_view (including
+  // embedded NUL bytes).
+  const json::Value fromCStr("hello");
+  EXPECT_TRUE(fromCStr.isString());
+  EXPECT_EQ(fromCStr.getString(), "hello"sv);
+
+  std::string strWithNull("foo\0bar", 7);
+  json::Value fromStdStr(strWithNull);
+  EXPECT_EQ(fromStdStr.getString(), "foo\0bar"sv);
+
+  json::Value fromView("a\0b\0c"sv);
+  EXPECT_EQ(fromView.getString(), "a\0b\0c"sv);
+
+  // Parsed strings in both ASCII and WTF16 encodings (WTF16 contains embedded
+  // NUL bytes for ASCII code points).
+  {
+    std::string input = R"(["hello", "world"])";
+    json::Value value;
+    value.parse(input.data(), json::Value::ASCII);
+    EXPECT_EQ(value[0]->getString(), "hello"sv);
+    EXPECT_EQ(value[1]->getString(), "world"sv);
+  }
+  {
+    std::string input = R"(["hi"])";
+    json::Value value;
+    value.parse(input.data(), json::Value::WTF16);
+    EXPECT_EQ(value[0]->getString(), "h\0i\0"sv);
+  }
+}

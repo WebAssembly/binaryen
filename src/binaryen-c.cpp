@@ -6631,7 +6631,7 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
   loc.fileIndex = fileIndex;
   loc.lineNumber = lineNumber;
   loc.columnNumber = columnNumber;
-  ((Function*)func)->debugLocations[(Expression*)expr] = loc;
+  ((Function*)func)->debugLocations[(Expression*)expr] = {loc};
 }
 
 //

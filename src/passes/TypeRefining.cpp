@@ -25,7 +25,6 @@
 // themselves.
 //
 
-#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/possible-contents.h"
@@ -108,7 +107,12 @@ struct FieldInfoScanner
     info.note(expr->type);
   }
 
-  Properties::FallthroughBehavior getFallthroughBehavior() {
+  Expression* getFallthrough(Expression* expr) {
+    if (!expr->type.isCastable()) {
+      // We cannot add casts later to fix up intermediate expressions whose
+      // types do not update with the fallthrough (such as a try with a catch).
+      return expr;
+    }
     // Looking at fallthrough values may be dangerous here, because it ignores
     // intermediate steps. Consider this:
     //
@@ -123,7 +127,11 @@ struct FieldInfoScanner
     // using casts later, but those casts may be expensive (especially ref.casts
     // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
     // TODO: investigate more
-    return Properties::FallthroughBehavior::NoTeeBrIf;
+    return Properties::getFallthrough(
+      expr,
+      getPassOptions(),
+      *getModule(),
+      Properties::FallthroughBehavior::NoTeeBrIf);
   }
 };
 
@@ -399,7 +407,6 @@ struct TypeRefining : public Pass {
       bool requiresNonNullableLocalFixups() override { return false; }
 
       TypeRefining& parent;
-      bool addedBlock = false;
 
       ReadUpdater(TypeRefining& parent) : parent(parent) {}
 
@@ -429,7 +436,6 @@ struct TypeRefining : public Pass {
           Builder builder(*getModule());
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                               builder.makeUnreachable()));
-          addedBlock = true;
           return;
         }
 
@@ -458,12 +464,6 @@ struct TypeRefining : public Pass {
         // no update is needed - which will be correct, since we've updated it
         // ourselves here, before.)
         curr->type = newFieldType;
-      }
-
-      void visitFunction(Function* func) {
-        if (addedBlock) {
-          EHUtils::handleBlockNestedPops(func, *getModule());
-        }
       }
     };
 
@@ -592,7 +592,6 @@ struct TypeRefining : public Pass {
       }
 
       bool refinalize = false;
-      bool addedBlock = false;
 
       // Fix up a given value so it fits into the type the location it is
       // written to.
@@ -607,7 +606,6 @@ struct TypeRefining : public Pass {
         Builder builder(*getModule());
         auto heapType = type.getHeapType();
         if (heapType.isBottom()) {
-          addedBlock = true;
           auto* drop = builder.makeDrop(value);
           if (type.isNonNullableRef()) {
             // This will just trap. Make it trap, and update parents' types.
@@ -623,9 +621,6 @@ struct TypeRefining : public Pass {
       void visitFunction(Function* func) {
         if (refinalize) {
           ReFinalize().walkFunctionInModule(func, getModule());
-        }
-        if (addedBlock) {
-          EHUtils::handleBlockNestedPops(func, *getModule());
         }
       }
     };

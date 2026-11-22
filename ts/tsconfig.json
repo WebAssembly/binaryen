@@ -11,6 +11,9 @@
     "module": "esnext",
     "rewriteRelativeImportExtensions": true,
     "rootDir": "./src/",
+    "types": [
+      "node"
+    ],
 
     // Emit
     "declaration": true,

@@ -1669,3 +1669,86 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct (field i32))))
+    (type $super (sub (struct (field i32))))
+    ;; CHECK:       (type $sub1 (sub final $super (struct (field i32))))
+    (type $sub1 (sub final $super (struct (field i32))))
+    ;; CHECK:       (type $sub2 (sub final $super (struct (field i32) (field i64))))
+    (type $sub2 (sub final $super (struct (field i32) (field i64))))
+  )
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param (ref $super))))
+
+  ;; CHECK:      (tag $e (type $4) (param (ref $super)))
+  (tag $e (param (ref $super)))
+
+  ;; CHECK:      (func $make (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub1
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub2
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $make
+    (drop
+      (struct.new $sub1
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $sub2
+        (i32.const 20)
+        (i64.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $catch-pop (type $3)
+  ;; CHECK-NEXT:  (local $0 (ref $super))
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop (ref $super))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:      (ref.test (ref $sub1)
+  ;; CHECK-NEXT:       (ref.as_non_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $catch-pop
+    ;; Optimizing this struct.get into a select moves its reference into the
+    ;; select condition (third child), requiring the enclosed pop to be fixed up.
+    (try
+      (do)
+      (catch $e
+        (drop
+          (struct.get $super 0
+            (pop (ref $super))
+          )
+        )
+      )
+    )
+  )
+)

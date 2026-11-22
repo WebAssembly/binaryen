@@ -1263,7 +1263,7 @@ function test_expression_info() {
   module.dispose();
 }
 
-function test_relaxed_atomics() {
+function test_acquire_release_atomics() {
   module = new binaryen.Module();
   module.setFeatures(binaryen.Features.All);
 
@@ -1317,4 +1317,4 @@ test_parsing_with_features();
 test_internals();
 test_for_each();
 test_expression_info();
-test_relaxed_atomics();
+test_acquire_release_atomics();

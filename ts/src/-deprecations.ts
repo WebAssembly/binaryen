@@ -2,6 +2,7 @@
 
 
 
+import * as util from "node:util";
 import {
 	BinaryenObj,
 } from "./-pre.ts";
@@ -406,10 +407,10 @@ export const Table = Module.Table;
 
 
 /** @deprecated Use {@link Module#getSideEffects} instead. */
-export function getSideEffects(expr: ExpressionRef, mod: Module) {
-	BinaryenObj.printWarn("Global function `getSideEffects(expr, mod)` is deprecated; use `mod.getSideEffects(expr)` instead.");
-	return mod.getSideEffects(expr);
-}
+export const getSideEffects = util.deprecate(
+	(expr: ExpressionRef, mod: Module) => mod.getSideEffects(expr),
+	"Global function `getSideEffects(expr, mod)` is deprecated; use `mod.getSideEffects(expr)` instead.",
+);
 
 
 

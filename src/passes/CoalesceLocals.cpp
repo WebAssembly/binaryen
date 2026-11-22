@@ -26,16 +26,26 @@
 //
 
 #include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <iostream>
+#include <limits>
 #include <memory>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "cfg/liveness-traversal.h"
+#include "ir/literal-utils.h"
+#include "ir/manipulation.h"
 #include "ir/numbering.h"
 #include "ir/utils.h"
+#include "literal.h"
 #include "pass.h"
 #include "support/learning.h"
 #include "support/permutations.h"
 #include "support/sparse_square_matrix.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 #ifndef CFG_PROFILE

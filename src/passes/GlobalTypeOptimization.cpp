@@ -22,7 +22,6 @@
 //  * Fields that are never read from can be removed entirely.
 //
 
-#include "ir/eh-utils.h"
 #include "ir/js-utils.h"
 #include "ir/localize.h"
 #include "ir/names.h"
@@ -677,8 +676,6 @@ struct GlobalTypeOptimization : public Pass {
         return std::make_unique<FieldRemover>(parent);
       }
 
-      bool needEHFixups = false;
-
       // Expressions that might trap that have been removed from module-level
       // initializers. These need to be placed in new globals to preserve any
       // instantiation-time traps.
@@ -710,8 +707,6 @@ struct GlobalTypeOptimization : public Pass {
         if (func) {
           ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
           replaceCurrent(localizer.getReplacement());
-          // Adding a block here requires EH fixups.
-          needEHFixups = true;
         }
 
         // Remove and reorder operands.
@@ -766,19 +761,12 @@ struct GlobalTypeOptimization : public Pass {
                                            getFunction(),
                                            getModule(),
                                            getPassOptions());
-          needEHFixups = true;
           Expression* replacement =
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped));
           // We only remove fields with no reads, so if this set is atomic,
           // there are no reads it can possibly synchronize with and we do not
           // need a fence.
           replaceCurrent(replacement);
-        }
-      }
-
-      void visitFunction(Function* curr) {
-        if (needEHFixups) {
-          EHUtils::handleBlockNestedPops(curr, *getModule());
         }
       }
     };

@@ -85,10 +85,8 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
     // Otherwise, just trap.
     Expression* handlerExpr;
     if (handler.is()) {
-      handlerExpr =
-        builder.makeCall(handler,
-                         {builder.makeLocalGet(newSP, stackPointer->type)},
-                         stackPointer->type);
+      handlerExpr = builder.makeCall(
+        handler, {builder.makeLocalGet(newSP, stackPointer->type)}, Type::none);
     } else {
       handlerExpr = builder.makeUnreachable();
     }

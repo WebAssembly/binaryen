@@ -36,7 +36,6 @@
 #include <memory>
 
 #include "ir/drop.h"
-#include "ir/eh-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -320,7 +319,6 @@ struct AbstractTypeRefining : public Pass {
 
     struct Preoptimizer : WalkerPass<PostWalker<Preoptimizer>> {
       const TypeMapper::TypeUpdates& mapping;
-      bool addedBlock = false;
 
       Preoptimizer(const TypeMapper::TypeUpdates& mapping) : mapping(mapping) {}
 
@@ -331,7 +329,6 @@ struct AbstractTypeRefining : public Pass {
       }
 
       Block* localizeChildren(Expression* curr) {
-        addedBlock = true;
         return ChildLocalizer(
                  curr, getFunction(), *getModule(), getPassOptions())
           .getChildrenReplacement();
@@ -374,6 +371,13 @@ struct AbstractTypeRefining : public Pass {
       // This might cause the casts to incorrectly start succeeding. To avoid
       // that, optimize them out first.
       void visitRefCast(RefCast* curr) {
+        if (curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
+          // A child may have become unreachable earlier in Preoptimizer, before
+          // ReFinalize has run. Propagate unreachability and skip optimizing.
+          curr->type = Type::unreachable;
+          return;
+        }
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
           return;
@@ -405,6 +409,11 @@ struct AbstractTypeRefining : public Pass {
       // If we optimize away a descriptor type, then we must fix up any
       // ref.get_desc of it, as ReFinalize would fix us up to return it.
       void visitRefGetDesc(RefGetDesc* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          // As in visitRefCast, propagate unreachability and skip optimizing.
+          curr->type = Type::unreachable;
+          return;
+        }
         auto optimized = getOptimized(curr->type);
         if (!optimized) {
           return;
@@ -420,7 +429,6 @@ struct AbstractTypeRefining : public Pass {
           // optimize to. In this case it must trap.
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                               builder.makeUnreachable()));
-          addedBlock = true;
         } else {
           // The descriptor is abstract, but it has a subtype that is not
           // (which we want to optimize to). We know this will only succeed if
@@ -434,6 +442,12 @@ struct AbstractTypeRefining : public Pass {
       }
 
       void visitBrOn(BrOn* curr) {
+        if (curr->ref->type == Type::unreachable ||
+            (curr->desc && curr->desc->type == Type::unreachable)) {
+          // As in visitRefCast, propagate unreachability and skip optimizing.
+          curr->type = Type::unreachable;
+          return;
+        }
         if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
           return;
         }
@@ -490,15 +504,8 @@ struct AbstractTypeRefining : public Pass {
         if (getFunction()) {
           replaceCurrent(getDroppedChildrenAndAppend(
             curr, *getModule(), getPassOptions(), builder.makeUnreachable()));
-          addedBlock = true;
         } else {
           curr->desc = builder.makeRefNull(HeapType::none);
-        }
-      }
-
-      void visitFunction(Function* func) {
-        if (addedBlock) {
-          EHUtils::handleBlockNestedPops(func, *getModule());
         }
       }
     } preoptimizer(mapping);

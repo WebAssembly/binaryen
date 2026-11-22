@@ -29,6 +29,7 @@ script covers different options being passed)
 
 import contextlib
 import difflib
+import functools
 import json
 import math
 import os
@@ -51,6 +52,9 @@ assert sys.version_info >= (3, 10), 'requires Python 3.10'
 
 # Limit default thread pool size per subprocess so parallel passes are still
 # exercised without spawning a thread per hardware core on every invocation.
+# On machines with lots of cores, the overhead of setting up a full-sized
+# thread pool and synchronization around function-parallel passes can be
+# significant when running on the fuzzer's relatively small modules.
 os.environ.setdefault('BINARYEN_CORES', '4')
 
 # parameters
@@ -110,7 +114,7 @@ def random_size():
 
 def make_random_input(input_size, raw_input_data):
     with open(raw_input_data, 'wb') as f:
-        f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+        f.write(random.randbytes(input_size))
 
 
 def run(cmd, stderr=None, silent=False):
@@ -1260,13 +1264,24 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'acquire-release-atomics', 'relaxed-atomics', 'wide-arithmetic'])
 
 
+# Cache disassembled WAT strings by (wasm_bytes, tuple(FEATURE_OPTS), wasm).
+# Within a single test_one() iteration, multiple handlers (e.g. TrapsNeverHappen,
+# CtorEval, Merge) inspect the same wasm binary via wasm_notices_export_changes,
+# get_exports, or filter_exports. Including the binary bytes in the key ensures
+# reused filenames like a.wasm invalidate when overwritten.
+@functools.lru_cache(maxsize=16)
+def _disassemble_wat(_binary, feature_opts, wasm):
+    return run([in_bin('wasm-dis'), wasm] + list(feature_opts))
+
+
 # Returns the wat for a wasm file. If it is already wat, it just returns that
 # (useful when reducing with --text, where wasm files are really wat files).
 def get_wat(wasm):
-    binary = open(wasm, 'rb').read()
+    with open(wasm, 'rb') as f:
+        binary = f.read()
     if binary.startswith(b'(module'):
         return binary.decode(encoding='utf-8')
-    return run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+    return _disassemble_wat(binary, tuple(FEATURE_OPTS), wasm)
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
@@ -1324,6 +1339,14 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
 # Check if a wasm file would notice normally-unnoticeable changes to exports,
 # such as removing one that is not called.
 def wasm_notices_export_changes(wasm):
+    with open(wasm, 'rb') as f:
+        binary = f.read()
+    # Check the binary directly for the import strings before disassembling and
+    # doing full checks below. This saves the cost of running wasm-dis in the
+    # common case.
+    if b'call-export' not in binary and b'table-' not in binary:
+        return False
+
     wat = get_wat(wasm)
 
     if '(import "fuzzing-support" "call-export' in wat:
@@ -2724,6 +2747,7 @@ opt_choices = [
     ("--local-cse",),
     ("--heap2local",),
     ("--remove-unused-names", "--heap2local",),
+    ("--heap2local2",),
     ("--heap-store-optimization",),
     ("--generate-stack-ir",),
     ("--licm",),
@@ -2738,6 +2762,7 @@ opt_choices = [
     ('--monomorphize', '--pass-arg=monomorphize-min-benefit@95'),
     ('--monomorphize-always',),
     ('--minimize-rec-groups',),
+    ("--multi-heap2local",),
     ('--no-stack-ir',),
     ('--once-reduction',),
     ("--optimize-casts",),
@@ -2752,6 +2777,7 @@ opt_choices = [
     ("--precompute-propagate",),
     ("--print",),
     ("--print-boundary",),
+    ("--relax-nullability",),
     ("--remove-unused-brs",),
     ("--remove-unused-nonfunction-module-elements",),
     ("--remove-unused-module-elements",),
@@ -2777,6 +2803,7 @@ opt_choices = [
     ("--tail-call",),
     ("--tuple-optimization",),
     ("--type-finalizing",),
+    ("--type-generalizing",),
     ("--type-refining",),
     ("--type-refining-gufa",),
     ("--type-merging",),
@@ -2798,6 +2825,7 @@ requires_closed_world = {("--type-refining",),
                          ("--cfp-reftest",),
                          ("--reorder-types",),
                          ("--type-finalizing",),
+                         ("--type-generalizing",),
                          ("--type-unfinalizing",),
                          ("--type-ssa",),
                          ("--type-merging",),
@@ -2841,6 +2869,13 @@ def get_random_opts():
            '--enable-exception-handling' in FEATURE_OPTS:
             print('avoiding --rereloop or --dfo due to exception-handling not supporting it')
             continue
+        if '--relax-nullability' in choice:
+            if '--enable-multivalue' in FEATURE_OPTS:
+                print('avoiding --relax-nullability due to it not supporting multivalue')
+                continue
+            if '--enable-gc' not in FEATURE_OPTS:
+                print('avoiding --relax-nullability due to it requiring GC')
+                continue
         flag_groups.append(choice)
         if len(flag_groups) > 20 or random.random() < 0.3:
             break

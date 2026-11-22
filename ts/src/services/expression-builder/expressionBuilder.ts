@@ -1,4 +1,3 @@
-/* eslint-disable @stylistic/object-curly-newline */
 import {
 	BinaryenObj,
 } from "../../-pre.ts";
@@ -55,7 +54,6 @@ import {
 	global,
 	local,
 } from "./variable.ts";
-/* eslint-enable @stylistic/object-curly-newline */
 
 
 

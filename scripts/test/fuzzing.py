@@ -22,6 +22,7 @@ unfuzzable = [
     'strings.wast',
     'simplify-locals-strings.wast',
     'string-lowering-instructions.wast',
+    'type-generalizing-strings.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
@@ -80,14 +81,6 @@ unfuzzable = [
     # it removes unknown imports
     'string-lifting.wast',
     'string-lifting-custom-module.wast',
-    # TODO: fuzzer support for remaining stack switching instructions: switch,
-    #       cont.bind
-    'cont.wast',
-    'precompute-stack-switching.wast',
-    'coalesce-locals-stack-switching.wast',
-    'stack_switching_switch_2.wast',
-    'stack_switching_switch.wast',
-    'unsubtyping-stack-switching.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
@@ -113,6 +106,7 @@ unfuzzable = [
     'duplicate-function-elimination_annotations.wast',
     'once-reduction_idempotent.wast',
     'local-cse_idempotent.wast',
+    'local-cse-global-effects-idempotent.wast',
     'optimize-instructions-global-effects-idempotent.wast',
     'noreturn.wast',
     'optimize-noreturn.wast',

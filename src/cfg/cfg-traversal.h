@@ -30,7 +30,20 @@
 #ifndef cfg_traversal_h
 #define cfg_traversal_h
 
+#include <cassert>
+#include <cstddef>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include "ir/branch-utils.h"
+#include "ir/properties.h"
+#include "shared-constants.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 

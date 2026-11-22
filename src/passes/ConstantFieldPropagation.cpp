@@ -54,6 +54,7 @@
 #include <unordered_set>
 
 #include "ir/bits.h"
+#include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
@@ -447,6 +448,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       makeExpression(values[1 - testIndex].constant, refHeapType, curr)));
 
     changed = true;
+    // Placing `ref` into the select condition (the third child) moves any
+    // enclosed `pop` out of the catch body's first-descendant line.
+    needEHFixups = true;
   }
 
   void doWalkFunction(Function* func) {
@@ -457,6 +461,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     if (changed) {
       ReFinalize().walkFunctionInModule(func, getModule());
     }
+    if (needEHFixups) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
+    }
   }
 
 private:
@@ -466,6 +473,7 @@ private:
   const bool refTest;
 
   bool changed = false;
+  bool needEHFixups = false;
 };
 
 struct PCVScanner
