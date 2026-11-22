@@ -71,21 +71,21 @@ export function f32(mod: Module) {
 		/** @deprecated */
 		convert_s: {
 			// @ts-expect-error
-			/** @deprecated Use `.convert_i32_s()` instead. */ i32: (...args) => { BinaryenObj.printWarn("`.convert_s.i32()` is deprecated; use `.convert_i32_s()` instead."); return f32(mod).convert_i32_s(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i32_s} instead. */ i32: (...args) => { BinaryenObj.printWarn("`.convert_s.i32()` is deprecated; use `.convert_i32_s()` instead."); return f32(mod).convert_i32_s(...args); },
 			// @ts-expect-error
-			/** @deprecated Use `.convert_i64_s()` instead. */ i64: (...args) => { BinaryenObj.printWarn("`.convert_s.i64()` is deprecated; use `.convert_i64_s()` instead."); return f32(mod).convert_i64_s(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i64_s} instead. */ i64: (...args) => { BinaryenObj.printWarn("`.convert_s.i64()` is deprecated; use `.convert_i64_s()` instead."); return f32(mod).convert_i64_s(...args); },
 		},
 		/** @deprecated */
 		convert_u: {
 			// @ts-expect-error
-			/** @deprecated Use `.convert_i32_u()` instead. */ i32: (...args) => { BinaryenObj.printWarn("`.convert_u.i32()` is deprecated; use `.convert_i32_u()` instead."); return f32(mod).convert_i32_u(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i32_u} instead. */ i32: (...args) => { BinaryenObj.printWarn("`.convert_u.i32()` is deprecated; use `.convert_i32_u()` instead."); return f32(mod).convert_i32_u(...args); },
 			// @ts-expect-error
-			/** @deprecated Use `.convert_i64_u()` instead. */ i64: (...args) => { BinaryenObj.printWarn("`.convert_u.i64()` is deprecated; use `.convert_i64_u()` instead."); return f32(mod).convert_i64_u(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i64_u} instead. */ i64: (...args) => { BinaryenObj.printWarn("`.convert_u.i64()` is deprecated; use `.convert_i64_u()` instead."); return f32(mod).convert_i64_u(...args); },
 		},
 		// @ts-expect-error
-		/** @deprecated Use `.reinterpret_i32()` instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_i32()` instead."); return this.reinterpret_i32(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.reinterpret_i32} instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_i32()` instead."); return this.reinterpret_i32(...args); },
 		// @ts-expect-error
-		/** @deprecated Use `.demote_f64()` instead. */ demote(...args) { BinaryenObj.printWarn("`.demote()` is deprecated; use `.demote_f64()` instead."); return this.demote_f64(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.demote_f64} instead. */ demote(...args) { BinaryenObj.printWarn("`.demote()` is deprecated; use `.demote_f64()` instead."); return this.demote_f64(...args); },
 
 		/** @deprecated Use {@link Module#pop} instead. */
 		pop() {
