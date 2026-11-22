@@ -3,9 +3,6 @@
 
 
 import * as util from "node:util";
-import {
-	BinaryenObj,
-} from "./-pre.ts";
 import * as expressions from "./classes/expression/index.ts";
 import {
 	Feature,
@@ -415,211 +412,211 @@ export const getSideEffects = util.deprecate(
 
 
 /** @deprecated Use {@link Module.Tag | `new Module.Tag(tagref)`} instead. */
-export function getTagInfo(tag: TagRef) {
-	BinaryenObj.printWarn("Global function `getTagInfo` is deprecated; use `new Module.Tag(tagref)` instead.");
-	return new Module.Tag(tag);
-}
+export const getTagInfo = util.deprecate(
+	(tag: TagRef) => new Module.Tag(tag),
+	"Global function `getTagInfo` is deprecated; use `new Module.Tag(tagref)` instead.",
+);
 /** @deprecated Use {@link Module.Global | `new Module.Global(globalref)`} instead. */
-export function getGlobalInfo(global: GlobalRef) {
-	BinaryenObj.printWarn("Global function `getGlobalInfo` is deprecated; use `new Module.Global(globalref)` instead.");
-	return new Module.Global(global);
-}
+export const getGlobalInfo = util.deprecate(
+	(global: GlobalRef) => new Module.Global(global),
+	"Global function `getGlobalInfo` is deprecated; use `new Module.Global(globalref)` instead.",
+);
 // function `getMemoryInfo` always existed in `Module`
 /** @deprecated Use {@link Module.Table | `new Module.Table(tableref)`} instead. */
-export function getTableInfo(table: TableRef) {
-	BinaryenObj.printWarn("Global function `getTableInfo` is deprecated; use `new Module.Table(tableref)` instead.");
-	return new Module.Table(table);
-}
+export const getTableInfo = util.deprecate(
+	(table: TableRef) => new Module.Table(table),
+	"Global function `getTableInfo` is deprecated; use `new Module.Table(tableref)` instead.",
+);
 /** @deprecated Use {@link Module.Function | `new Module.Function(funcref)`} instead. */
-export function getFunctionInfo(func: FunctionRef) {
-	BinaryenObj.printWarn("Global function `getFunctionInfo` is deprecated; use `new Module.Function(funcref)` instead.");
-	return new Module.Function(func);
-}
+export const getFunctionInfo = util.deprecate(
+	(func: FunctionRef) => new Module.Function(func),
+	"Global function `getFunctionInfo` is deprecated; use `new Module.Function(funcref)` instead.",
+);
 // function `getDataSegmentInfo` always existed in `Module`
 /** @deprecated Use {@link Module.ElementSegment | `new Module.ElementSegment(segmentref)`} instead. */
-export function getElementSegmentInfo(segment: ElementSegmentRef) {
-	BinaryenObj.printWarn("Global function `getElementSegmentInfo` is deprecated; use `new Module.ElementSegment(segmentref)` instead.");
-	return new Module.ElementSegment(segment);
-}
+export const getElementSegmentInfo = util.deprecate(
+	(segment: ElementSegmentRef) => new Module.ElementSegment(segment),
+	"Global function `getElementSegmentInfo` is deprecated; use `new Module.ElementSegment(segmentref)` instead.",
+);
 // no function `getImportInfo` ever existed
 /** @deprecated Use {@link Module.Export | `new Module.Export(exportref)`} instead. */
-export function getExportInfo(xport: ExportRef) {
-	BinaryenObj.printWarn("Global function `getExportInfo` is deprecated; use `new Module.Export(exportref)` instead.");
-	return new Module.Export(xport);
-}
+export const getExportInfo = util.deprecate(
+	(xport: ExportRef) => new Module.Export(xport),
+	"Global function `getExportInfo` is deprecated; use `new Module.Export(exportref)` instead.",
+);
 
 
 
 /** @deprecated Use {@link settings.optimizeLevel} instead. */
-export function getOptimizeLevel() {
-	BinaryenObj.printWarn("Global function `getOptimizeLevel` is deprecated; use `settings.optimizeLevel` instead.");
-	return settings.optimizeLevel;
-}
+export const getOptimizeLevel = util.deprecate(
+	() => settings.optimizeLevel,
+	"Global function `getOptimizeLevel` is deprecated; use `settings.optimizeLevel` instead.",
+);
 /** @deprecated Use {@link settings.optimizeLevel} instead. */
-export function setOptimizeLevel(level: number) {
-	BinaryenObj.printWarn("Global function `setOptimizeLevel` is deprecated; use `settings.optimizeLevel = level` instead.");
-	settings.optimizeLevel = level;
-}
+export const setOptimizeLevel = util.deprecate(
+	(level: number) => { settings.optimizeLevel = level; },
+	"Global function `setOptimizeLevel` is deprecated; use `settings.optimizeLevel = level` instead.",
+);
 /** @deprecated Use {@link settings.shrinkLevel} instead. */
-export function getShrinkLevel() {
-	BinaryenObj.printWarn("Global function `getShrinkLevel` is deprecated; use `settings.shrinkLevel` instead.");
-	return settings.shrinkLevel;
-}
+export const getShrinkLevel = util.deprecate(
+	() => settings.shrinkLevel,
+	"Global function `getShrinkLevel` is deprecated; use `settings.shrinkLevel` instead.",
+);
 /** @deprecated Use {@link settings.shrinkLevel} instead. */
-export function setShrinkLevel(level: number) {
-	BinaryenObj.printWarn("Global function `setShrinkLevel` is deprecated; use `settings.shrinkLevel = level` instead.");
-	settings.shrinkLevel = level;
-}
+export const setShrinkLevel = util.deprecate(
+	(level: number) => { settings.shrinkLevel = level; },
+	"Global function `setShrinkLevel` is deprecated; use `settings.shrinkLevel = level` instead.",
+);
 /** @deprecated Use {@link settings.debugInfo} instead. */
-export function getDebugInfo(): boolean {
-	BinaryenObj.printWarn("Global function `getDebugInfo` is deprecated; use `settings.debugInfo` instead.");
-	return settings.debugInfo;
-}
+export const getDebugInfo = util.deprecate(
+	() => settings.debugInfo,
+	"Global function `getDebugInfo` is deprecated; use `settings.debugInfo` instead.",
+);
 /** @deprecated Use {@link settings.debugInfo} instead. */
-export function setDebugInfo(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setDebugInfo` is deprecated; use `settings.debugInfo = enabled` instead.");
-	settings.debugInfo = enabled;
-}
+export const setDebugInfo = util.deprecate(
+	(enabled: boolean) => { settings.debugInfo = enabled; },
+	"Global function `setDebugInfo` is deprecated; use `settings.debugInfo = enabled` instead.",
+);
 /** @deprecated Use {@link settings.trapsNeverHappen} instead. */
-export function getTrapsNeverHappen(): boolean {
-	BinaryenObj.printWarn("Global function `getTrapsNeverHappen` is deprecated; use `settings.trapsNeverHappen` instead.");
-	return settings.trapsNeverHappen;
-}
+export const getTrapsNeverHappen = util.deprecate(
+	() => settings.trapsNeverHappen,
+	"Global function `getTrapsNeverHappen` is deprecated; use `settings.trapsNeverHappen` instead.",
+);
 /** @deprecated Use {@link settings.trapsNeverHappen} instead. */
-export function setTrapsNeverHappen(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setTrapsNeverHappen` is deprecated; use `settings.trapsNeverHappen = enabled` instead.");
-	settings.trapsNeverHappen = enabled;
-}
+export const setTrapsNeverHappen = util.deprecate(
+	(enabled: boolean) => { settings.trapsNeverHappen = enabled; },
+	"Global function `setTrapsNeverHappen` is deprecated; use `settings.trapsNeverHappen = enabled` instead.",
+);
 /** @deprecated Use {@link settings.closedWorld} instead. */
-export function getClosedWorld() {
-	BinaryenObj.printWarn("Global function `getClosedWorld` is deprecated; use `settings.closedWorld` instead.");
-	return settings.closedWorld;
-}
+export const getClosedWorld = util.deprecate(
+	() => settings.closedWorld,
+	"Global function `getClosedWorld` is deprecated; use `settings.closedWorld` instead.",
+);
 /** @deprecated Use {@link settings.closedWorld} instead. */
-export function setClosedWorld(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setClosedWorld` is deprecated; use `settings.closedWorld = enabled` instead.");
-	settings.closedWorld = enabled;
-}
+export const setClosedWorld = util.deprecate(
+	(enabled: boolean) => { settings.closedWorld = enabled; },
+	"Global function `setClosedWorld` is deprecated; use `settings.closedWorld = enabled` instead.",
+);
 /** @deprecated Use {@link settings.lowMemoryUnused} instead. */
-export function getLowMemoryUnused() {
-	BinaryenObj.printWarn("Global function `getLowMemoryUnused` is deprecated; use `settings.lowMemoryUnused` instead.");
-	return settings.lowMemoryUnused;
-}
+export const getLowMemoryUnused = util.deprecate(
+	() => settings.lowMemoryUnused,
+	"Global function `getLowMemoryUnused` is deprecated; use `settings.lowMemoryUnused` instead.",
+);
 /** @deprecated Use {@link settings.lowMemoryUnused} instead. */
-export function setLowMemoryUnused(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setLowMemoryUnused` is deprecated; use `settings.lowMemoryUnused = enabled` instead.");
-	settings.lowMemoryUnused = enabled;
-}
+export const setLowMemoryUnused = util.deprecate(
+	(enabled: boolean) => { settings.lowMemoryUnused = enabled; },
+	"Global function `setLowMemoryUnused` is deprecated; use `settings.lowMemoryUnused = enabled` instead.",
+);
 /** @deprecated Use {@link settings.zeroFilledMemory} instead. */
-export function getZeroFilledMemory() {
-	BinaryenObj.printWarn("Global function `getZeroFilledMemory` is deprecated; use `settings.zeroFilledMemory` instead.");
-	return settings.zeroFilledMemory;
-}
+export const getZeroFilledMemory = util.deprecate(
+	() => settings.zeroFilledMemory,
+	"Global function `getZeroFilledMemory` is deprecated; use `settings.zeroFilledMemory` instead.",
+);
 /** @deprecated Use {@link settings.zeroFilledMemory} instead. */
-export function setZeroFilledMemory(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setZeroFilledMemory` is deprecated; use `settings.zeroFilledMemory = enabled` instead.");
-	settings.zeroFilledMemory = enabled;
-}
+export const setZeroFilledMemory = util.deprecate(
+	(enabled: boolean) => { settings.zeroFilledMemory = enabled; },
+	"Global function `setZeroFilledMemory` is deprecated; use `settings.zeroFilledMemory = enabled` instead.",
+);
 /** @deprecated Use {@link settings.fastMath} instead. */
-export function getFastMath() {
-	BinaryenObj.printWarn("Global function `getFastMath` is deprecated; use `settings.fastMath` instead.");
-	return settings.fastMath;
-}
+export const getFastMath = util.deprecate(
+	() => settings.fastMath,
+	"Global function `getFastMath` is deprecated; use `settings.fastMath` instead.",
+);
 /** @deprecated Use {@link settings.fastMath} instead. */
-export function setFastMath(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setFastMath` is deprecated; use `settings.fastMath = enabled` instead.");
-	settings.fastMath = enabled;
-}
+export const setFastMath = util.deprecate(
+	(enabled: boolean) => { settings.fastMath = enabled; },
+	"Global function `setFastMath` is deprecated; use `settings.fastMath = enabled` instead.",
+);
 /** @deprecated Use {@link settings.generateStackIR} instead. */
-export function getGenerateStackIR() {
-	BinaryenObj.printWarn("Global function `getGenerateStackIR` is deprecated; use `settings.generateStackIR` instead.");
-	return settings.generateStackIR;
-}
+export const getGenerateStackIR = util.deprecate(
+	() => settings.generateStackIR,
+	"Global function `getGenerateStackIR` is deprecated; use `settings.generateStackIR` instead.",
+);
 /** @deprecated Use {@link settings.generateStackIR} instead. */
-export function setGenerateStackIR(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setGenerateStackIR` is deprecated; use `settings.generateStackIR = enabled` instead.");
-	settings.generateStackIR = enabled;
-}
+export const setGenerateStackIR = util.deprecate(
+	(enabled: boolean) => { settings.generateStackIR = enabled; },
+	"Global function `setGenerateStackIR` is deprecated; use `settings.generateStackIR = enabled` instead.",
+);
 /** @deprecated Use {@link settings.optimizeStackIR} instead. */
-export function getOptimizeStackIR() {
-	BinaryenObj.printWarn("Global function `getOptimizeStackIR` is deprecated; use `settings.optimizeStackIR` instead.");
-	return settings.optimizeStackIR;
-}
+export const getOptimizeStackIR = util.deprecate(
+	() => settings.optimizeStackIR,
+	"Global function `getOptimizeStackIR` is deprecated; use `settings.optimizeStackIR` instead.",
+);
 /** @deprecated Use {@link settings.optimizeStackIR} instead. */
-export function setOptimizeStackIR(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setOptimizeStackIR` is deprecated; use `settings.optimizeStackIR = enabled` instead.");
-	settings.optimizeStackIR = enabled;
-}
+export const setOptimizeStackIR = util.deprecate(
+	(enabled: boolean) => { settings.optimizeStackIR = enabled; },
+	"Global function `setOptimizeStackIR` is deprecated; use `settings.optimizeStackIR = enabled` instead.",
+);
 /** @deprecated Use {@link settings.alwaysInlineMaxSize} instead. */
-export function getAlwaysInlineMaxSize() {
-	BinaryenObj.printWarn("Global function `getAlwaysInlineMaxSize` is deprecated; use `settings.alwaysInlineMaxSize` instead.");
-	return settings.alwaysInlineMaxSize;
-}
+export const getAlwaysInlineMaxSize = util.deprecate(
+	() => settings.alwaysInlineMaxSize,
+	"Global function `getAlwaysInlineMaxSize` is deprecated; use `settings.alwaysInlineMaxSize` instead.",
+);
 /** @deprecated Use {@link settings.alwaysInlineMaxSize} instead. */
-export function setAlwaysInlineMaxSize(size: number) {
-	BinaryenObj.printWarn("Global function `setAlwaysInlineMaxSize` is deprecated; use `settings.alwaysInlineMaxSize = size` instead.");
-	settings.alwaysInlineMaxSize = size;
-}
+export const setAlwaysInlineMaxSize = util.deprecate(
+	(size: number) => { settings.alwaysInlineMaxSize = size; },
+	"Global function `setAlwaysInlineMaxSize` is deprecated; use `settings.alwaysInlineMaxSize = size` instead.",
+);
 /** @deprecated Use {@link settings.flexibleInlineMaxSize} instead. */
-export function getFlexibleInlineMaxSize() {
-	BinaryenObj.printWarn("Global function `getFlexibleInlineMaxSize` is deprecated; use `settings.flexibleInlineMaxSize` instead.");
-	return settings.flexibleInlineMaxSize;
-}
+export const getFlexibleInlineMaxSize = util.deprecate(
+	() => settings.flexibleInlineMaxSize,
+	"Global function `getFlexibleInlineMaxSize` is deprecated; use `settings.flexibleInlineMaxSize` instead.",
+);
 /** @deprecated Use {@link settings.flexibleInlineMaxSize} instead. */
-export function setFlexibleInlineMaxSize(size: number) {
-	BinaryenObj.printWarn("Global function `setFlexibleInlineMaxSize` is deprecated; use `settings.flexibleInlineMaxSize = size` instead.");
-	settings.flexibleInlineMaxSize = size;
-}
+export const setFlexibleInlineMaxSize = util.deprecate(
+	(size: number) => { settings.flexibleInlineMaxSize = size; },
+	"Global function `setFlexibleInlineMaxSize` is deprecated; use `settings.flexibleInlineMaxSize = size` instead.",
+);
 /** @deprecated Use {@link settings.oneCallerInlineMaxSize} instead. */
-export function getOneCallerInlineMaxSize() {
-	BinaryenObj.printWarn("Global function `getOneCallerInlineMaxSize` is deprecated; use `settings.oneCallerInlineMaxSize` instead.");
-	return settings.oneCallerInlineMaxSize;
-}
+export const getOneCallerInlineMaxSize = util.deprecate(
+	() => settings.oneCallerInlineMaxSize,
+	"Global function `getOneCallerInlineMaxSize` is deprecated; use `settings.oneCallerInlineMaxSize` instead.",
+);
 /** @deprecated Use {@link settings.oneCallerInlineMaxSize} instead. */
-export function setOneCallerInlineMaxSize(size: number) {
-	BinaryenObj.printWarn("Global function `setOneCallerInlineMaxSize` is deprecated; use `settings.oneCallerInlineMaxSize = size` instead.");
-	settings.oneCallerInlineMaxSize = size;
-}
+export const setOneCallerInlineMaxSize = util.deprecate(
+	(size: number) => { settings.oneCallerInlineMaxSize = size; },
+	"Global function `setOneCallerInlineMaxSize` is deprecated; use `settings.oneCallerInlineMaxSize = size` instead.",
+);
 /** @deprecated Use {@link settings.allowInliningFunctionsWithLoops} instead. */
-export function getAllowInliningFunctionsWithLoops() {
-	BinaryenObj.printWarn("Global function `getAllowInliningFunctionsWithLoops` is deprecated; use `settings.allowInliningFunctionsWithLoops` instead.");
-	return settings.allowInliningFunctionsWithLoops;
-}
+export const getAllowInliningFunctionsWithLoops = util.deprecate(
+	() => settings.allowInliningFunctionsWithLoops,
+	"Global function `getAllowInliningFunctionsWithLoops` is deprecated; use `settings.allowInliningFunctionsWithLoops` instead.",
+);
 /** @deprecated Use {@link settings.allowInliningFunctionsWithLoops} instead. */
-export function setAllowInliningFunctionsWithLoops(enabled: boolean) {
-	BinaryenObj.printWarn("Global function `setAllowInliningFunctionsWithLoops` is deprecated; use `settings.allowInliningFunctionsWithLoops = enabled` instead.");
-	settings.allowInliningFunctionsWithLoops = enabled;
-}
+export const setAllowInliningFunctionsWithLoops = util.deprecate(
+	(enabled: boolean) => { settings.allowInliningFunctionsWithLoops = enabled; },
+	"Global function `setAllowInliningFunctionsWithLoops` is deprecated; use `settings.allowInliningFunctionsWithLoops = enabled` instead.",
+);
 
 
 
 /** @deprecated Use {@link settings.getPassArgument} instead. */
-export function getPassArgument(key: string) {
-	BinaryenObj.printWarn("Global function `getPassArgument` is deprecated; use `settings.getPassArgument(key)` instead.");
-	return settings.getPassArgument(key);
-}
+export const getPassArgument = util.deprecate(
+	(key: string) => settings.getPassArgument(key),
+	"Global function `getPassArgument` is deprecated; use `settings.getPassArgument(key)` instead.",
+);
 /** @deprecated Use {@link settings.setPassArgument} instead. */
-export function setPassArgument(key: string, value?: string) {
-	BinaryenObj.printWarn("Global function `setPassArgument` is deprecated; use `settings.setPassArgument(key, value)` instead.");
-	return settings.setPassArgument(key, value);
-}
+export const setPassArgument = util.deprecate(
+	(key: string, value?: string) => settings.setPassArgument(key, value),
+	"Global function `setPassArgument` is deprecated; use `settings.setPassArgument(key, value)` instead.",
+);
 /** @deprecated Use {@link settings.clearPassArguments} instead. */
-export function clearPassArguments() {
-	BinaryenObj.printWarn("Global function `clearPassArguments` is deprecated; use `settings.clearPassArguments()` instead.");
-	return settings.clearPassArguments();
-}
+export const clearPassArguments = util.deprecate(
+	() => settings.clearPassArguments(),
+	"Global function `clearPassArguments` is deprecated; use `settings.clearPassArguments()` instead.",
+);
 /** @deprecated Use {@link settings.hasPassToSkip} instead. */
-export function hasPassToSkip(pass: string) {
-	BinaryenObj.printWarn("Global function `hasPassToSkip` is deprecated; use `settings.hasPassToSkip(pass)` instead.");
-	return settings.hasPassToSkip(pass);
-}
+export const hasPassToSkip = util.deprecate(
+	(pass: string) => settings.hasPassToSkip(pass),
+	"Global function `hasPassToSkip` is deprecated; use `settings.hasPassToSkip(pass)` instead.",
+);
 /** @deprecated Use {@link settings.addPassToSkip} instead. */
-export function addPassToSkip(pass: string) {
-	BinaryenObj.printWarn("Global function `addPassToSkip` is deprecated; use `settings.addPassToSkip(pass)` instead.");
-	return settings.addPassToSkip(pass);
-}
+export const addPassToSkip = util.deprecate(
+	(pass: string) => settings.addPassToSkip(pass),
+	"Global function `addPassToSkip` is deprecated; use `settings.addPassToSkip(pass)` instead.",
+);
 /** @deprecated Use {@link settings.clearPassesToSkip} instead. */
-export function clearPassesToSkip() {
-	BinaryenObj.printWarn("Global function `clearPassesToSkip` is deprecated; use `settings.clearPassesToSkip()` instead.");
-	return settings.clearPassesToSkip();
-}
+export const clearPassesToSkip = util.deprecate(
+	() => settings.clearPassesToSkip(),
+	"Global function `clearPassesToSkip` is deprecated; use `settings.clearPassesToSkip()` instead.",
+);

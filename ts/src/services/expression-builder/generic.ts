@@ -6,6 +6,7 @@ import {
 	i32sToStack,
 	i8sToStack,
 	preserveStack,
+	replaceWith,
 	strToStack,
 	type TryTableCatch,
 } from "../../-utils.ts";
@@ -124,10 +125,12 @@ export function breaks(mod: Module) {
 			brOn(Operation.BrOnCastFail, label, value, castType)
 		),
 
+		/* eslint-disable prefer-arrow-callback */
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#br} instead. */ break(...args) { BinaryenObj.printWarn("`.break()` is deprecated; use `.br()` instead."); return this.br(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#br} instead. */ break: replaceWith("break -> br", function (...args) { return this.br(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */ switch(...args) { BinaryenObj.printWarn("`.switch()` is deprecated; use `.br_table()` instead."); return this.br_table(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#br_table} instead. */ switch: replaceWith("switch -> br_table", function (...args) { return this.br_table(...args); }),
+		/* eslint-enable prefer-arrow-callback */
 	} as const;
 }
 
@@ -174,12 +177,14 @@ export function calls(mod: Module) {
 			preserveStack(() => BinaryenObj["_BinaryenReturnCallIndirect"](mod[PTR], strToStack(table), target, i32sToStack(operands), operands.length, paramsType, resultsType))
 		),
 
+		/* eslint-disable prefer-arrow-callback */
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */ callIndirect(...args) { BinaryenObj.printWarn("`.callIndirect()` is deprecated; use `.call_indirect()` instead."); return this.call_indirect(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#call_indirect} instead. */ callIndirect: replaceWith("callIndirect -> call_indirect", function (...args) { return this.call_indirect(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */ returnCall(...args) { BinaryenObj.printWarn("`.returnCall()` is deprecated; use `.return_call()` instead."); return this.return_call(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#return_call} instead. */ returnCall: replaceWith("returnCall -> return_call", function (...args) { return this.return_call(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */ returnCallIndirect(...args) { BinaryenObj.printWarn("`.returnCallIndirect()` is deprecated; use `.return_call_indirect()` instead."); return this.return_call_indirect(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#return_call_indirect} instead. */ returnCallIndirect: replaceWith("returnCallIndirect -> return_call_indirect", function (...args) { return this.return_call_indirect(...args); }),
+		/* eslint-enable prefer-arrow-callback */
 	} as const;
 }
 
@@ -216,30 +221,27 @@ export function throws(mod: Module) {
 		// TODO: catch_all_ref
 
 		/** @deprecated Use {@link ExpressionBuilder#throw_ref} instead. */
-		rethrow(target: string): ExpressionRef {
-			BinaryenObj.printWarn("`.rethrow()` is deprecated; use `.throw_ref()` instead.");
-			return preserveStack(() => BinaryenObj["_BinaryenRethrow"](mod[PTR], strToStack(target)));
-		},
+		rethrow: replaceWith(
+			"rethrow -> throw_ref",
+			(target: string): ExpressionRef => preserveStack(() => BinaryenObj["_BinaryenRethrow"](mod[PTR], strToStack(target))),
+		),
 
 		/** @deprecated Use {@link ExpressionBuilder#try_table} instead. */
-		try(
+		try: replaceWith("try -> try_table", (
 			name: string,
 			body: ExpressionRef,
 			catchTags: readonly string[],
 			catchBodies: readonly ExpressionRef[],
 			delegateTarget: string,
-		): ExpressionRef {
-			BinaryenObj.printWarn("`.try()` is deprecated; use `.try_table()` instead.");
-			return BinaryenObj["_BinaryenTry"](
-				mod[PTR],
-				strToStack(name),
-				body,
-				i32sToStack(catchTags.map(strToStack)),
-				catchTags.length,
-				i32sToStack(catchBodies),
-				catchBodies.length,
-				strToStack(delegateTarget),
-			);
-		},
+		): ExpressionRef => BinaryenObj["_BinaryenTry"](
+			mod[PTR],
+			strToStack(name),
+			body,
+			i32sToStack(catchTags.map(strToStack)),
+			catchTags.length,
+			i32sToStack(catchBodies),
+			catchBodies.length,
+			strToStack(delegateTarget),
+		)),
 	} as const;
 }

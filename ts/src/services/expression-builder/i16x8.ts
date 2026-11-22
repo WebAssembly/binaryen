@@ -1,6 +1,6 @@
 import {
-	BinaryenObj,
-} from "../../-pre.ts";
+	replaceWith,
+} from "../../-utils.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -83,13 +83,15 @@ export function i16x8(mod: Module) {
 		extract_lane_u: simdExtractFn(mod, Operation.ExtractLaneUVecI16x8),
 		replace_lane: simdReplaceFn(mod, Operation.ReplaceLaneVecI16x8),
 
+		/* eslint-disable prefer-arrow-callback */
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_s} instead. */ add_saturate_s(...args) { BinaryenObj.printWarn("`.i16x8.add_saturate_s()` is deprecated; use `.i16x8.add_sat_s()` instead."); return this.add_sat_s(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_s} instead. */ add_saturate_s: replaceWith("i16x8.add_saturate_s -> i16x8.add_sat_s", function (...args) { return this.add_sat_s(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_u} instead. */ add_saturate_u(...args) { BinaryenObj.printWarn("`.i16x8.add_saturate_u()` is deprecated; use `.i16x8.add_sat_u()` instead."); return this.add_sat_u(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.add_sat_u} instead. */ add_saturate_u: replaceWith("i16x8.add_saturate_u -> i16x8.add_sat_u", function (...args) { return this.add_sat_u(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_s} instead. */ sub_saturate_s(...args) { BinaryenObj.printWarn("`.i16x8.sub_saturate_s()` is deprecated; use `.i16x8.sub_sat_s()` instead."); return this.sub_sat_s(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_s} instead. */ sub_saturate_s: replaceWith("i16x8.sub_saturate_s -> i16x8.sub_sat_s", function (...args) { return this.sub_sat_s(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_u} instead. */ sub_saturate_u(...args) { BinaryenObj.printWarn("`.i16x8.sub_saturate_u()` is deprecated; use `.i16x8.sub_sat_u()` instead."); return this.sub_sat_u(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#i16x8 | ExpressionBuilder#i16x8.sub_sat_u} instead. */ sub_saturate_u: replaceWith("i16x8.sub_saturate_u -> i16x8.sub_sat_u", function (...args) { return this.sub_sat_u(...args); }),
+		/* eslint-enable prefer-arrow-callback */
 	} as const;
 }

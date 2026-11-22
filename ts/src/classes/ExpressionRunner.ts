@@ -1,3 +1,4 @@
+import * as util from "node:util";
 import {
 	BinaryenObj,
 } from "../-pre.ts";
@@ -24,8 +25,8 @@ export enum ExpressionRunnerFlag {
 
 export class ExpressionRunner {
 	/** @deprecated Static field `ExpressionRunner.Flags` is now a standalone enum {@link ExpressionRunnerFlag}. */
+	@(($) => util.deprecate($, "The enum `ExpressionRunner.Flags` has been renamed to `ExpressionRunnerFlag`."))
 	static get Flags() {
-		BinaryenObj.printWarn("The enum `ExpressionRunner.Flags` has been renamed to `ExpressionRunnerFlag`.");
 		return ExpressionRunnerFlag;
 	}
 

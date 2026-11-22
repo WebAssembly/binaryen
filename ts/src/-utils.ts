@@ -3,6 +3,7 @@
 
 
 
+import * as util from "node:util";
 import {
 	BinaryenObj,
 	stackAlloc,
@@ -137,4 +138,25 @@ export function setAllNested<T, U>(
 	while (prevNum > values.length) {
 		removeFn(ref, --prevNum);
 	}
+}
+
+
+
+/**
+ * Mark a function as deprecated by logging a warning in the console.
+ * @example
+ * const obj = {
+ * 	callIndirect: replaceWith(
+ * 		"callIndirect -> call_indirect",
+ * 		function (...args) { return this.call_indirect(...args); },
+ * 	),
+ * }
+ *
+ * @param replacement a description of the format "{old_name} -> {new_name}"
+ * @param fn          the function to replace
+ * @returns           a new function that performs the original function and marks it as deprecated
+ */
+export function replaceWith<T extends Function>(replacement: string, fn: T): T {
+	const [deprecated, replaced] = replacement.split(" -> ");
+	return util.deprecate(fn, `\`.${deprecated}\` is deprecated; use \`.${replaced}\` instead.`);
 }

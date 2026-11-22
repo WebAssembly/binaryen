@@ -4,6 +4,7 @@ import {
 import {
 	PTR,
 	i8sToStack,
+	replaceWith,
 } from "../../-utils.ts";
 import type {
 	Module,
@@ -74,9 +75,9 @@ export function v128(mod: Module) {
 		anytrue: unaryFn(mod, Operation.AnyTrueVec128),
 
 		/** @deprecated Use {@link Module#pop} instead. */
-		pop() {
-			BinaryenObj.printWarn("`.v128.pop()` is deprecated; use `.pop(Type.v128)` instead.");
-			return mod.pop(Type.v128);
-		},
+		pop: replaceWith(
+			"v128.pop -> pop(Type.v128)",
+			() => mod.pop(Type.v128),
+		),
 	} as const;
 }

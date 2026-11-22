@@ -1,6 +1,6 @@
 import {
-	BinaryenObj,
-} from "../../-pre.ts";
+	replaceWith,
+} from "../../-utils.ts";
 import type {
 	Module,
 } from "../../classes/module/Module.ts";
@@ -68,29 +68,31 @@ export function f32(mod: Module) {
 
 		demote_f64: unaryFn(mod, Operation.DemoteFloat64),
 
+		/* eslint-disable prefer-arrow-callback */
 		/** @deprecated */
 		convert_s: {
 			// @ts-expect-error
-			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i32_s} instead. */ i32: (...args) => { BinaryenObj.printWarn("`.convert_s.i32()` is deprecated; use `.convert_i32_s()` instead."); return f32(mod).convert_i32_s(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i32_s} instead. */ i32: replaceWith("convert_s.i32 -> convert_i32_s", (...args) => f32(mod).convert_i32_s(...args)),
 			// @ts-expect-error
-			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i64_s} instead. */ i64: (...args) => { BinaryenObj.printWarn("`.convert_s.i64()` is deprecated; use `.convert_i64_s()` instead."); return f32(mod).convert_i64_s(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i64_s} instead. */ i64: replaceWith("convert_s.i64 -> convert_i64_s", (...args) => f32(mod).convert_i64_s(...args)),
 		},
 		/** @deprecated */
 		convert_u: {
 			// @ts-expect-error
-			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i32_u} instead. */ i32: (...args) => { BinaryenObj.printWarn("`.convert_u.i32()` is deprecated; use `.convert_i32_u()` instead."); return f32(mod).convert_i32_u(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i32_u} instead. */ i32: replaceWith("convert_u.i32 -> convert_i32_u", (...args) => f32(mod).convert_i32_u(...args)),
 			// @ts-expect-error
-			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i64_u} instead. */ i64: (...args) => { BinaryenObj.printWarn("`.convert_u.i64()` is deprecated; use `.convert_i64_u()` instead."); return f32(mod).convert_i64_u(...args); },
+			/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.convert_i64_u} instead. */ i64: replaceWith("convert_u.i64 -> convert_i64_u", (...args) => f32(mod).convert_i64_u(...args)),
 		},
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.reinterpret_i32} instead. */ reinterpret(...args) { BinaryenObj.printWarn("`.reinterpret()` is deprecated; use `.reinterpret_i32()` instead."); return this.reinterpret_i32(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.reinterpret_i32} instead. */ reinterpret: replaceWith("reinterpret -> reinterpret_i32", function (...args) { return this.reinterpret_i32(...args); }),
 		// @ts-expect-error
-		/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.demote_f64} instead. */ demote(...args) { BinaryenObj.printWarn("`.demote()` is deprecated; use `.demote_f64()` instead."); return this.demote_f64(...args); },
+		/** @deprecated Use {@link ExpressionBuilder#f32 | ExpressionBuilder#f32.demote_f64} instead. */ demote: replaceWith("demote -> demote_f64", function (...args) { return this.demote_f64(...args); }),
 
 		/** @deprecated Use {@link Module#pop} instead. */
-		pop() {
-			BinaryenObj.printWarn("`.f32.pop()` is deprecated; use `.pop(Type.f32)` instead.");
-			return mod.pop(Type.f32);
-		},
+		pop: replaceWith(
+			"f32.pop -> pop(Type.f32)",
+			() => mod.pop(Type.f32),
+		),
+		/* eslint-enable prefer-arrow-callback */
 	} as const;
 }

@@ -1,3 +1,4 @@
+import * as util from "node:util";
 import {
 	_free,
 	BinaryenObj,
@@ -9,6 +10,7 @@ import {
 	i8sToStack,
 	i32sToStack,
 	preserveStack,
+	replaceWith,
 	strToStack,
 } from "../../-utils.ts";
 import {
@@ -116,11 +118,7 @@ function replacedBy<This, Params extends unknown[], Return>(replacement: string 
 	method: (this: This, ...args: Params) => Return,
 	context: ClassMethodDecoratorContext<This, typeof method>,
 ) => (typeof method) | void {
-	return (method, context) => function (...args) {
-		const message = `WARNING: ${ context.static ? "Static" : "Instance" } method \`${ String(context.name) }\` is deprecated${ replacement && `; use ${ replacement } instead` }.`;
-		BinaryenObj.printWarn(message);
-		return method.call(this, ...args);
-	};
+	return (method, context) => util.deprecate(method, `${context.static ? "Static" : "Instance"} method \`${String(context.name)}\` is deprecated${replacement && `; use ${replacement} instead`}.`);
 }
 
 
@@ -220,14 +218,14 @@ export class Module {
 		}
 	}
 
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly funcref = {pop: () => { BinaryenObj.printWarn("`.funcref.pop()` is deprecated; use `.pop(Type.funcref)` instead."); return this.pop(Type.funcref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly externref = {pop: () => { BinaryenObj.printWarn("`.externref.pop()` is deprecated; use `.pop(Type.externref)` instead."); return this.pop(Type.externref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly anyref = {pop: () => { BinaryenObj.printWarn("`.anyref.pop()` is deprecated; use `.pop(Type.anyref)` instead."); return this.pop(Type.anyref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly eqref = {pop: () => { BinaryenObj.printWarn("`.eqref.pop()` is deprecated; use `.pop(Type.eqref)` instead."); return this.pop(Type.eqref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly i31ref = {pop: () => { BinaryenObj.printWarn("`.i31ref.pop()` is deprecated; use `.pop(Type.i31ref)` instead."); return this.pop(Type.i31ref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly structref = {pop: () => { BinaryenObj.printWarn("`.structref.pop()` is deprecated; use `.pop(Type.structref)` instead."); return this.pop(Type.structref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly arrayref = {pop: () => { BinaryenObj.printWarn("`.arrayref.pop()` is deprecated; use `.pop(Type.arrayref)` instead."); return this.pop(Type.arrayref); }};
-	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly stringref = {pop: () => { BinaryenObj.printWarn("`.stringref.pop()` is deprecated; use `.pop(Type.stringref)` instead."); return this.pop(Type.stringref); }};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly funcref = {pop: replaceWith("funcref.pop -> pop(Type.funcref)", () => this.pop(Type.funcref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly externref = {pop: replaceWith("externref.pop -> pop(Type.externref)", () => this.pop(Type.externref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly anyref = {pop: replaceWith("anyref.pop -> pop(Type.anyref)", () => this.pop(Type.anyref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly eqref = {pop: replaceWith("eqref.pop -> pop(Type.eqref)", () => this.pop(Type.eqref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly i31ref = {pop: replaceWith("i31ref.pop -> pop(Type.i31ref)", () => this.pop(Type.i31ref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly structref = {pop: replaceWith("structref.pop -> pop(Type.structref)", () => this.pop(Type.structref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly arrayref = {pop: replaceWith("arrayref.pop -> pop(Type.arrayref)", () => this.pop(Type.arrayref))};
+	/** @deprecated Use {@link Module#pop} instead. @category Expression Manipulation */ readonly stringref = {pop: replaceWith("stringref.pop -> pop(Type.stringref)", () => this.pop(Type.stringref))};
 
 	/**
 	 * Gets the side effects of the specified expression.
@@ -613,10 +611,10 @@ export interface Module {
 Object.keys(new Module().wasm).forEach((key) => {
 	if (!Reflect.has(Module.prototype, key)) {
 		Reflect.defineProperty(Module.prototype, key, {
-			get() {
-				BinaryenObj.printWarn(`Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`);
-				return (this as Module).wasm[key as keyof ExpressionBuilder];
-			},
+			// eslint-disable-next-line prefer-arrow-callback
+			get: util.deprecate(function (this: Module) {
+				return this.wasm[key as keyof ExpressionBuilder];
+			}, `Module property \`.${ key }\` is deprecated; use \`.wasm.${ key }\` instead.`),
 		});
 	}
 });
