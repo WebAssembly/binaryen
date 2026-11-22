@@ -19598,4 +19598,187 @@
       )
     )
   )
+
+  ;; CHECK:      (func $select-loop-if-unreachable-else-interfering (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (loop $loop (result i32)
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $loop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-loop-if-unreachable-else-interfering (param $x i32) (result i32)
+    ;; The unreachable else arm modifies $x and branches back to $loop, so it
+    ;; can execute before the then arm evaluates (local.get $x) on a later
+    ;; iteration. We must not drop the first select arm.
+    (select
+      (local.get $x)
+      (loop $loop (result i32)
+        (if (result i32)
+          (local.get $x)
+          (then
+            (local.get $x)
+          )
+          (else
+            (block
+              (local.set $x
+                (i32.const 42)
+              )
+              (br $loop)
+            )
+          )
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $select-loop-if-unreachable-else-noninterfering (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop (result i32)
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (local.set $y
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-loop-if-unreachable-else-noninterfering (param $x i32) (param $y i32) (result i32)
+    ;; The unreachable else arm modifies $y and branches back to $loop, which
+    ;; does not affect (local.get $x), so we can still optimize the select.
+    (select
+      (local.get $x)
+      (loop $loop (result i32)
+        (if (result i32)
+          (local.get $y)
+          (then
+            (local.get $x)
+          )
+          (else
+            (block
+              (local.set $y
+                (i32.const 42)
+              )
+              (br $loop)
+            )
+          )
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $select-if-unreachable-else-no-loop (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-if-unreachable-else-no-loop (param $x i32) (param $y i32) (result i32)
+    ;; Without an enclosing loop, the unreachable else arm cannot execute before
+    ;; the then arm, so its modification to $x does not block optimization.
+    (select
+      (local.get $x)
+      (if (result i32)
+        (local.get $y)
+        (then
+          (local.get $x)
+        )
+        (else
+          (block
+            (local.set $x
+              (i32.const 42)
+            )
+            (unreachable)
+          )
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $select-unnamed-loop-if-unreachable-else (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop (result i32)
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-unnamed-loop-if-unreachable-else (param $x i32) (param $y i32) (result i32)
+    ;; An unnamed loop cannot be branched to, so the unreachable else arm still
+    ;; cannot execute before the then arm.
+    (select
+      (local.get $x)
+      (loop (result i32)
+        (if (result i32)
+          (local.get $y)
+          (then
+            (local.get $x)
+          )
+          (else
+            (block
+              (local.set $x
+                (i32.const 42)
+              )
+              (unreachable)
+            )
+          )
+        )
+      )
+      (i32.const 1)
+    )
+  )
 )
