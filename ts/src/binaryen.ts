@@ -6,3 +6,4 @@ export {
 	Module,
 } from "./classes/module/Module.ts";
 export {ExpressionRunnerFlag} from "./classes/ExpressionRunner.ts";
+export * from "./-deprecations.ts";
