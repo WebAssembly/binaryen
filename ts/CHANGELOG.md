@@ -1,8 +1,9 @@
 # TypeScript API Changelog
 
 ## Current Trunk
+- Improve deprecation warnings
 
-## v0.3.0
+## v0.3.0 (2026-11-02T02:11Z)
 - Fix TypeBuilder `setArrayType` & `setSubType` signatures
 - Expose heap types `exn` & `noexn`, and ref types `exnref` & `nullexnref` (#9057)
 - Update `throw_ref` & `try_table` (#9057)
