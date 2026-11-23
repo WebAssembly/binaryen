@@ -291,12 +291,14 @@ if(BYN_PGO_GENERATE)
     # compiler-rt directory to the linker library search path.
     # Note: COMMAND_ERROR_IS_FATAL requires CMake 3.19+.
     execute_process(
-      COMMAND "${CMAKE_CXX_COMPILER}" /clang:-print-libgcc-file-name /clang:--rtlib=compiler-rt
-      OUTPUT_VARIABLE clang_compiler_rt_file
+      COMMAND "${CMAKE_CXX_COMPILER}" -print-runtime-dir
+      OUTPUT_VARIABLE clang_runtime_dir
       OUTPUT_STRIP_TRAILING_WHITESPACE
       COMMAND_ERROR_IS_FATAL ANY)
-    file(TO_CMAKE_PATH "${clang_compiler_rt_file}" clang_compiler_rt_file)
-    get_filename_component(clang_runtime_dir "${clang_compiler_rt_file}" DIRECTORY)
+    file(TO_CMAKE_PATH "${clang_runtime_dir}" clang_runtime_dir)
+    if(NOT IS_DIRECTORY "${clang_runtime_dir}")
+      message(FATAL_ERROR "Unable to find clang compiler-rt directory: ${clang_runtime_dir}")
+    endif()
     add_link_flag("/libpath:\"${clang_runtime_dir}\"")
   else()
     add_link_flag("-fprofile-generate")
