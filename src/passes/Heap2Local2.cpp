@@ -20,7 +20,8 @@
 //
 // Phase 1 builds a dataflow graph over reference expressions in a function,
 // collecting candidate StructNew, fixed-size ArrayNew, and ArrayNewFixed
-// allocations alongside identity and cast edges and escaping uses.
+// allocations alongside identity and cast edges, atomic cmpxchg sites, and
+// escaping uses.
 //
 // Phase 2 solves a smallest fixed point over Flat<AllocId> origins (i.e. the
 // flat lattice of all allocation sites) across all candidate allocations
@@ -29,8 +30,8 @@
 //   - Val(a): definitely non-null reference to a single allocation `a`.
 //   - Bot: unreachable or statically trapping cast output.
 //
-// Phase 3 marks allocations escaped from escaping uses and identity-edge mixes
-// (Val(a) flowing into Top).
+// Phase 3 propagates escapes over cmpxchg (expected -> replacement) edges,
+// escaping uses, and identity-edge mixes (Val(a) flowing into Top).
 //
 // Phase 4 rewrites every non-escaping allocation and all expressions it flows
 // into in a single post-order pass, followed by ReFinalize and
@@ -100,6 +101,17 @@ struct AllocInfo {
   }
 };
 
+// An atomic cmpxchg site linking expected and replacement origins. If the
+// expected allocation does not escape, it can never reside in the heap field
+// being compared, so the comparison always fails at runtime and replacement is
+// never written to memory. If expected escapes, however, it could match the
+// heap value at runtime and cause cmpxchg to store replacement into the heap,
+// forcing replacement to escape as well.
+struct CmpxchgSite {
+  NodeId expNode;
+  NodeId repNode;
+};
+
 // Shared per-function state populated by GraphBuilder (Phase 1) and consumed by
 // origin propagation (Phase 2), escape analysis (Phase 3), and IR rewriting
 // (Phase 4).
@@ -122,6 +134,9 @@ struct AnalysisState {
   // Nodes whose values flow into contexts that escape the function or alias
   // heap memory.
   std::vector<NodeId> escapingNodes;
+  // Tracked cmpxchg sites where an escaping expected value forces replacement
+  // to escape.
+  std::vector<CmpxchgSite> cmpxchgSites;
 
   AnalysisState() {
     // Node 0 (TopNode) is a shared sentinel node with fixed origin Top
@@ -194,7 +209,7 @@ struct AnalysisState {
 };
 
 // Phase 1: Single post-order walk over the function body to collect candidate
-// allocations, dataflow edges, and escaping uses.
+// allocations, dataflow edges, cmpxchg sites, and escaping uses.
 struct GraphBuilder
   : public ControlFlowWalker<GraphBuilder,
                              UnifiedExpressionVisitor<GraphBuilder>> {
@@ -456,6 +471,39 @@ struct GraphBuilder
 
   void visitStructRMW(StructRMW* curr) { state.escapeIfRef(curr->value); }
 
+  void handleCmpxchg(Expression* cmpxchg,
+                     Expression* expected,
+                     Expression* replacement) {
+    if (!replacement->type.isRef()) {
+      return;
+    }
+    NodeId repNode = state.getNodeOrTop(replacement);
+    if (repNode == TopNode) {
+      // We will not optimize replacement anyway, so it doesn't depend on
+      // whether expected escapes.
+      return;
+    }
+    if (cmpxchg->type == Type::unreachable || !expected->type.isRef()) {
+      // Optimizer leaves unreachable cmpxchgs in place. If a reachable `ref`
+      // requires `replacement` to be non-nullable, or a bottom nullref cmpxchg
+      // takes its non-nullable result type from `replacement->type` in
+      // `finalize()`, optimizing `replacement` and replacing it with a null
+      // would cause a validation failure. Escape `replacement` to avoid this.
+      state.escapingNodes.push_back(repNode);
+      return;
+    }
+    NodeId expNode = state.getNodeOrTop(expected);
+    if (expNode == TopNode) {
+      state.escapingNodes.push_back(repNode);
+    } else {
+      state.cmpxchgSites.push_back({expNode, repNode});
+    }
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    handleCmpxchg(curr, curr->expected, curr->replacement);
+  }
+
   void visitArrayGet(ArrayGet* curr) {
     if (!curr->index->is<Const>()) {
       state.escapeIfRef(curr->ref);
@@ -474,6 +522,14 @@ struct GraphBuilder
       state.escapeIfRef(curr->ref);
     }
     state.escapeIfRef(curr->value);
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (!curr->index->is<Const>()) {
+      state.escapeIfRef(curr->ref);
+    }
+    // Note: expected never escapes even when index is non-constant.
+    handleCmpxchg(curr, curr->expected, curr->replacement);
   }
 };
 
@@ -557,9 +613,58 @@ void computeOrigins(AnalysisState& state) {
 // Phase 3: Compute escaped allocations and return whether any remain unescaped
 // and can be optimized. Return true if we find something to optimize.
 bool computeEscapes(AnalysisState& state) {
+  size_t numAllocs = state.allocs.size();
+  // Conditional escape adjacency list: escapeAdj[u] lists replacement
+  // allocations v that must escape if expected allocation u escapes in a
+  // cmpxchg. Lazily allocated since candidate-to-candidate cmpxchg is rare.
+  std::vector<SmallVector<AllocId, 1>> escapeAdj;
+  std::vector<AllocId> worklist;
+
+  auto addEscapeEdge = [&](AllocId from, AllocId to) {
+    if (escapeAdj.empty()) {
+      escapeAdj.resize(numAllocs);
+    }
+    escapeAdj[from].push_back(to);
+  };
+
+  auto markEscaped = [&](AllocId alloc) {
+    if (!state.allocs[alloc].escaped) {
+      state.allocs[alloc].escaped = true;
+      worklist.push_back(alloc);
+    }
+  };
+
+  for (const auto& site : state.cmpxchgSites) {
+    const auto* repAlloc = state.origins[site.repNode].getVal();
+    if (!repAlloc) {
+      // Replacement is either unreachable (Bot) or already mixed to Top (whose
+      // incoming allocations escape via the mixing check below).
+      continue;
+    }
+    const auto& expOrigin = state.origins[site.expNode];
+    if (expOrigin.isTop()) {
+      // Expected may be an arbitrary heap reference that matches the stored
+      // value at runtime, so replacement may be written to the heap.
+      markEscaped(*repAlloc);
+    } else if (const auto* expAlloc = expOrigin.getVal()) {
+      // If expAlloc ends up escaping, expected remains a live heap reference
+      // that could match the field at runtime and cause cmpxchg to write
+      // replacement to the heap, so repAlloc must escape too (when
+      // *expAlloc == *repAlloc, that is already vacuously true without another
+      // edge in the graph).
+      if (*expAlloc != *repAlloc) {
+        addEscapeEdge(*expAlloc, *repAlloc);
+      }
+    } else {
+      // The cmpxchg is never executed, so it cannot cause the replacement to
+      // escape.
+      assert(expOrigin.isBottom());
+    }
+  }
+
   for (NodeId u : state.escapingNodes) {
     if (const auto* alloc = state.origins[u].getVal()) {
-      state.allocs[*alloc].escaped = true;
+      markEscaped(*alloc);
     }
   }
 
@@ -573,7 +678,17 @@ bool computeEscapes(AnalysisState& state) {
     }
     if (const auto* alloc = state.origins[u].getVal()) {
       if (state.origins[v].isTop()) {
-        state.allocs[*alloc].escaped = true;
+        markEscaped(*alloc);
+      }
+    }
+  }
+
+  if (!escapeAdj.empty()) {
+    while (!worklist.empty()) {
+      AllocId alloc = worklist.back();
+      worklist.pop_back();
+      for (AllocId dep : escapeAdj[alloc]) {
+        markEscaped(dep);
       }
     }
   }
@@ -644,6 +759,17 @@ struct Optimizer : public PostWalker<Optimizer> {
       }
     }
     return std::nullopt;
+  }
+
+  // Returns true when `curr` could match an existing heap value at runtime
+  // (i.e. it is neither a non-escaping allocation nor dynamically
+  // unreachable).
+  bool canMatchHeapValue(Expression* curr) {
+    if (getOptimizedAlloc(curr)) {
+      return false;
+    }
+    auto it = state.exprNodes.find(curr);
+    return it == state.exprNodes.end() || !state.origins[it->second].isBottom();
   }
 
   // Create the null value with which we will replace an optimized allocation.
@@ -1007,6 +1133,102 @@ struct Optimizer : public PostWalker<Optimizer> {
     }
   }
 
+  void emitOptimizedRefCmpxchg(Expression* ref,
+                               Expression* expected,
+                               Expression* replacement,
+                               bool expCanMatch,
+                               const AllocInfo& info,
+                               Index index) {
+    assert(!info.fields[index].isPacked());
+    Index fieldLocal = info.fieldLocals[index];
+    Type fieldType = info.fields[index].type;
+    if (!expCanMatch) {
+      // `expected` is non-escaping or dynamically unreachable, so the
+      // comparison never succeeds.
+      replaceCurrent(
+        builder.makeBlock({builder.makeDrop(ref),
+                           builder.makeDrop(expected),
+                           builder.makeDrop(replacement),
+                           builder.makeLocalGet(fieldLocal, fieldType)}));
+      return;
+    }
+
+    Type expectedType = fieldType;
+    if (fieldType.isRef()) {
+      expectedType = Type(
+        HeapTypes::eq.getBasic(fieldType.getHeapType().getShared()), Nullable);
+    }
+    // Stash `expected`, `replacement`, and the pre-cmpxchg field value in
+    // scratch locals so operand evaluation order is preserved if `replacement`
+    // traps or reads/mutates `local`.
+    Index oldScratch = builder.addVar(func, fieldType);
+    Index expectedScratch = builder.addVar(func, expectedType);
+    Index replacementScratch = builder.addVar(func, fieldType);
+
+    Expression* pred = nullptr;
+    if (fieldType.isRef()) {
+      pred =
+        builder.makeRefEq(builder.makeLocalGet(fieldLocal, fieldType),
+                          builder.makeLocalGet(expectedScratch, expectedType));
+    } else {
+      pred =
+        builder.makeBinary(Abstract::getBinary(fieldType, Abstract::Eq),
+                           builder.makeLocalGet(fieldLocal, fieldType),
+                           builder.makeLocalGet(expectedScratch, expectedType));
+    }
+
+    replaceCurrent(builder.makeBlock(
+      {builder.makeDrop(ref),
+       builder.makeLocalSet(expectedScratch, expected),
+       builder.makeLocalSet(replacementScratch, replacement),
+       builder.makeLocalSet(oldScratch,
+                            builder.makeLocalGet(fieldLocal, fieldType)),
+       builder.makeIf(
+         pred,
+         builder.makeLocalSet(
+           fieldLocal, builder.makeLocalGet(replacementScratch, fieldType))),
+       builder.makeLocalGet(oldScratch, fieldType)}));
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
+      return;
+    }
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    bool expCanMatch = canMatchHeapValue(curr->expected);
+    if (refAlloc) {
+      emitOptimizedRefCmpxchg(curr->ref,
+                              curr->expected,
+                              curr->replacement,
+                              expCanMatch,
+                              state.allocs[*refAlloc],
+                              curr->index);
+      return;
+    }
+    if (expCanMatch) {
+      return;
+    }
+    // `curr->ref` is unoptimized while `curr->expected` is a non-escaping
+    // allocation or dynamically unreachable, so `expected` cannot match the
+    // heap struct field. Stash `ref` in a scratch local before dropping
+    // `expected` and `replacement` to preserve evaluation order
+    // (`ChildLocalizer` cannot be used here because compound `expected` or
+    // `replacement` operands whose inner allocations became `nullref` still
+    // carry stale non-nullable types until `ReFinalize`, which would give
+    // `ChildLocalizer`'s scratch locals invalid non-nullable types).
+    Type refType = curr->ref->type.with(Nullable);
+    Index refScratch = builder.addVar(func, refType);
+    replaceCurrent(builder.makeBlock(
+      {builder.makeLocalSet(refScratch, curr->ref),
+       builder.makeDrop(curr->expected),
+       builder.makeDrop(curr->replacement),
+       builder.makeStructGet(curr->index,
+                             builder.makeLocalGet(refScratch, refType),
+                             curr->order,
+                             curr->type)}));
+  }
+
   void visitArrayGet(ArrayGet* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -1063,6 +1285,49 @@ struct Optimizer : public PostWalker<Optimizer> {
               info.fieldLocals[idx],
               info.fields[idx].type);
     }
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (curr->type == Type::unreachable ||
+        curr->ref->type == Type::unreachable) {
+      return;
+    }
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    bool expCanMatch = canMatchHeapValue(curr->expected);
+    if (refAlloc) {
+      Index idx = curr->index->cast<Const>()->value.getUnsigned();
+      const auto& info = state.allocs[*refAlloc];
+      if (idx >= info.fields.size()) {
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->expected),
+                                          builder.makeDrop(curr->replacement),
+                                          builder.makeUnreachable()}));
+        return;
+      }
+      emitOptimizedRefCmpxchg(
+        curr->ref, curr->expected, curr->replacement, expCanMatch, info, idx);
+      return;
+    }
+    if (expCanMatch) {
+      return;
+    }
+    // `curr->ref` is unoptimized while `curr->expected` is a non-escaping
+    // allocation or dynamically unreachable, so `expected` cannot match the
+    // element in memory. Stash `ref` and `index` in scratch locals before
+    // dropping `expected` and `replacement` to preserve evaluation order, then
+    // read the element directly.
+    Type refType = curr->ref->type.with(Nullable);
+    Index refScratch = builder.addVar(func, refType);
+    Index indexScratch = builder.addVar(func, Type::i32);
+    replaceCurrent(builder.makeBlock(
+      {builder.makeLocalSet(refScratch, curr->ref),
+       builder.makeLocalSet(indexScratch, curr->index),
+       builder.makeDrop(curr->expected),
+       builder.makeDrop(curr->replacement),
+       builder.makeArrayGet(builder.makeLocalGet(refScratch, refType),
+                            builder.makeLocalGet(indexScratch, Type::i32),
+                            curr->order,
+                            curr->type)}));
   }
 };
 
