@@ -182,6 +182,51 @@ struct FuncCastEmulation : public Pass {
       }
     }
 
+    if (hasArgument("fpcast-emu-export-thunks")) {
+      // Export fpcast$ thunks for non-imported function exports (excluding
+      // dynCall_* and already-prefixed fpcast$ exports) so dynamic linking can
+      // insert ABI-compatible thunks into the indirect function table.
+      std::vector<std::unique_ptr<Export>> newExports;
+      Builder builder(*module);
+      for (auto& ex : module->exports) {
+        if (ex->kind != ExternalKind::Function) {
+          continue;
+        }
+        Name funcName = *ex->getInternalName();
+        if (module->getFunction(funcName)->imported()) {
+          continue;
+        }
+        if (ex->name.startsWith("dynCall_") || ex->name.startsWith("fpcast$")) {
+          continue;
+        }
+        // Under !WASM_BIGINT, LegalizeJSInterface runs earlier and exports
+        // `orig$foo` for the unlegalized function while `foo` points to a
+        // legalstub. Wrap `orig$foo` as `fpcast$foo` and skip `foo`.
+        std::string exportName = ex->name.toString();
+        if (ex->name.startsWith("orig$")) {
+          exportName = exportName.substr(5);
+          if (Name(exportName).startsWith("dynCall_")) {
+            continue;
+          }
+        } else if (module->getExportOrNull("orig$" + exportName)) {
+          continue;
+        }
+        Name fpcastName = "fpcast$" + exportName;
+        if (module->getExportOrNull(fpcastName)) {
+          continue;
+        }
+        auto [iter, inserted] = funcThunks.insert({funcName, nullptr});
+        if (inserted) {
+          iter->second = makeThunk(funcName, module, numParams);
+        }
+        newExports.push_back(builder.makeExport(
+          fpcastName, iter->second->name, ExternalKind::Function));
+      }
+      for (auto& ex : newExports) {
+        module->addExport(std::move(ex));
+      }
+    }
+
     // update call_indirects
     ParallelFuncCastEmulation(ABIType, numParams).run(getPassRunner(), module);
   }
