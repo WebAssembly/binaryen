@@ -34,6 +34,8 @@
 
  ;; CHECK:      (type $6 (func (param (ref (exact $foo))) (result (ref (exact $foo)))))
 
+ ;; CHECK:      (type $7 (func (result anyref)))
+
  ;; CHECK:      (func $ref.test (type $4) (param $exact (ref (exact $foo))) (result i32)
  ;; CHECK-NEXT:  (local $x anyref)
  ;; CHECK-NEXT:  (local.set $x
@@ -52,6 +54,8 @@
  ;; NO_CD:      (type $5 (func (param (ref (exact $foo)))))
 
  ;; NO_CD:      (type $6 (func (param (ref (exact $foo))) (result (ref (exact $foo)))))
+
+ ;; NO_CD:      (type $7 (func (result anyref)))
 
  ;; NO_CD:      (func $ref.test (type $4) (param $exact (ref (exact $foo))) (result i32)
  ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
@@ -72,6 +76,8 @@
 
  ;; TNH:      (type $6 (func (param (ref (exact $foo))) (result (ref (exact $foo)))))
 
+ ;; TNH:      (type $7 (func (result anyref)))
+
  ;; TNH:      (func $ref.test (type $4) (param $exact (ref (exact $foo))) (result i32)
  ;; TNH-NEXT:  (local $x anyref)
  ;; TNH-NEXT:  (local.set $x
@@ -90,6 +96,8 @@
  ;; TNH_NO_CD:      (type $5 (func (param (ref (exact $foo)))))
 
  ;; TNH_NO_CD:      (type $6 (func (param (ref (exact $foo))) (result (ref (exact $foo)))))
+
+ ;; TNH_NO_CD:      (type $7 (func (result anyref)))
 
  ;; TNH_NO_CD:      (func $ref.test (type $4) (param $exact (ref (exact $foo))) (result i32)
  ;; TNH_NO_CD-NEXT:  (local $x (ref null (exact $foo)))
@@ -675,6 +683,49 @@
   )
   (ref.cast (ref (exact $foo))
    (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $chained (type $7) (result anyref)
+ ;; CHECK-NEXT:  (local $x anyref)
+ ;; CHECK-NEXT:  (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:   (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $chained (type $7) (result anyref)
+ ;; NO_CD-NEXT:  (local $x (ref null (exact $foo)))
+ ;; NO_CD-NEXT:  (ref.cast (ref (exact $foo))
+ ;; NO_CD-NEXT:   (ref.cast (ref (exact $foo))
+ ;; NO_CD-NEXT:    (local.get $x)
+ ;; NO_CD-NEXT:   )
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ ;; TNH:      (func $chained (type $7) (result anyref)
+ ;; TNH-NEXT:  (local $x anyref)
+ ;; TNH-NEXT:  (ref.cast anyref
+ ;; TNH-NEXT:   (ref.cast anyref
+ ;; TNH-NEXT:    (local.get $x)
+ ;; TNH-NEXT:   )
+ ;; TNH-NEXT:  )
+ ;; TNH-NEXT: )
+ ;; TNH_NO_CD:      (func $chained (type $7) (result anyref)
+ ;; TNH_NO_CD-NEXT:  (local $x anyref)
+ ;; TNH_NO_CD-NEXT:  (ref.cast anyref
+ ;; TNH_NO_CD-NEXT:   (ref.cast anyref
+ ;; TNH_NO_CD-NEXT:    (local.get $x)
+ ;; TNH_NO_CD-NEXT:   )
+ ;; TNH_NO_CD-NEXT:  )
+ ;; TNH_NO_CD-NEXT: )
+ (func $chained (result anyref)
+  (local $x (ref null (exact $foo)))
+  ;; Two exact casts in sequence. We can generalize $x to anyref (except in
+  ;; NO_CD, which keeps the cast trivial).
+  (ref.cast (ref (exact $foo))
+   (ref.cast (ref (exact $foo))
+    (local.get $x)
+   )
   )
  )
 )
