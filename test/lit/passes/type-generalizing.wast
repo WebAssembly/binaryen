@@ -3094,3 +3094,42 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $sig (func (param (ref any))))
+ (type $sig (func (param (ref any))))
+
+ ;; CHECK:      (type $1 (func (param (ref any) funcref)))
+
+ ;; CHECK:      (type $2 (func (param funcref (ref any))))
+
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $1) (param (ref any) funcref)))
+ (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param (ref any) funcref)))
+ ;; CHECK:      (func $test (type $2) (param $f funcref) (param $a (ref any))
+ ;; CHECK-NEXT:  (local $t (ref $sig))
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (ref.cast (ref $sig)
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $cwe
+ ;; CHECK-NEXT:   (local.get $a)
+ ;; CHECK-NEXT:   (local.get $t)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (param $f funcref) (param $a (ref any))
+  (local $t (ref $sig))
+  (local.set $t
+   (ref.cast (ref $sig)
+    (local.get $f)
+   )
+  )
+  ;; $t cannot be generalized to funcref, as the signature must match the
+  ;; params sent.
+  (call $cwe
+   (local.get $a)
+   (local.get $t)
+  )
+ )
+)
+

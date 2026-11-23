@@ -30,6 +30,7 @@
 #include "ir/branch-utils.h"
 #include "ir/child-typer.h"
 #include "ir/glbs.h"
+#include "ir/intrinsics.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-traversal.h"
@@ -461,6 +462,18 @@ struct Generalizer : public ChildTyper<Generalizer> {
     // TODO: Track constraints on tuple elements.
     for (auto* op : curr->operands) {
       addConstraint(op, op->type);
+    }
+  }
+
+  void visitCall(Call* curr) {
+    Super::visitCall(curr);
+
+    if (Intrinsics(wasm).isCallWithoutEffects(curr)) {
+      // Do not allow the funcref passed at the end to generalize, as its type
+      // must match the params sent.
+      assert(!curr->operands.empty());
+      auto* last = curr->operands.back();
+      addConstraint(last, last->type);
     }
   }
 
