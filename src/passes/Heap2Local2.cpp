@@ -617,7 +617,7 @@ bool computeEscapes(AnalysisState& state) {
   // Conditional escape adjacency list: escapeAdj[u] lists replacement
   // allocations v that must escape if expected allocation u escapes in a
   // cmpxchg. Lazily allocated since candidate-to-candidate cmpxchg is rare.
-  std::vector<std::vector<AllocId>> escapeAdj;
+  std::vector<SmallVector<AllocId, 1>> escapeAdj;
   std::vector<AllocId> worklist;
 
   auto addEscapeEdge = [&](AllocId from, AllocId to) {
