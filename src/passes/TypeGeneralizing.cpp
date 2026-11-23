@@ -663,8 +663,6 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   }
 
   void runOnFunction(Module* wasm, Function* func) override {
-    refinalize = false;
-
     // First, remove unreachable code. If we didn't, the unreachable code could
     // become invalid after this optimization because ChildTyper does not
     // constrain unreachable expressions in all cases.
