@@ -3,12 +3,14 @@
 ;; RUN: wasm-opt %s -all --optimize-level=3 --generate-stack-ir --optimize-stack-ir --print-stack-ir | filecheck %s
 
 (module
+  ;; CHECK:      (type $6 (func (param i32) (result i32)))
+
   ;; CHECK:      (type $FUNCSIG$v (func))
   (type $FUNCSIG$v (func))
 
-  ;; CHECK:      (type $6 (func (param i32) (result i32)))
-
   ;; CHECK:      (type $5 (func (result i32)))
+
+  ;; CHECK:      (type $3 (func (param i32 i32) (result i32)))
 
   ;; CHECK:      (type $FUNCSIG$vf (func (param f32)))
   (type $FUNCSIG$vf (func (param f32)))
@@ -19,6 +21,8 @@
   ;; CHECK:      (type $8 (func (result i64)))
 
   ;; CHECK:      (type $10 (func (param f32) (result f32)))
+
+  ;; CHECK:      (type $11 (func (param i32)))
 
   ;; CHECK:      (type $FUNCSIG$id (func (param f64) (result i32)))
   (type $FUNCSIG$id (func (param f64) (result i32)))
@@ -32,11 +36,19 @@
   ;; CHECK:      (type $9 (func (param i32 i64)))
   (type $9 (func (param i32 i64)))
 
-  ;; CHECK:      (type $14 (func (param eqref) (result i32)))
+  ;; CHECK:      (type $15 (func (param eqref) (result i32)))
 
-  ;; CHECK:      (type $15 (func (param eqref) (result eqref)))
+  ;; CHECK:      (type $16 (func (param eqref) (result eqref)))
 
-  ;; CHECK:      (type $16 (func (param stringref) (result i64)))
+  ;; CHECK:      (type $17 (func (param stringref) (result i64)))
+
+  ;; CHECK:      (type $18 (func (param i32 i64 f32) (result i32)))
+
+  ;; CHECK:      (type $19 (func (param i32 i32)))
+
+  ;; CHECK:      (type $20 (func (param i32 i64) (result i32)))
+
+  ;; CHECK:      (type $21 (func (param i32 f32) (result i32)))
 
   ;; CHECK:      (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi (type $FUNCSIG$v)))
   (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
@@ -1488,7 +1500,7 @@
   )
 
   ;; A ref.eq with an intervening value: its operands can be swapped.
-  ;; CHECK:      (func $local-to-stack-ref-eq (type $14) (param $x eqref) (result i32)
+  ;; CHECK:      (func $local-to-stack-ref-eq (type $15) (param $x eqref) (result i32)
   ;; CHECK-NEXT:  (local $temp eqref)
   ;; CHECK-NEXT:  local.get $x
   ;; CHECK-NEXT:  call $eqref-value
@@ -1508,7 +1520,7 @@
     )
   )
 
-  ;; CHECK:      (func $eqref-value (type $15) (param $x eqref) (result eqref)
+  ;; CHECK:      (func $eqref-value (type $16) (param $x eqref) (result eqref)
   ;; CHECK-NEXT:  local.get $x
   ;; CHECK-NEXT:  call $eqref-value
   ;; CHECK-NEXT: )
@@ -1609,7 +1621,7 @@
     (local.get $y)
   )
 
-  ;; CHECK:      (func $null-string-encode (type $16) (param $str stringref) (result i64)
+  ;; CHECK:      (func $null-string-encode (type $17) (param $str stringref) (result i64)
   ;; CHECK-NEXT:  (local $y i64)
   ;; CHECK-NEXT:  i64.const 1
   ;; CHECK-NEXT:  local.set $y
@@ -1635,5 +1647,388 @@
       )
     )
     (local.get $y)
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-single (type $6) (param $cond i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  local.get $cond
+  ;; CHECK-NEXT:  i32.const 10
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  block $b (type $6) (param i32) (result i32)
+  ;; CHECK-NEXT:   i32.eqz
+  ;; CHECK-NEXT:   if
+  ;; CHECK-NEXT:    i32.const 42
+  ;; CHECK-NEXT:    br $b
+  ;; CHECK-NEXT:   end
+  ;; CHECK-NEXT:   i32.const 99
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-single (param $cond i32) (result i32)
+    (local $x i32)
+    ;; A single local.set before a targeted block can be threaded into the
+    ;; block as a block input parameter.
+    (local.set $x
+      (i32.add
+        (local.get $cond)
+        (i32.const 10)
+      )
+    )
+    (block $b (result i32)
+      (if
+        (i32.eqz
+          (local.get $x)
+        )
+        (then
+          (br $b
+            (i32.const 42)
+          )
+        )
+      )
+      (i32.const 99)
+    )
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-two (type $3) (param $a i32) (param $b i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  local.get $a
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  local.get $b
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  block $out (type $3) (param i32 i32) (result i32)
+  ;; CHECK-NEXT:   block $in (type $19) (param i32 i32)
+  ;; CHECK-NEXT:    i32.add
+  ;; CHECK-NEXT:    br_if $in
+  ;; CHECK-NEXT:    i32.const 7
+  ;; CHECK-NEXT:    br $out
+  ;; CHECK-NEXT:   end
+  ;; CHECK-NEXT:   i32.const 8
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-two (param $a i32) (param $b i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    ;; Two local.sets before nested targeted blocks can be threaded into both
+    ;; blocks as (param i32 i32).
+    (local.set $x
+      (i32.add
+        (local.get $a)
+        (i32.const 1)
+      )
+    )
+    (local.set $y
+      (i32.add
+        (local.get $b)
+        (i32.const 2)
+      )
+    )
+    (block $out (result i32)
+      (block $in
+        (br_if $in
+          (i32.add
+            (local.get $x)
+            (local.get $y)
+          )
+        )
+        (br $out
+          (i32.const 7)
+        )
+      )
+      (i32.const 8)
+    )
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-reversed-symmetric (type $3) (param $a i32) (param $b i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  local.get $a
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  local.get $b
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  i32.sub
+  ;; CHECK-NEXT:  block $b (type $3) (param i32 i32) (result i32)
+  ;; CHECK-NEXT:   i32.add
+  ;; CHECK-NEXT:   if
+  ;; CHECK-NEXT:    i32.const 10
+  ;; CHECK-NEXT:    br $b
+  ;; CHECK-NEXT:   end
+  ;; CHECK-NEXT:   i32.const 20
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-reversed-symmetric (param $a i32) (param $b i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    ;; Even when the gets inside the block are read in reverse order ($y then
+    ;; $x), a symmetric op (i32.add) allows threading both sets as block
+    ;; parameters in stack push order ($x then $y).
+    (local.set $x
+      (i32.add
+        (local.get $a)
+        (i32.const 1)
+      )
+    )
+    (local.set $y
+      (i32.sub
+        (local.get $b)
+        (i32.const 2)
+      )
+    )
+    (block $b (result i32)
+      (if
+        (i32.add
+          (local.get $y)
+          (local.get $x)
+        )
+        (then
+          (br $b
+            (i32.const 10)
+          )
+        )
+      )
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-outer-survives (type $3) (param $a i32) (param $b i32) (result i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  local.get $a
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  local.get $b
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  block $in (type $11) (param i32)
+  ;; CHECK-NEXT:   br_if $in
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-outer-survives (param $a i32) (param $b i32) (result i32)
+    (local $z i32)
+    (local $x i32)
+    ;; $z is pushed before $x. Threading $x into $in leaves $z underneath on
+    ;; the outer stack, so $z can still be moved to the stack after $in ends.
+    (local.set $z
+      (i32.add
+        (local.get $a)
+        (i32.const 1)
+      )
+    )
+    (local.set $x
+      (i32.add
+        (local.get $b)
+        (i32.const 2)
+      )
+    )
+    (block $in
+      (br_if $in
+        (local.get $x)
+      )
+    )
+    (local.get $z)
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-outer-blocked (type $3) (param $a i32) (param $b i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  local.get $a
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  local.get $b
+  ;; CHECK-NEXT:  i32.const 2
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  local.set $z
+  ;; CHECK-NEXT:  block $in (type $11) (param i32)
+  ;; CHECK-NEXT:   br_if $in
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT:  local.get $z
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-outer-blocked (param $a i32) (param $b i32) (result i32)
+    (local $x i32)
+    (local $z i32)
+    ;; $z is pushed after $x. Once $x is threaded into $in, $z cannot be left
+    ;; on the stack across $in (or it would sit above $x at BlockBegin and be
+    ;; consumed by $in instead of $x), so $z must remain in a local.
+    (local.set $x
+      (i32.add
+        (local.get $a)
+        (i32.const 1)
+      )
+    )
+    (local.set $z
+      (i32.add
+        (local.get $b)
+        (i32.const 2)
+      )
+    )
+    (block $in
+      (br_if $in
+        (local.get $x)
+      )
+    )
+    (local.get $z)
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-deep-nested (type $6) (param $a i32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  local.get $a
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  block $b1 (type $6) (param i32) (result i32)
+  ;; CHECK-NEXT:   block $b2 (type $6) (param i32) (result i32)
+  ;; CHECK-NEXT:    block $b3 (type $6) (param i32) (result i32)
+  ;; CHECK-NEXT:     block $b4 (type $6) (param i32) (result i32)
+  ;; CHECK-NEXT:      if
+  ;; CHECK-NEXT:       i32.const 1
+  ;; CHECK-NEXT:       br $b1
+  ;; CHECK-NEXT:      end
+  ;; CHECK-NEXT:      local.get $a
+  ;; CHECK-NEXT:      if
+  ;; CHECK-NEXT:       i32.const 2
+  ;; CHECK-NEXT:       br $b2
+  ;; CHECK-NEXT:      end
+  ;; CHECK-NEXT:      local.get $a
+  ;; CHECK-NEXT:      if
+  ;; CHECK-NEXT:       i32.const 3
+  ;; CHECK-NEXT:       br $b3
+  ;; CHECK-NEXT:      end
+  ;; CHECK-NEXT:      i32.const 4
+  ;; CHECK-NEXT:      br $b4
+  ;; CHECK-NEXT:     end
+  ;; CHECK-NEXT:    end
+  ;; CHECK-NEXT:   end
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-deep-nested (param $a i32) (result i32)
+    (local $x i32)
+    ;; A local.set can be threaded across an arbitrary chain of nested targeted
+    ;; blocks.
+    (local.set $x
+      (i32.add
+        (local.get $a)
+        (i32.const 1)
+      )
+    )
+    (block $b1 (result i32)
+      (block $b2 (result i32)
+        (block $b3 (result i32)
+          (block $b4 (result i32)
+            (if
+              (local.get $x)
+              (then
+                (br $b1 (i32.const 1))
+              )
+            )
+            (if
+              (local.get $a)
+              (then
+                (br $b2 (i32.const 2))
+              )
+            )
+            (if
+              (local.get $a)
+              (then
+                (br $b3 (i32.const 3))
+              )
+            )
+            (br $b4 (i32.const 4))
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local-to-stack-block-param-deep-varying (type $18) (param $a i32) (param $b i64) (param $c f32) (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i64)
+  ;; CHECK-NEXT:  (local $z f32)
+  ;; CHECK-NEXT:  local.get $a
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  i32.add
+  ;; CHECK-NEXT:  block $b1 (type $6) (param i32) (result i32)
+  ;; CHECK-NEXT:   local.get $b
+  ;; CHECK-NEXT:   i64.const 2
+  ;; CHECK-NEXT:   i64.add
+  ;; CHECK-NEXT:   block $b2 (type $20) (param i32 i64) (result i32)
+  ;; CHECK-NEXT:    i32.wrap_i64
+  ;; CHECK-NEXT:    if
+  ;; CHECK-NEXT:     i32.const 10
+  ;; CHECK-NEXT:     br $b2
+  ;; CHECK-NEXT:    end
+  ;; CHECK-NEXT:    local.get $c
+  ;; CHECK-NEXT:    f32.const 3
+  ;; CHECK-NEXT:    f32.add
+  ;; CHECK-NEXT:    block $b3 (type $21) (param i32 f32) (result i32)
+  ;; CHECK-NEXT:     f32.const 0
+  ;; CHECK-NEXT:     f32.gt
+  ;; CHECK-NEXT:     if
+  ;; CHECK-NEXT:      i32.const 20
+  ;; CHECK-NEXT:      br $b1
+  ;; CHECK-NEXT:     end
+  ;; CHECK-NEXT:     if
+  ;; CHECK-NEXT:      i32.const 30
+  ;; CHECK-NEXT:      br $b3
+  ;; CHECK-NEXT:     end
+  ;; CHECK-NEXT:     i32.const 40
+  ;; CHECK-NEXT:    end
+  ;; CHECK-NEXT:   end
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $local-to-stack-block-param-deep-varying (param $a i32) (param $b i64) (param $c f32) (result i32)
+    (local $x i32)
+    (local $y i64)
+    (local $z f32)
+    ;; Nested blocks receive different parameter lists as sets are pushed and
+    ;; consumed at intermediate depths.
+    (local.set $x
+      (i32.add
+        (local.get $a)
+        (i32.const 1)
+      )
+    )
+    (block $b1 (result i32)
+      (local.set $y
+        (i64.add
+          (local.get $b)
+          (i64.const 2)
+        )
+      )
+      (block $b2 (result i32)
+        (if
+          (i32.wrap_i64
+            (local.get $y)
+          )
+          (then
+            (br $b2 (i32.const 10))
+          )
+        )
+        (local.set $z
+          (f32.add
+            (local.get $c)
+            (f32.const 3)
+          )
+        )
+        (block $b3 (result i32)
+          (if
+            (f32.gt
+              (local.get $z)
+              (f32.const 0)
+            )
+            (then
+              (br $b1 (i32.const 20))
+            )
+          )
+          (if
+            (local.get $x)
+            (then
+              (br $b3 (i32.const 30))
+            )
+          )
+          (i32.const 40)
+        )
+      )
+    )
   )
 )

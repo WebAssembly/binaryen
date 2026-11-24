@@ -176,9 +176,30 @@ void StackIROptimizer::local2Stack() {
   //    stack at that location.
   const Index null = -1;
   std::vector<Index> values;
-  // We also maintain a stack of values vectors for control flow,
-  // saving the stack as we enter and restoring it when we exit.
-  std::vector<std::vector<Index>> savedValues;
+  // We also maintain a stack of active control-flow scopes, saving the outer
+  // value stack as we enter and restoring it when we exit, while recording any
+  // LocalSet values threaded across BlockBegin boundaries as block input
+  // parameters.
+  struct BlockScope {
+    // An outer LocalSet value threaded into this block as an input parameter.
+    struct ParamSet {
+      // Index into `insts` of the eliminated LocalSet, used to sort parameters
+      // into the order their values were pushed onto the stack.
+      Index setIndex;
+      // Value type of the parameter.
+      Type type;
+    };
+
+    // Index into `insts` of the control-flow begin instruction, used to test
+    // whether this scope was entered after a candidate LocalSet and to update
+    // `insts[beginInstIndex]->params` on exit.
+    Index beginInstIndex;
+    // Outer value stack saved on scope entry and restored on scope exit.
+    std::vector<Index> savedValues;
+    // Eliminated outer LocalSets threaded across this block boundary.
+    SmallVector<ParamSet, 2> paramSets;
+  };
+  std::vector<BlockScope> scopeStack;
 #if STACK_OPT_DEBUG
   std::cout << "func: " << func->name << '\n' << insts << '\n';
 #endif
@@ -214,13 +235,45 @@ void StackIROptimizer::local2Stack() {
     // After consuming, we can see what to do with this. First, handle
     // control flow.
     if (isControlFlowBegin(inst)) {
-      // Save the stack for when we end this control flow.
-      savedValues.push_back(values); // TODO: optimize copies
-      values.assign(inst->params.size(), null);
+      assert(inst->params == Type::none);
+      std::vector<Index> innerValues;
+      if (features.hasMultivalue() && inst->op == StackInst::BlockBegin) {
+        // Initialize `innerValues` with the contiguous suffix of candidate
+        // LocalSets at the top of the outer stack so inner LocalGets can thread
+        // them across `BlockBegin` as block input parameters. Stop at the first
+        // `null` (which represents an actual unnamed value already on the Wasm
+        // value stack) because block parameters are popped from the top of the
+        // stack at `BlockBegin` and cannot reach underneath an unconsumed stack
+        // value.
+        size_t start = values.size();
+        while (start > 0 && values[start - 1] != null) {
+          start--;
+        }
+        innerValues.assign(values.begin() + start, values.end());
+      }
+      scopeStack.push_back({instIndex, std::move(values), {}});
+      values = std::move(innerValues);
     } else if (isControlFlowEnd(inst)) {
-      assert(!savedValues.empty());
-      values = savedValues.back();
-      savedValues.pop_back();
+      assert(!scopeStack.empty());
+      auto scope = std::move(scopeStack.back());
+      scopeStack.pop_back();
+      if (!scope.paramSets.empty()) {
+        // Inner LocalGets can be optimized in reverse stack order when consumed
+        // by a symmetric operation, so sort by `setIndex` to match the order
+        // the parameter values were pushed before `BlockBegin`.
+        std::sort(scope.paramSets.begin(),
+                  scope.paramSets.end(),
+                  [](const auto& lhs, const auto& rhs) {
+                    return lhs.setIndex < rhs.setIndex;
+                  });
+        std::vector<Type> paramTypes;
+        paramTypes.reserve(scope.paramSets.size());
+        for (const auto& param : scope.paramSets) {
+          paramTypes.push_back(param.type);
+        }
+        insts[scope.beginInstIndex]->params = Type(paramTypes);
+      }
+      values = std::move(scope.savedValues);
     } else if (isControlFlow(inst)) {
       // Otherwise, in the middle of control flow, just clear it
       values.clear();
@@ -262,34 +315,48 @@ void StackIROptimizer::local2Stack() {
               continue;
             }
             auto* set = insts[setIndex]->origin->cast<LocalSet>();
-            if (set->index == get->index) {
-              // This might be a proper set-get pair, where the set is
-              // used by this get and nothing else, check that.
-              auto& sets = localGraph.getSets(get);
-              if (sets.size() == 1 && *sets.begin() == set) {
-                auto& setInfluences = localGraph.getSetInfluences(set);
-                // If this has the proper value of 1, also do the potentially-
-                // expensive check of whether we can remove this pair at all.
-                if (setInfluences.size() == 1 &&
-                    canRemoveSetGetPair(setIndex, getIndex)) {
-                  assert(*setInfluences.begin() == get);
-                  // Do it! The set and the get can go away, the proper
-                  // value is on the stack.
+            if (set->index == get->index &&
+                isSingleUseSetGetPair(setIndex, getIndex, localGraph)) {
+              // Do it! The set and the get can go away, the proper
+              // value is on the stack.
 #if STACK_OPT_DEBUG
-                  std::cout << "  stackify the get\n";
+              std::cout << "  stackify the get\n";
 #endif
-                  insts[setIndex] = nullptr;
-                  insts[getIndex] = nullptr;
-                  // Continuing on from here, replace this on the stack
-                  // with a null, representing a regular value. We
-                  // keep possible values above us active - they may
-                  // be optimized later, as they would be pushed after
-                  // us, and used before us, so there is no conflict.
-                  values[j] = null;
-                  optimized = true;
-                  break;
+              insts[setIndex] = nullptr;
+              insts[getIndex] = nullptr;
+              // Continuing on from here, replace this on the stack
+              // with a null, representing a regular value. We
+              // keep possible values above us active - they may
+              // be optimized later, as they would be pushed after
+              // us, and used before us, so there is no conflict.
+              values[j] = null;
+              // Record the new block parameter on each crossed block, scanning
+              // from innermost to outermost since `beginInstIndex` increases
+              // monotonically along `scopeStack`.
+              for (auto scopeIt = scopeStack.rbegin();
+                   scopeIt != scopeStack.rend() &&
+                   scopeIt->beginInstIndex > setIndex;
+                   ++scopeIt) {
+                assert(insts[scopeIt->beginInstIndex]->op ==
+                       StackInst::BlockBegin);
+                scopeIt->paramSets.push_back({setIndex, get->type});
+                auto savedIt = std::find(scopeIt->savedValues.begin(),
+                                         scopeIt->savedValues.end(),
+                                         setIndex);
+                if (savedIt != scopeIt->savedValues.end()) {
+                  // `setIndex` is not necessarily at the back of `savedValues`:
+                  // any candidate sets pushed after `setIndex` sit above this
+                  // value on the outer stack at `BlockBegin` and would be
+                  // consumed by the block if left on the stack, so erase
+                  // `setIndex` and everything above it. (`savedIt` may already
+                  // have been erased if an even deeper outer set was threaded
+                  // earlier in this block.)
+                  scopeIt->savedValues.erase(savedIt,
+                                             scopeIt->savedValues.end());
                 }
               }
+              optimized = true;
+              break;
             }
             // We failed here. Can we look some more?
             if (j == 0) {
@@ -491,6 +558,25 @@ Index StackIROptimizer::getNumConsumedValues(StackInst* inst) {
   }
   // Otherwise, for basic instructions, just count the expression children.
   return ChildIterator(inst->origin).children.size();
+}
+
+// Check that `set` at `setIndex` and `get` at `getIndex` form a single-use
+// def-use pair whose removal preserves non-nullable local validation.
+bool StackIROptimizer::isSingleUseSetGetPair(Index setIndex,
+                                             Index getIndex,
+                                             LazyLocalGraph& localGraph) {
+  auto* set = insts[setIndex]->origin->cast<LocalSet>();
+  auto* get = insts[getIndex]->origin->cast<LocalGet>();
+  auto& sets = localGraph.getSets(get);
+  if (sets.size() != 1 || *sets.begin() != set) {
+    return false;
+  }
+  auto& setInfluences = localGraph.getSetInfluences(set);
+  if (setInfluences.size() != 1) {
+    return false;
+  }
+  assert(*setInfluences.begin() == get);
+  return canRemoveSetGetPair(setIndex, getIndex);
 }
 
 // Given a pair of a local.set and local.get, see if we can remove them
