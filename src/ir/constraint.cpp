@@ -1097,20 +1097,28 @@ void BasicBlockConstraintMap::set(Index index,
   }
 
   // Apply a constraint to a local, x = y.
+  auto alreadySet = false;
   if (auto* get = value->dynCast<LocalGet>()) {
     set(index, Constraint{Eq, {get->index}});
-    return;
-  }
-  if (auto* tee = value->dynCast<LocalSet>()) {
+    alreadySet = true;
+  } else if (auto* tee = value->dynCast<LocalSet>()) {
     set(index, Constraint{Eq, {tee->index}});
-    return;
+    alreadySet = true;
   }
 
   // Apply a refining constraint.
   if (localType && localType->isNullableRef() &&
       value->type.isNonNullableRef()) {
     auto zero = Literal::makeZero(*localType);
-    set(index, Constraint{Ne, {zero}});
+    auto c = Constraint{Ne, {zero}};
+    if (!alreadySet) {
+      set(index, c);
+    } else {
+      approximateAnd(index, c);
+    }
+    return;
+  }
+  if (alreadySet) {
     return;
   }
 

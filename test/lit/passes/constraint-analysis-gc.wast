@@ -5,14 +5,13 @@
 (module
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
-  ;; CHECK:      (type $Func (func))
-
   ;; CHECK:      (type $Array (array (mut i32)))
   (type $Array (array (mut i32)))
 
+  ;; CHECK:      (import "a" "c" (func $get-nullable (type $3) (result (ref null $A))))
   (import "a" "c" (func $get-nullable (result (ref null $A))))
 
-  ;; CHECK:      (func $non-null-direct (type $3) (param $a (ref null $A))
+  ;; CHECK:      (func $non-null-direct (type $1) (param $a (ref null $A))
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (struct.new_default $A)
   ;; CHECK-NEXT:  )
@@ -42,7 +41,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null (type $1) (param $a (ref null $A)) (result i32)
+  ;; CHECK:      (func $non-null-indirect (type $2) (param $a (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $a)
@@ -74,7 +73,7 @@
     )
   )
 
-  ;; CHECK:      (func $nullable-set-and-overwrite (type $3) (param $a (ref null $A))
+  ;; CHECK:      (func $nullable-set-and-overwrite (type $1) (param $a (ref null $A))
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (struct.new_default $A)
   ;; CHECK-NEXT:  )
@@ -141,7 +140,7 @@
     )
   )
 
-  ;; CHECK:      (func $from-non-null-param (type $10) (param $a (ref null $A)) (param $b (ref $A)) (result i32)
+  ;; CHECK:      (func $from-non-null-param (type $4) (param $a (ref null $A)) (param $b (ref $A)) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $a)
@@ -152,13 +151,10 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.is_null
-  ;; CHECK-NEXT:   (local.get $a)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $from-non-null-param (param $a (ref null $A)) (param $b (ref $A)) (result i32)
     ;; Assigning a non-nullable param to a nullable local proves non-null.
-    ;; TODO
     (if
       (ref.is_null
         (local.get $a)
@@ -174,21 +170,18 @@
     )
   )
 
-  ;; CHECK:      (func $from-non-null-tee (type $1) (param $a (ref null $A)) (result i32)
+  ;; CHECK:      (func $from-non-null-tee (type $2) (param $a (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (local $b (ref $A))
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (local.tee $b
   ;; CHECK-NEXT:    (struct.new_default $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.is_null
-  ;; CHECK-NEXT:   (local.get $a)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $from-non-null-tee (param $a (ref null $A)) (result i32)
     (local $b (ref $A))
     ;; Assigning from a tee of a non-nullable local proves $a is non-null.
-    ;; TODO
     (local.set $a
       (local.tee $b
         (struct.new_default $A)
@@ -199,7 +192,7 @@
     )
   )
 
-  ;; CHECK:      (func $from-nullable-tee (type $3) (param $a (ref null $A))
+  ;; CHECK:      (func $from-nullable-tee (type $1) (param $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (local.tee $b
@@ -233,7 +226,7 @@
     )
   )
 
-  ;; CHECK:      (func $fallthrough-ref-as-non-null (type $1) (param $a (ref null $A)) (result i32)
+  ;; CHECK:      (func $fallthrough-ref-as-non-null (type $2) (param $a (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (call $get-nullable)
@@ -257,7 +250,7 @@
     )
   )
 
-  ;; CHECK:      (func $merge-two-non-null (type $14) (param $c i32) (result i32)
+  ;; CHECK:      (func $merge-two-non-null (type $5) (param $c i32) (result i32)
   ;; CHECK-NEXT:  (local $a anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $c)
@@ -300,7 +293,7 @@
   )
 
 
-  ;; CHECK:      (func $merge-one-nullable-one-non-null (type $15) (param $a (ref null $A)) (param $c i32) (result i32)
+  ;; CHECK:      (func $merge-one-nullable-one-non-null (type $7) (param $a (ref null $A)) (param $c i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $c)
   ;; CHECK-NEXT:   (then
