@@ -1619,9 +1619,7 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       bool operator<(const ScopePos& other) const {
         return std::tie(line, col) < std::tie(other.line, other.col);
       }
-      bool operator<=(const ScopePos& other) const {
-        return !(other < *this);
-      }
+      bool operator<=(const ScopePos& other) const { return !(other < *this); }
     };
     auto toScopePos = [](const Function::DebugLocation& dl) -> ScopePos {
       return {dl.lineNumber > 0 ? dl.lineNumber - 1 : 0, dl.columnNumber};
@@ -1695,8 +1693,8 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
           ScopePos pos = toScopePos(dl);
           auto it = scopeBoundsMap.find(key);
           if (it == scopeBoundsMap.end()) {
-            scopeBoundsMap.emplace(
-              key, ScopeBounds{pos, pos, dl.symbolNameIndex});
+            scopeBoundsMap.emplace(key,
+                                   ScopeBounds{pos, pos, dl.symbolNameIndex});
           } else {
             if (pos < it->second.minPos) {
               it->second.minPos = pos;
@@ -1744,8 +1742,8 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
                                       std::move(keys),
                                       {}});
       }
-      // Sort by start ascending, then end descending so enclosing scopes precede
-      // nested scopes and unsigned relative positions never underflow.
+      // Sort by start ascending, then end descending so enclosing scopes
+      // precede nested scopes and unsigned relative positions never underflow.
       std::sort(nodes.begin(),
                 nodes.end(),
                 [](const ScopeTreeNode& a, const ScopeTreeNode& b) {

@@ -1119,10 +1119,9 @@ TEST_F(SourceMapTest, OverlappingAndNestedOriginalScopes) {
   // Scope 2 (FuncA, widened to [39:0, 54:1), name 2): BFKAC
   //   Scope 3 (FuncB, [44:0, 54:1), name 3): BFFAC,CKB
   // FuncA closes at 54:1: CAA
-  EXPECT_THAT(
-    mapStr,
-    ::testing::HasSubstr(
-      "\"scopes\":[\"BFJAA,BFFCC,CFF,CKB,BFKAC,BFFAC,CKB,CAA\"]"));
+  EXPECT_THAT(mapStr,
+              ::testing::HasSubstr(
+                "\"scopes\":[\"BFJAA,BFFCC,CFF,CKB,BFKAC,BFFAC,CKB,CAA\"]"));
 
   std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
   std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
@@ -1134,18 +1133,18 @@ TEST_F(SourceMapTest, OverlappingAndNestedOriginalScopes) {
   ASSERT_EQ(m2.functions.size(), 3u);
   auto* outerBlock = m2.functions[0]->body->cast<Block>();
   ASSERT_EQ(outerBlock->list.size(), 4u);
-  EXPECT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[0])[0].lineNumber,
-            10u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[0])[0].lineNumber, 10u);
   ASSERT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[1]).size(), 2u);
-  EXPECT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[1])[0].lineNumber,
-            12u);
-  EXPECT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[1])[1].lineNumber,
-            15u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[1])[0].lineNumber, 12u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[1])[1].lineNumber, 15u);
   ASSERT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[2]).size(), 2u);
-  EXPECT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[2])[1].lineNumber,
-            20u);
-  EXPECT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[3])[0].lineNumber,
-            30u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[2])[1].lineNumber, 20u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[3])[0].lineNumber, 30u);
 
   auto* aBlock = m2.functions[1]->body->cast<Block>();
   EXPECT_EQ(m2.functions[1]->debugLocations.at(aBlock->list[0])[0].lineNumber,
