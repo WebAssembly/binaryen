@@ -1714,6 +1714,14 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       std::vector<ScopeKey> keys;
       std::vector<size_t> children;
     };
+    // Deduplicate scopes in the same file that end up with identical
+    // (start, end, name) bounds. Because unnamed frames are keyed by Wasm
+    // function index or call site, the same unnamed original function can
+    // produce multiple ScopeKeys (e.g. inlined at N call sites, or both
+    // inlined and kept out-of-line). Merging them avoids emitting redundant
+    // identical OriginalScopes (which would also artificially nest inside one
+    // another in the scope tree below) and lets all their GeneratedRanges
+    // share one OriginalScope definition.
     using DedupKey =
       std::tuple<ScopePos, ScopePos, std::optional<BinaryLocation>>;
     std::vector<std::map<DedupKey, std::vector<ScopeKey>>> perFileDedup(
