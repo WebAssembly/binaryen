@@ -3,10 +3,25 @@
 ;; RUN: wasm-opt %s --constraint-analysis -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
+  ;; CHECK:      (import "a" "b" (func $import (type $1)))
   (import "a" "b" (func $import))
 
+  ;; CHECK:      (func $non-null (type $2) (param $a (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
   (func $non-null (param $a (ref null $A)) (result i32)
     ;; The param is nullable, but if it is null then we assign a non-null
     ;; value.
@@ -20,7 +35,7 @@
         )
       )
     )
-    ;; At this point, it is certainly not null, so this is 0.
+    ;; At this point, the param is certainly not null, so this is 0.
     (ref.is_null
       (local.get $a)
     )
