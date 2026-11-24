@@ -2341,16 +2341,34 @@ class PreserveImportsExportsJS(TestCaseHandler):
 
         # Clean up stack traces.
         cleaned = []
-        for line in out.splitlines():
+        lines = out.splitlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             if 'RuntimeError:' in line or 'TypeError:' in line:
                 # This is part of an error like
                 #
                 #  wasm-function[2]:0x273: RuntimeError: unreachable
                 #
-                # We must ignore the binary location, which opts can change. We
-                # must also remove the specific trap, as Binaryen can change
-                # that.
-                line = 'TRAP'
+                # or, when the error is attributed to JS (e.g. after a
+                # return_call to a JS builtin),
+                #
+                #  file.mjs:30: RuntimeError: illegal cast
+                #  b.value = 20;
+                #          ^
+                #
+                # We must ignore the binary/source location, which opts can
+                # change. We must also remove the specific trap, as Binaryen can
+                # change that.
+                cleaned.append('TRAP')
+                if (
+                    re.search(r':\d+: (?:RuntimeError|TypeError):', line)
+                    and i + 2 < len(lines)
+                    and re.fullmatch(r'[ \t]*\^+[ \t]*', lines[i + 2])
+                ):
+                    # Skip the 2-line JS source snippet and caret line.
+                    i += 3
+                    continue
             elif line.startswith('    at '):
                 # This is part of a stack trace like
                 #
@@ -2359,12 +2377,14 @@ class PreserveImportsExportsJS(TestCaseHandler):
                 #     at file.js
                 #
                 # Ignore it, as details of traces differ based on optimizations.
-                continue
+                pass
             elif not line:
                 # V8 may print blank lines before stack traces when the top
                 # frame has no script location (e.g. after a return_call to JS).
-                continue
-            cleaned.append(line)
+                pass
+            else:
+                cleaned.append(line)
+            i += 1
         cleaned = '\n'.join(cleaned)
 
         # Clean up function references, which can differ after opts, things like
