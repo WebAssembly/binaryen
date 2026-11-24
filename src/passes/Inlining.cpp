@@ -644,6 +644,66 @@ static void doCodeInlining(Module* module,
   auto* contents = ExpressionManipulator::copy(from->body, *module);
   metadata::copyBetweenFunctions(from->body, contents, from, into);
   updater.walk(contents);
+
+  // Handle source map scopes.
+  if (auto it = into->debugLocations.find(call);
+      it != into->debugLocations.end() && !it->second.empty()) {
+    auto callLocs = it->second;
+
+    // Mark the block as having the locations of the call.
+    into->debugLocations[block] = callLocs;
+    for (auto* initExpr : block->list) {
+      into->debugLocations[initExpr] = callLocs;
+    }
+
+    // For the inlined contents inside the block, add scoping info: we had
+    //
+    //   func called() {
+    //     //@ a.cpp:10:1
+    //     x++;
+    //   }
+    //
+    //   func caller() {
+    //     //@ b.cpp:20:2
+    //     called();
+    //   }
+    //
+    // and after inlining, we have two stack frames:
+    //
+    //   func caller() {
+    //     //@ b.cpp:20:2
+    //     //@ a.cpp:10:1
+    //     x++;
+    //   }
+    //
+    struct InlinedDebugUpdater
+      : public PostWalker<InlinedDebugUpdater,
+                          UnifiedExpressionVisitor<InlinedDebugUpdater>> {
+      Function* into;
+      const Function::DebugLocations& callLocs;
+      InlinedDebugUpdater(Function* into,
+                          const Function::DebugLocations& callLocs)
+        : into(into), callLocs(callLocs) {}
+      void visitExpression(Expression* curr) {
+        auto it = into->debugLocations.find(curr);
+        if (it == into->debugLocations.end() || it->second.empty()) {
+          // No debug info on this instruction, so do not add anything. Things
+          // that were untracked can remain untracked.
+          return;
+        }
+
+        // This was tracked, so prepend the caller's locations.
+        auto combined = callLocs;
+        for (const auto& loc : it->second) {
+          combined.push_back(loc);
+        }
+        it->second = std::move(combined);
+      }
+    };
+    InlinedDebugUpdater(into, callLocs).walk(contents);
+  }
+
+  // Finish up the block.
   block->list.push_back(contents);
   block->type = retType;
 
@@ -1459,6 +1519,10 @@ struct Inlining : public Pass {
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func);
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
+
+        // Update the size, as we may try to inline into the target additional
+        // times.
+        infos[func->name].size += infos[inlinedName].size;
       }
     }
 

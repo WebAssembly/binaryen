@@ -1313,6 +1313,8 @@ enum FeaturePrefix { FeatureUsed = '+', FeatureDisallowed = '-' };
 // (local index in IR, tuple index) => binary local index
 using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
 
+class ModuleStackIR;
+
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
@@ -1387,10 +1389,8 @@ class WasmBinaryWriter {
 public:
   WasmBinaryWriter(Module* input,
                    BufferWithRandomAccess& o,
-                   const PassOptions& options)
-    : wasm(input), o(o), options(options), indexes(*input) {
-    prepare();
-  }
+                   const PassOptions& options);
+  ~WasmBinaryWriter();
 
   // locations in the output binary for the various parts of the module
   struct TableOfContents {
@@ -1469,7 +1469,7 @@ public:
   void initializeDebugInfo();
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
-  void writeDebugLocation(const Function::DebugLocation& loc);
+  void writeDebugLocation(const Function::DebugLocations& loc);
   void writeNoDebugLocation();
   void writeSourceMapLocation(Expression* curr, Function* func);
 
@@ -1548,14 +1548,16 @@ private:
   // Storage of source map locations until the section is placed at its final
   // location (shrinking LEBs may cause changes there).
   //
-  // A null DebugLocation* indicates we have no debug information for that
+  // A null DebugLocations* indicates we have no debug information for that
   // location.
-  std::vector<std::pair<size_t, const Function::DebugLocation*>>
+  std::vector<std::pair<size_t, const Function::DebugLocations*>>
     sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;
-  Function::DebugLocation lastDebugLocation;
+  std::vector<size_t> functionEndOffsets;
+  Function::DebugLocations lastDebugLocation;
 
   std::unique_ptr<ImportInfo> importInfo;
+  std::unique_ptr<ModuleStackIR> moduleStackIR;
 
   // General debugging info: track locations as we write.
   BinaryLocations binaryLocations;

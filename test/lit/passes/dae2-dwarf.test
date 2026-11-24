@@ -1,0 +1,5 @@
+;; Verify that DAE2 declares DWARF incompatibility and warns when run with -g.
+
+;; RUN: wasm-opt %S/../binary/dwarf-multivalue.test.wasm -all -g --dae2 -o /dev/null 2>&1 | filecheck %s
+
+;; CHECK: warning: running pass 'dae2' which is not fully compatible with DWARF

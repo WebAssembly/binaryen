@@ -232,6 +232,9 @@ void PassRegistry::registerPasses() {
                createTypeRefiningGUFAPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
+  registerPass("heap2local2",
+               "experimental reimplementation of heap2local",
+               createHeap2Local2Pass);
   registerPass("heap-store-optimization",
                "optimize heap (GC) stores",
                createHeapStoreOptimizationPass);
@@ -606,6 +609,8 @@ void PassRegistry::registerPasses() {
   registerPass("type-finalizing",
                "mark all leaf types as final",
                createTypeFinalizingPass);
+  registerPass(
+    "type-generalizing", "generalize types", createTypeGeneralizingPass);
   registerPass("type-merging",
                "merge types to their supertypes where possible",
                createTypeMergingPass);
@@ -635,9 +640,6 @@ void PassRegistry::registerPasses() {
   registerTestPass("delete-branch-hints",
                    "delete branch hints using a list of instrumented IDs",
                    createDeleteBranchHintsPass);
-  registerTestPass("experimental-type-generalizing",
-                   "generalize types (not yet sound)",
-                   createTypeGeneralizingPass);
   registerTestPass("randomize-branch-hints",
                    "randomize branch hints (for fuzzing)",
                    createRandomizeBranchHintsPass);

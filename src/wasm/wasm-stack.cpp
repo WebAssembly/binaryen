@@ -24,9 +24,10 @@ static Name IMPOSSIBLE_CONTINUE("impossible-continue");
 
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
-    parent.writeType(Type::none);
-  } else if (type.isTuple()) {
-    o << S32LEB(parent.getSignatureIndex(Signature(Type::none, type)));
+    type = Type::none;
+  }
+  if (currParams != Type::none || type.isTuple()) {
+    o << S32LEB(parent.getSignatureIndex(Signature(currParams, type)));
   } else {
     parent.writeType(type);
   }
@@ -3731,8 +3732,8 @@ ModuleStackIR::ModuleStackIR(Module& wasm, const PassOptions& options)
     }) {}
 
 void StackIRToBinaryWriter::write() {
-  if (func->prologLocation) {
-    parent.writeDebugLocation(*func->prologLocation);
+  if (!func->prologLocation.empty()) {
+    parent.writeDebugLocation(func->prologLocation);
   }
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
@@ -3753,7 +3754,7 @@ void StackIRToBinaryWriter::write() {
         if (sourceMap) {
           parent.writeSourceMapLocation(inst->origin, func);
         }
-        writer.visit(inst->origin);
+        writer.visit(inst);
         break;
       }
       case StackInst::TryEnd:
@@ -3790,8 +3791,8 @@ void StackIRToBinaryWriter::write() {
   }
   // Indicate the debug location corresponding to the end opcode that
   // terminates the function code.
-  if (func->epilogLocation) {
-    parent.writeDebugLocation(*func->epilogLocation);
+  if (!func->epilogLocation.empty()) {
+    parent.writeDebugLocation(func->epilogLocation);
   } else {
     // The end opcode has no debug location.
     parent.writeNoDebugLocation();

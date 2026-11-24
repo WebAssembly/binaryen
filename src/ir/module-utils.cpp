@@ -24,24 +24,27 @@
 #include "support/topological_sort.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-stack.h"
 
 namespace wasm::ModuleUtils {
 
 // Update the file name indices when moving a set of debug locations from one
 // module to another.
-static void updateLocation(std::optional<Function::DebugLocation>& location,
-                           std::vector<Index>& fileIndexMap) {
-  if (location) {
-    location->fileIndex = fileIndexMap[location->fileIndex];
+static void updateLocation(Function::DebugLocations& locations,
+                           const std::vector<Index>& fileIndexMap) {
+  for (auto& loc : locations) {
+    loc.fileIndex = fileIndexMap[loc.fileIndex];
   }
 }
 
 // Update the symbol name indices when moving a set of debug locations from one
 // module to another.
-static void updateSymbol(std::optional<Function::DebugLocation>& location,
-                         std::vector<Index>& symbolIndexMap) {
-  if (location && location->symbolNameIndex) {
-    location->symbolNameIndex = symbolIndexMap[*location->symbolNameIndex];
+static void updateSymbol(Function::DebugLocations& locations,
+                         const std::vector<Index>& symbolIndexMap) {
+  for (auto& loc : locations) {
+    if (loc.symbolNameIndex) {
+      loc.symbolNameIndex = symbolIndexMap[*loc.symbolNameIndex];
+    }
   }
 }
 
@@ -83,21 +86,14 @@ copyFunctionWithoutAdd(Function* func,
   // Update file indices if needed
   if (fileIndexMap) {
     for (auto& iter : ret->debugLocations) {
-      if (iter.second) {
-        iter.second->fileIndex = (*fileIndexMap)[iter.second->fileIndex];
-      }
+      updateLocation(iter.second, *fileIndexMap);
     }
     updateLocation(ret->prologLocation, *fileIndexMap);
     updateLocation(ret->epilogLocation, *fileIndexMap);
   }
   if (symbolNameIndexMap) {
     for (auto& iter : ret->debugLocations) {
-      if (iter.second) {
-        if (iter.second->symbolNameIndex.has_value()) {
-          iter.second->symbolNameIndex =
-            (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
-        }
-      }
+      updateSymbol(iter.second, *symbolNameIndexMap);
     }
     updateSymbol(ret->prologLocation, *symbolNameIndexMap);
     updateSymbol(ret->epilogLocation, *symbolNameIndexMap);
@@ -305,7 +301,7 @@ void clearModule(Module& wasm) {
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this to redirect all of its uses.
-template<typename T> void renameFunctions(Module& wasm, T& map) {
+void renameFunctions(Module& wasm, const std::map<Name, Name>& map) {
   // Update the function itself.
   for (auto& [oldName, newName] : map) {
     if (Function* func = wasm.getFunctionOrNull(oldName)) {
@@ -319,7 +315,7 @@ template<typename T> void renameFunctions(Module& wasm, T& map) {
   struct Updater : public WalkerPass<PostWalker<Updater>> {
     bool isFunctionParallel() override { return true; }
 
-    T& map;
+    const std::map<Name, Name>& map;
 
     void maybeUpdate(Name& name) {
       if (auto iter = map.find(name); iter != map.end()) {
@@ -327,7 +323,7 @@ template<typename T> void renameFunctions(Module& wasm, T& map) {
       }
     }
 
-    Updater(T& map) : map(map) {}
+    Updater(const std::map<Name, Name>& map) : map(map) {}
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<Updater>(map);
@@ -398,9 +394,10 @@ struct TypeInfos {
     }
   }
   void noteControlFlow(Signature sig) {
-    // TODO: support control flow input parameters.
-    assert(sig.params.size() == 0);
-    if (sig.results.isTuple()) {
+    if (sig.results == Type::unreachable) {
+      sig.results = Type::none;
+    }
+    if (sig.params != Type::none || sig.results.isTuple()) {
       // We have to use a function type.
       ++controlFlowSignatures[sig];
     } else if (sig.results != Type::none) {
@@ -417,9 +414,16 @@ using ReferencedFuncs = std::unordered_map<Name, std::atomic<bool>>;
 struct CodeScanner : PostWalker<CodeScanner> {
   TypeInfos& info;
   ReferencedFuncs& referencedFuncs;
+  // Whether StackIR is being used for the function being scanned, in which case
+  // control flow signatures have already been collected from StackIR and should
+  // not be collected again from the Binaryen IR control flow nodes.
+  bool hasStackIR;
 
-  CodeScanner(Module& wasm, TypeInfos& info, ReferencedFuncs& referencedFuncs)
-    : info(info), referencedFuncs(referencedFuncs) {
+  CodeScanner(Module& wasm,
+              TypeInfos& info,
+              ReferencedFuncs& referencedFuncs,
+              bool hasStackIR = false)
+    : info(info), referencedFuncs(referencedFuncs), hasStackIR(hasStackIR) {
     setModule(&wasm);
   }
 
@@ -474,21 +478,18 @@ struct CodeScanner : PostWalker<CodeScanner> {
     info.note(curr->cont->type);
     info.note(curr->type);
   }
-  void visitBlock(Block* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
+  void maybeNoteControlFlow(Type results) {
+    // If there is StackIR, we will separately note its control flow types
+    // instead.
+    if (!hasStackIR) {
+      info.noteControlFlow(Signature(Type::none, results));
+    }
   }
-  void visitIf(If* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
-  void visitLoop(Loop* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
-  void visitTry(Try* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
-  void visitTryTable(TryTable* curr) {
-    info.noteControlFlow(Signature(Type::none, curr->type));
-  }
+  void visitBlock(Block* curr) { maybeNoteControlFlow(curr->type); }
+  void visitIf(If* curr) { maybeNoteControlFlow(curr->type); }
+  void visitLoop(Loop* curr) { maybeNoteControlFlow(curr->type); }
+  void visitTry(Try* curr) { maybeNoteControlFlow(curr->type); }
+  void visitTryTable(TryTable* curr) { maybeNoteControlFlow(curr->type); }
   void visitRefFunc(RefFunc* curr) { referencedFuncs.at(curr->func) = true; }
 };
 
@@ -503,7 +504,8 @@ InsertOrderedMap<HeapType, HeapTypeInfo>
 collectHeapTypeInfo(Module& wasm,
                     WorldMode worldMode,
                     TypeInclusion inclusion,
-                    VisibilityHandling visibility) {
+                    VisibilityHandling visibility,
+                    const ModuleStackIR* stackIR) {
   // Collect module-level info.
   TypeInfos info;
   ReferencedFuncs referencedFuncs;
@@ -531,11 +533,20 @@ collectHeapTypeInfo(Module& wasm,
       for (auto type : func->vars) {
         info.note(type);
       }
+      auto* funcStackIR = stackIR ? stackIR->getStackIROrNull(func) : nullptr;
+      if (funcStackIR) {
+        for (auto* inst : *funcStackIR) {
+          if (inst && inst->isControlFlowBegin()) {
+            info.noteControlFlow(Signature(inst->params, inst->origin->type));
+          }
+        }
+      }
       // Don't just use `func->imported()` here because we also might be
       // printing an error message on a partially parsed module whose declared
       // function bodies have not all been parsed yet.
       if (func->body) {
-        CodeScanner(wasm, info, referencedFuncs).walk(func->body);
+        CodeScanner(wasm, info, referencedFuncs, funcStackIR != nullptr)
+          .walk(func->body);
       }
     });
 
@@ -975,9 +986,13 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm, WorldMode worldMode) {
   return types;
 }
 
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts =
-    collectHeapTypeInfo(wasm, WorldMode::Open, TypeInclusion::BinaryTypes);
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm,
+                                              const ModuleStackIR* stackIR) {
+  auto counts = collectHeapTypeInfo(wasm,
+                                    WorldMode::Open,
+                                    TypeInclusion::BinaryTypes,
+                                    VisibilityHandling::NoVisibility,
+                                    stackIR);
 
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;

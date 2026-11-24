@@ -137,7 +137,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // not yet printed any debug location, or that we last printed an
   // annotation indicating that the expression had no associated
   // debug location.
-  std::optional<Function::DebugLocation> lastPrintedLocation;
+  Function::DebugLocations lastPrintedLocation;
   bool debugInfo;
 
   // Used to print delegate's depth argument when it throws to the caller
@@ -252,23 +252,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
 
   std::ostream& printBlockType(Signature sig) {
-    assert(sig.params == Type::none);
-    if (sig.results == Type::none) {
-      return o;
-    }
-    if (sig.results.isTuple()) {
+    if (sig.params != Type::none || sig.results.isTuple()) {
       if (auto it = signatureTypes.find(sig); it != signatureTypes.end()) {
-        o << "(type ";
+        o << " (type ";
         printHeapTypeName(it->second);
-        o << ") ";
+        o << ')';
       }
     }
-    printResultType(sig.results);
+    if (sig.params != Type::none) {
+      o << ' ';
+      printParamType(sig.params);
+    }
+    if (sig.results != Type::none) {
+      o << ' ';
+      printResultType(sig.results);
+    }
     return o;
   }
 
-  void
-  printDebugLocation(const std::optional<Function::DebugLocation>& location);
+  void printDebugLocation(const Function::DebugLocations& locations);
 
   // Prints debug info for a delimiter in an expression.
   void printDebugDelimiterLocation(Expression* curr, Index i);
@@ -362,6 +364,33 @@ struct PrintExpressionContents
       currFunction(parent.currFunction), o(parent.o),
       features(wasm ? wasm->features : FeatureSet::All), full(isFullForced()) {}
 
+  using OverriddenVisitor<PrintExpressionContents>::visit;
+
+  void visit(StackInst* inst) {
+    switch (inst->op) {
+      case StackInst::Basic:
+        visit(inst->origin);
+        break;
+      case StackInst::BlockBegin:
+        visitBlock(inst->origin->cast<Block>(), inst->params);
+        break;
+      case StackInst::IfBegin:
+        visitIf(inst->origin->cast<If>(), inst->params);
+        break;
+      case StackInst::LoopBegin:
+        visitLoop(inst->origin->cast<Loop>(), inst->params);
+        break;
+      case StackInst::TryBegin:
+        visitTry(inst->origin->cast<Try>(), inst->params);
+        break;
+      case StackInst::TryTableBegin:
+        visitTryTable(inst->origin->cast<TryTable>(), inst->params);
+        break;
+      default:
+        WASM_UNREACHABLE("unexpected op");
+    }
+  }
+
   std::ostream& printType(Type type) { return parent.printType(type); }
 
   std::ostream& printHeapTypeName(HeapType type) {
@@ -376,8 +405,11 @@ struct PrintExpressionContents
     return parent.printParamType(type);
   }
 
-  std::ostream& printBlockType(Signature sig) {
-    return parent.printBlockType(sig);
+  void printBlockType(Type results, Type params = Type::none) {
+    if (results == Type::unreachable) {
+      results = Type::none;
+    }
+    parent.printBlockType(Signature(params, results));
   }
 
   void printMemoryPostfix(uint8_t bytes, Type type) {
@@ -407,18 +439,15 @@ struct PrintExpressionContents
     return o;
   }
 
-  void visitBlock(Block* curr) {
+  void visitBlock(Block* curr, Type params = Type::none) {
     printMedium(o, "block");
     if (curr->name.is()) {
       o << ' ';
       curr->name.print(o);
     }
-    if (curr->type.isConcrete()) {
-      o << ' ';
-      printBlockType(Signature(Type::none, curr->type));
-    }
+    printBlockType(curr->type, params);
   }
-  void visitIf(If* curr) {
+  void visitIf(If* curr, Type params = Type::none) {
     printMedium(o, "if");
     // Ifs are unreachable if their condition is unreachable, but in that case
     // the arms might have some concrete type we have to account for to produce
@@ -427,21 +456,15 @@ struct PrintExpressionContents
     if (curr->condition->type == Type::unreachable && curr->ifFalse) {
       type = Type::getLeastUpperBound(curr->ifTrue->type, curr->ifFalse->type);
     }
-    if (type.isConcrete()) {
-      o << ' ';
-      printBlockType(Signature(Type::none, type));
-    }
+    printBlockType(type, params);
   }
-  void visitLoop(Loop* curr) {
+  void visitLoop(Loop* curr, Type params = Type::none) {
     printMedium(o, "loop");
     if (curr->name.is()) {
       o << ' ';
       curr->name.print(o);
     }
-    if (curr->type.isConcrete()) {
-      o << ' ';
-      printBlockType(Signature(Type::none, curr->type));
-    }
+    printBlockType(curr->type, params);
   }
   void visitBreak(Break* curr) {
     if (curr->condition) {
@@ -2136,23 +2159,17 @@ struct PrintExpressionContents
     printMedium(o, "elem.drop ");
     curr->segment.print(o);
   }
-  void visitTry(Try* curr) {
+  void visitTry(Try* curr, Type params = Type::none) {
     printMedium(o, "try");
     if (curr->name.is()) {
       o << ' ';
       curr->name.print(o);
     }
-    if (curr->type.isConcrete()) {
-      o << ' ';
-      printBlockType(Signature(Type::none, curr->type));
-    }
+    printBlockType(curr->type, params);
   }
-  void visitTryTable(TryTable* curr) {
+  void visitTryTable(TryTable* curr, Type params = Type::none) {
     printMedium(o, "try_table");
-    if (curr->type.isConcrete()) {
-      o << ' ';
-      printBlockType(Signature(Type::none, curr->type));
-    }
+    printBlockType(curr->type, params);
     for (Index i = 0; i < curr->catchTags.size(); i++) {
       o << " (";
       if (curr->catchTags[i]) {
@@ -2716,7 +2733,9 @@ struct PrintExpressionContents
 void PrintSExpression::setModule(Module* module) {
   currModule = module;
   if (module) {
-    heapTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*module).types;
+    heapTypes = ModuleUtils::getOptimizedIndexedHeapTypes(
+                  *module, moduleStackIR ? &*moduleStackIR : nullptr)
+                  .types;
     for (auto type : heapTypes) {
       if (type.isSignature()) {
         signatureTypes.insert({type.getSignature(), type});
@@ -2753,33 +2772,36 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 }
 
 void PrintSExpression::printDebugLocation(
-  const std::optional<Function::DebugLocation>& location) {
+  const Function::DebugLocations& locations) {
   if (minify) {
     return;
   }
   // Do not skip repeated debug info in full mode, for less-confusing debugging:
   // full mode prints out everything in the most verbose manner.
-  if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
+  if (lastPrintedLocation == locations && indent > lastPrintIndent && !full) {
     return;
   }
-  lastPrintedLocation = location;
+  lastPrintedLocation = locations;
   lastPrintIndent = indent;
-  if (!location) {
+  if (locations.empty()) {
     o << ";;@\n";
+    doIndent(o, indent);
   } else {
-    auto fileName = currModule->debugInfoFileNames[location->fileIndex];
-    o << ";;@ " << fileName << ":" << location->lineNumber << ":"
-      << location->columnNumber;
+    for (const auto& loc : locations) {
+      auto fileName = currModule->debugInfoFileNames[loc.fileIndex];
+      o << ";;@ " << fileName << ":" << loc.lineNumber << ":"
+        << loc.columnNumber;
 
-    if (location->symbolNameIndex) {
-      auto symbolName =
-        currModule->debugInfoSymbolNames[*(location->symbolNameIndex)];
-      o << ":" << symbolName;
+      if (loc.symbolNameIndex) {
+        auto symbolName =
+          currModule->debugInfoSymbolNames[*(loc.symbolNameIndex)];
+        o << ":" << symbolName;
+      }
+
+      o << '\n';
+      doIndent(o, indent);
     }
-
-    o << '\n';
   }
-  doIndent(o, indent);
 }
 
 void PrintSExpression::printMetadata(Expression* curr) {
@@ -2789,7 +2811,7 @@ void PrintSExpression::printMetadata(Expression* curr) {
         iter != currFunction->debugLocations.end()) {
       printDebugLocation(iter->second);
     } else {
-      printDebugLocation(std::nullopt);
+      printDebugLocation({});
     }
 
     // Show a binary position, if there is one.
@@ -3324,7 +3346,7 @@ void PrintSExpression::visitFunction(Function* curr) {
 void PrintSExpression::visitImportedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = std::nullopt;
+  lastPrintedLocation.clear();
   o << '(';
   emitImportHeader(curr);
   printCodeAnnotations(curr->funcAnnotations);
@@ -3336,10 +3358,10 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
 void PrintSExpression::visitDefinedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = std::nullopt;
+  lastPrintedLocation.clear();
   lastPrintIndent = 0;
-  if (currFunction->prologLocation) {
-    printDebugLocation(*currFunction->prologLocation);
+  if (!currFunction->prologLocation.empty()) {
+    printDebugLocation(currFunction->prologLocation);
   }
   printCodeAnnotations(curr->funcAnnotations);
   handleSignature(curr, true);
@@ -3374,14 +3396,14 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     }
     assert(controlFlowDepth == 0);
   }
-  if (currFunction->epilogLocation) {
+  if (!currFunction->epilogLocation.empty()) {
     // Print last debug location: mix of decIndent and printDebugLocation
     // logic.
     doIndent(o, indent);
     if (!minify) {
       indent--;
     }
-    printDebugLocation(*currFunction->epilogLocation);
+    printDebugLocation(currFunction->epilogLocation);
     o << ')';
   } else {
     decIndent();
@@ -3845,14 +3867,16 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
     case StackInst::LoopBegin:
-    case StackInst::TryBegin: {
-      PrintExpressionContents(printer).visit(inst->origin);
+    case StackInst::TryBegin:
+    case StackInst::TryTableBegin: {
+      PrintExpressionContents(printer).visit(inst);
       break;
     }
     case StackInst::BlockEnd:
     case StackInst::IfEnd:
     case StackInst::LoopEnd:
-    case StackInst::TryEnd: {
+    case StackInst::TryEnd:
+    case StackInst::TryTableEnd: {
       printMedium(o, "end");
       o << " ;; type: ";
       printer.printType(inst->type);
@@ -3917,7 +3941,7 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
       case StackInst::TryTableBegin: {
         controlFlowDepth++;
         doIndent();
-        PrintExpressionContents(printer).visit(inst->origin);
+        PrintExpressionContents(printer).visit(inst);
         indent++;
         break;
       }

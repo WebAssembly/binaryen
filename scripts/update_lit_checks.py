@@ -51,11 +51,6 @@ ALL_ITEMS = DECL_ITEMS + '|' + IMPORT_ITEM + '|' + EXPORT_ITEM
 # segments included in the output.
 ITEM_NAME = r'\$[^\s()]*|\$"[^"]*"|declare'
 
-# FIXME: This does not handle nested string contents. For example,
-#  (data (i32.const 10) "hello(")
-# will look unterminated, due to the '(' inside the string. As a result, the
-# code below will consider more elements after the |data| to be part of it,
-# until it sees enough closing ')' symbols.
 ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
                      re.MULTILINE)
 
@@ -140,14 +135,25 @@ def find_end(module, start):
     # open parenthesis at `start`.
     assert module[start] == '('
     depth = 1
+    in_string = False
+    escaped = False
     for end in range(start + 1, len(module)):
-        if depth == 0:
-            break
+        if in_string:
+            if escaped:
+                escaped = False
+            elif module[end] == '\\':
+                escaped = True
+            elif module[end] == '"':
+                in_string = False
+        elif module[end] == '"':
+            in_string = True
         elif module[end] == '(':
             depth += 1
         elif module[end] == ')':
             depth -= 1
-    return end
+            if depth == 0:
+                return end + 1
+    return len(module)
 
 
 def find_annotations(module, start):
