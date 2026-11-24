@@ -5,11 +5,44 @@
 (module
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
+  ;; CHECK:      (type $Func (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $1)))
-  (import "a" "b" (func $import))
+  ;; CHECK:      (type $Array (array (mut i32)))
+  (type $Array (array (mut i32)))
 
-  ;; CHECK:      (func $non-null (type $2) (param $a (ref null $A)) (result i32)
+  (import "a" "c" (func $get-nullable (result (ref null $A))))
+
+  ;; CHECK:      (func $non-null-direct (type $3) (param $a (ref null $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-null-direct (param $a (ref null $A))
+    (local.set $a
+      (struct.new_default $A)
+    )
+    ;; Direct checks after assigning a non-null struct: ref.is_null is 0 and
+    ;; ref.eq with null is 0.
+    (drop
+      (ref.is_null
+        (local.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (local.get $a)
+        (ref.null eq)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $non-null (type $1) (param $a (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $a)
@@ -22,7 +55,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $non-null (param $a (ref null $A)) (result i32)
+  (func $non-null-indirect (param $a (ref null $A)) (result i32)
     ;; The param is nullable, but if it is null then we assign a non-null
     ;; value.
     (if
@@ -36,6 +69,270 @@
       )
     )
     ;; At this point, the param is certainly not null, so this is 0.
+    (ref.is_null
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $nullable-set-and-overwrite (type $3) (param $a (ref null $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (call $get-nullable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nullable-set-and-overwrite (param $a (ref null $A))
+    (local.set $a
+      (struct.new_default $A)
+    )
+    ;; Known non-null -> 0.
+    (drop
+      (ref.is_null
+        (local.get $a)
+      )
+    )
+    ;; Overwrite with a nullable call -> cannot optimize.
+    (local.set $a
+      (call $get-nullable)
+    )
+    (drop
+      (ref.is_null
+        (local.get $a)
+      )
+    )
+    ;; Overwrite with non-null again -> 0.
+    (local.set $a
+      (struct.new_default $A)
+    )
+    (drop
+      (ref.is_null
+        (local.get $a)
+      )
+    )
+    ;; Overwrite with null -> 1.
+    (local.set $a
+      (ref.null $A)
+    )
+    (drop
+      (ref.is_null
+        (local.get $a)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $from-non-null-param (type $10) (param $a (ref null $A)) (param $b (ref $A)) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $from-non-null-param (param $a (ref null $A)) (param $b (ref $A)) (result i32)
+    ;; Assigning a non-nullable param to a nullable local proves non-null.
+    ;; TODO
+    (if
+      (ref.is_null
+        (local.get $a)
+      )
+      (then
+        (local.set $a
+          (local.get $b)
+        )
+      )
+    )
+    (ref.is_null
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $from-non-null-tee (type $1) (param $a (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (local $b (ref $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (local.tee $b
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $from-non-null-tee (param $a (ref null $A)) (result i32)
+    (local $b (ref $A))
+    ;; Assigning from a tee of a non-nullable local proves $a is non-null.
+    ;; TODO
+    (local.set $a
+      (local.tee $b
+        (struct.new_default $A)
+      )
+    )
+    (ref.is_null
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $from-nullable-tee (type $3) (param $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (local.tee $b
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $from-nullable-tee (param $a (ref null $A))
+    (local $b (ref null $A))
+    ;; Assigning from a tee of a nullable local proves both $b and $a non-null.
+    (local.set $a
+      (local.tee $b
+        (struct.new_default $A)
+      )
+    )
+    (drop
+      (ref.is_null
+        (local.get $a)
+      )
+    )
+    (drop
+      (ref.is_null
+        (local.get $b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $fallthrough-ref-as-non-null (type $1) (param $a (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (call $get-nullable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $fallthrough-ref-as-non-null (param $a (ref null $A)) (result i32)
+    ;; ref.as_non_null wraps a nullable call; fallthrough must preserve
+    ;; non-nullability.
+    ;; TODO
+    (local.set $a
+      (ref.as_non_null
+        (call $get-nullable)
+      )
+    )
+    (ref.is_null
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $merge-two-non-null (type $14) (param $c i32) (result i32)
+  ;; CHECK-NEXT:  (local $a anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $c)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (array.new_default $Array
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $merge-two-non-null (param $c i32) (result i32)
+    (local $a anyref)
+    ;; Both arms assign different non-null GC types into an anyref local.
+    (if
+      (local.get $c)
+      (then
+        (local.set $a
+          (struct.new_default $A)
+        )
+      )
+      (else
+        (local.set $a
+          (array.new_default $Array
+            (i32.const 10)
+          )
+        )
+      )
+    )
+    (ref.is_null
+      (local.get $a)
+    )
+  )
+
+
+  ;; CHECK:      (func $merge-one-nullable-one-non-null (type $15) (param $a (ref null $A)) (param $c i32) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $c)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $a
+  ;; CHECK-NEXT:     (call $get-nullable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $merge-one-nullable-one-non-null (param $a (ref null $A)) (param $c i32) (result i32)
+    ;; Only one arm assigns a non-null value -> cannot optimize after merge.
+    (if
+      (local.get $c)
+      (then
+        (local.set $a
+          (struct.new_default $A)
+        )
+      )
+      (else
+        (local.set $a
+          (call $get-nullable)
+        )
+      )
+    )
     (ref.is_null
       (local.get $a)
     )
