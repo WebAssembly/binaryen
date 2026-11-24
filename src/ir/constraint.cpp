@@ -1083,7 +1083,9 @@ void BasicBlockConstraintMap::set(Index index,
   }
 }
 
-void BasicBlockConstraintMap::set(Index index, Expression* value, std::optional<Type> localType) {
+void BasicBlockConstraintMap::set(Index index,
+                                  Expression* value,
+                                  std::optional<Type> localType) {
   using namespace Match;
   using namespace Abstract;
 
@@ -1105,7 +1107,8 @@ void BasicBlockConstraintMap::set(Index index, Expression* value, std::optional<
   }
 
   // Apply a refining constraint.
-  if (localType && localType->isNullableRef() && value->type.isNonNullableRef()) {
+  if (localType && localType->isNullableRef() &&
+      value->type.isNonNullableRef()) {
     auto zero = Literal::makeZero(*localType);
     set(index, Constraint{Ne, {zero}});
     return;
