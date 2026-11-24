@@ -196,19 +196,19 @@ struct FuncCastEmulation : public Pass {
         if (module->getFunction(funcName)->imported()) {
           continue;
         }
-        if (ex->name.startsWith("dynCall_") || ex->name.startsWith("fpcast$")) {
-          continue;
-        }
         // Under !WASM_BIGINT, LegalizeJSInterface runs earlier and exports
         // `orig$foo` for the unlegalized function while `foo` points to a
-        // legalstub. Wrap `orig$foo` as `fpcast$foo` and skip `foo`.
+        // legalstub. Wrap `orig$foo` as `fpcast$foo` and skip the `foo` stub.
         std::string exportName = ex->name.toString();
         if (ex->name.startsWith("orig$")) {
           exportName = exportName.substr(5);
-          if (Name(exportName).startsWith("dynCall_")) {
-            continue;
-          }
         } else if (module->getExportOrNull("orig$" + exportName)) {
+          // `ex` is the legalized stub; its companion `orig$` export provides
+          // `fpcast$<exportName>` instead.
+          continue;
+        }
+        if (Name(exportName).startsWith("dynCall_") ||
+            Name(exportName).startsWith("fpcast$")) {
           continue;
         }
         Name fpcastName = "fpcast$" + exportName;
@@ -241,6 +241,10 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
+    if (func->getNumParams() > numParams) {
+      Fatal() << "max-func-params needs to be at least "
+              << func->getNumParams();
+    }
     Type type = func->getResults();
     Builder builder(*module);
     std::vector<Expression*> callOperands;
