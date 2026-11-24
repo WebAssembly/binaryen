@@ -359,9 +359,31 @@ struct Generalizer : public ChildTyper<Generalizer> {
     exprSubs[curr].push_back(curr->value);
   }
 
+  // If custom descriptors are disabled, we still use exact types in the IR,
+  // and we accept trivial casts (and null checks) where the input has the same
+  // exact heap type as the cast target. We must therefore avoid generalizing
+  // the input's heap type or exactness in a way that would make an exact cast
+  // non-trivial (but nullability can still be generalized).
+  void noteExactCast(Expression* ref, Type castType) {
+    if (!wasm.features.hasCustomDescriptors() && castType.isExact()) {
+      addConstraint(ref, castType.with(Nullable));
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    Super::visitRefTest(curr);
+    noteExactCast(curr->ref, curr->castType);
+  }
+
+  void visitRefCast(RefCast* curr) {
+    Super::visitRefCast(curr);
+    noteExactCast(curr->ref, curr->type);
+  }
+
   void visitBrOn(BrOn* curr) {
     // Note immediate constraints (including descriptor constraints).
     Super::visitBrOn(curr);
+    noteExactCast(curr->ref, curr->castType);
     if (curr->desc && !curr->desc->type.isStruct()) {
       return;
     }

@@ -9,21 +9,28 @@
 ;; RUN: wasm-opt -all %s.wasm -S -o - | filecheck %s
 
 (module
-  (type $id (func (param i32) (result i32)))
-
   ;; CHECK:      (type $0 (func (result i32 i64)))
 
   ;; CHECK:      (type $1 (func (result i32)))
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func (param i32)))
+  ;; CHECK:      (type $id (func (param i32) (result i32)))
+  (type $id (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $4 (func (result i64)))
+  ;; CHECK:      (type $4 (func (result funcref i32)))
 
-  ;; CHECK:      (type $5 (func (result f32)))
+  ;; CHECK:      (type $5 (func (param i32)))
 
-  ;; CHECK:      (tag $e (type $3) (param i32))
+  ;; CHECK:      (type $6 (func (param i64) (result i32 i64)))
+
+  ;; CHECK:      (type $7 (func (result funcref)))
+
+  ;; CHECK:      (type $8 (func (result i64)))
+
+  ;; CHECK:      (type $9 (func (result f32)))
+
+  ;; CHECK:      (tag $e (type $5) (param i32))
   (tag $e (param i32))
 
   ;; CHECK:      (func $block (type $1) (result i32)
@@ -181,7 +188,6 @@
   ;; CHECK:      (func $block-multivalue-drop (type $2)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -190,15 +196,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch_2
-  ;; CHECK-NEXT:      (local.get $scratch)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $scratch_1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $scratch_2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $scratch_1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $scratch)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -213,22 +214,109 @@
 
   ;; CHECK:      (func $block-passthrough-nop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $scratch i32)
-  ;; CHECK-NEXT:  (local $scratch_1 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (local.set $scratch_1
-  ;; CHECK-NEXT:    (local.get $scratch)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (local.get $scratch_1)
+  ;; CHECK-NEXT:   (local.get $scratch)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $block-passthrough-nop (result i32)
     i32.const 0
     block (param i32) (result i32)
       nop
+    end
+  )
+
+  ;; CHECK:      (func $block-multivalue-passthrough-nop (type $0) (result i32 i64)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_1 i64)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (tuple.make 2
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:    (block (result i64)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-multivalue-passthrough-nop (result i32 i64)
+    ;; Hoisting multivalue block inputs across a none-typed instruction at the
+    ;; end of a block should not allocate new scratch locals.
+    i32.const 0
+    i64.const 1
+    block (param i32 i64) (result i32 i64)
+      nop
+    end
+  )
+
+  ;; CHECK:      (func $block-multivalue-add-nop (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_1 i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:    (local.get $scratch_1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-multivalue-add-nop (result i32)
+    ;; Popping multiple block inputs for an instruction after a none-typed
+    ;; instruction (which pops greedily) should hoist both inputs directly
+    ;; without new scratch locals or wrapper blocks.
+    i32.const 0
+    i32.const 1
+    block (param i32 i32) (result i32)
+      nop
+      i32.add
+    end
+  )
+
+  ;; CHECK:      (func $block-hoist-other-local (type $id) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_2 i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $scratch_2
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-hoist-other-local (param $x i32) (result i32)
+    ;; A local.get of a non-input local inside a parameterized block must not
+    ;; be hoisted directly across a subsequent local.set to that local.
+    i32.const 0
+    block (param i32) (result i32)
+      local.get $x
+      i32.const 1
+      local.set $x
+      i32.add
     end
   )
 
@@ -244,6 +332,302 @@
   (func $block-passthrough-type (result i32)
     i32.const 0
     block (type $id)
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel (result i32)
+    ;; A parameter tunneled through nested blocks should reuse a single scratch
+    ;; local.
+    i32.const 0
+    block (param i32) (result i32)
+      block (param i32) (result i32)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-double-tunnel (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-double-tunnel (result i32)
+    ;; A parameter tunneled through multiple nested blocks should still reuse a
+    ;; single scratch local.
+    i32.const 0
+    block (param i32) (result i32)
+      block (param i32) (result i32)
+        block (param i32) (result i32)
+        end
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-multivalue (type $0) (result i32 i64)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_1 i64)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-multivalue (result i32 i64)
+    ;; Multiple parameters tunneled through nested blocks should reuse the same
+    ;; scratch locals.
+    i32.const 0
+    i64.const 1
+    block (param i32 i64) (result i32 i64)
+      block (param i32 i64) (result i32 i64)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-multivalue-nop (type $0) (result i32 i64)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_1 i64)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-multivalue-nop (result i32 i64)
+    ;; Multiple parameters hoisted across a none-typed instruction (including
+    ;; greedily popped inputs) should still tunnel directly into a nested
+    ;; block without wrapper blocks or new scratch locals.
+    i32.const 0
+    i64.const 1
+    block (param i32 i64) (result i32 i64)
+      nop
+      block (param i32 i64) (result i32 i64)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-suffix (type $0) (result i32 i64)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_1 i64)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (tuple.make 2
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:    (block (result i64)
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-suffix (result i32 i64)
+    ;; An inner block that only consumes a suffix of the enclosing block's
+    ;; parameters should still reuse the corresponding scratch local.
+    i32.const 0
+    i64.const 1
+    block (param i32 i64) (result i32 i64)
+      block (param i64) (result i64)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-prefix (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_1 i64)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $scratch_1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-prefix (result i32)
+    ;; An inner block that consumes a prefix of the enclosing block's
+    ;; parameters after later parameters are dropped should hoist and reuse
+    ;; the corresponding scratch local.
+    i32.const 0
+    i64.const 1
+    block (param i32 i64) (result i32)
+      drop
+      block (param i32) (result i32)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-partial (type $6) (param $x i64) (result i32 i64)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_2 i64)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (local.set $scratch_2
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-partial (param $x i64) (result i32 i64)
+    ;; A parameter tunneled alongside a newly pushed parameter should still
+    ;; reuse the enclosing block's scratch local.
+    i32.const 0
+    block (param i32) (result i32 i64)
+      local.get $x
+      block (param i32 i64) (result i32 i64)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-other-local (type $id) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local $scratch_2 i32)
+  ;; CHECK-NEXT:  (local $scratch_3 i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_2
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $scratch_3
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $scratch_3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-other-local (param $x i32) (result i32)
+    ;; A local.get of a non-input local should not be mistaken for an enclosing
+    ;; block's input scratch local when tunneling.
+    i32.const 0
+    i32.const 1
+    block (param i32 i32) (result i32)
+      i32.add
+      drop
+      local.get $x
+      block (param i32) (result i32)
+        ;; $x should not be treated like a scratch input local here.
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-subtype (type $7) (result funcref)
+  ;; CHECK-NEXT:  (local $scratch (ref null $id))
+  ;; CHECK-NEXT:  (local $scratch_1 funcref)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result funcref)
+  ;; CHECK-NEXT:   (local.set $scratch_1
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result funcref)
+  ;; CHECK-NEXT:    (local.get $scratch_1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-subtype (result funcref)
+    ;; A parameter whose type is widened in a nested block cannot reuse the
+    ;; narrower scratch local because keeping the narrower type on the stack
+    ;; would allow us to parse invalid WAT that requires the narrower type.
+    ref.null $id
+    block (param (ref null $id)) (result funcref)
+      block (param funcref) (result funcref)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $block-tunnel-subtype-mixed (type $4) (result funcref i32)
+  ;; CHECK-NEXT:  (local $scratch (ref null $id))
+  ;; CHECK-NEXT:  (local $scratch_1 i32)
+  ;; CHECK-NEXT:  (local $scratch_2 funcref)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $scratch_1
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (type $4) (result funcref i32)
+  ;; CHECK-NEXT:   (local.set $scratch_2
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (type $4) (result funcref i32)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (local.get $scratch_2)
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-tunnel-subtype-mixed (result funcref i32)
+    ;; If an earlier parameter is widened and allocates a new scratch local, a
+    ;; subsequent parameter whose type matches can still reuse its scratch
+    ;; local.
+    ref.null $id
+    i32.const 0
+    block (param (ref null $id) i32) (result funcref i32)
+      block (param funcref i32) (result funcref i32)
+      end
     end
   )
 
@@ -348,7 +732,7 @@
     end
   )
 
-  ;; CHECK:      (func $loop-branch-cond-new-val (type $4) (result i64)
+  ;; CHECK:      (func $loop-branch-cond-new-val (type $8) (result i64)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
@@ -387,10 +771,8 @@
   ;; CHECK:      (func $nested-loops-multivalue (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
-  ;; CHECK-NEXT:  (local $scratch_3 i64)
-  ;; CHECK-NEXT:  (local $scratch_4 (tuple i32 i64))
-  ;; CHECK-NEXT:  (local $scratch_5 (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $scratch_2 (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $scratch_3 (tuple i32 i64))
   ;; CHECK-NEXT:  (block $label2 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (local.set $scratch
   ;; CHECK-NEXT:    (i32.const 0)
@@ -400,36 +782,30 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (loop $label10
   ;; CHECK-NEXT:    (block $label11
-  ;; CHECK-NEXT:     (local.set $scratch_5
+  ;; CHECK-NEXT:     (local.set $scratch_3
   ;; CHECK-NEXT:      (block $label1 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:       (local.set $scratch_2
-  ;; CHECK-NEXT:        (local.get $scratch)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.set $scratch_3
-  ;; CHECK-NEXT:        (local.get $scratch_1)
-  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (loop $label0
   ;; CHECK-NEXT:        (block $label3
-  ;; CHECK-NEXT:         (local.set $scratch_4
+  ;; CHECK-NEXT:         (local.set $scratch_2
   ;; CHECK-NEXT:          (block $label (type $0) (result i32 i64)
   ;; CHECK-NEXT:           (br_table $label $label1 $label2
   ;; CHECK-NEXT:            (tuple.make 2
-  ;; CHECK-NEXT:             (local.get $scratch_2)
-  ;; CHECK-NEXT:             (local.get $scratch_3)
+  ;; CHECK-NEXT:             (local.get $scratch)
+  ;; CHECK-NEXT:             (local.get $scratch_1)
   ;; CHECK-NEXT:            )
   ;; CHECK-NEXT:            (i32.const 2)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:           (br $label3)
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (local.set $scratch_2
+  ;; CHECK-NEXT:         (local.set $scratch
   ;; CHECK-NEXT:          (tuple.extract 2 0
-  ;; CHECK-NEXT:           (local.get $scratch_4)
+  ;; CHECK-NEXT:           (local.get $scratch_2)
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (local.set $scratch_3
+  ;; CHECK-NEXT:         (local.set $scratch_1
   ;; CHECK-NEXT:          (tuple.extract 2 1
-  ;; CHECK-NEXT:           (local.get $scratch_4)
+  ;; CHECK-NEXT:           (local.get $scratch_2)
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (br $label0)
@@ -440,12 +816,12 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $scratch
   ;; CHECK-NEXT:      (tuple.extract 2 0
-  ;; CHECK-NEXT:       (local.get $scratch_5)
+  ;; CHECK-NEXT:       (local.get $scratch_3)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $scratch_1
   ;; CHECK-NEXT:      (tuple.extract 2 1
-  ;; CHECK-NEXT:       (local.get $scratch_5)
+  ;; CHECK-NEXT:       (local.get $scratch_3)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $label10)
@@ -464,6 +840,41 @@
       end
     end
     unreachable
+  )
+
+  ;; CHECK:      (func $block-loop-tunnel (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (loop $label0 (result i32)
+  ;; CHECK-NEXT:    (block $label1 (result i32)
+  ;; CHECK-NEXT:     (local.set $scratch
+  ;; CHECK-NEXT:      (block $label (result i32)
+  ;; CHECK-NEXT:       (br $label1
+  ;; CHECK-NEXT:        (br_if $label
+  ;; CHECK-NEXT:         (local.get $scratch)
+  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $label0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $block-loop-tunnel (result i32)
+    ;; A parameter tunneled from a block into a loop should reuse the same
+    ;; scratch local.
+    i32.const 0
+    block (param i32) (result i32)
+      loop (param i32) (result i32)
+        i32.const 1
+        br_if 0
+      end
+    end
   )
 
   ;; CHECK:      (func $if (type $1) (result i32)
@@ -600,11 +1011,9 @@
     end
   )
 
-  ;; CHECK:      (func $if-else-multivalue (type $5) (result f32)
+  ;; CHECK:      (func $if-else-multivalue (type $9) (result f32)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i64)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
-  ;; CHECK-NEXT:  (local $scratch_3 i32)
   ;; CHECK-NEXT:  (local.set $scratch
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -615,29 +1024,19 @@
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $scratch_2
-  ;; CHECK-NEXT:       (local.get $scratch)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $scratch_1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $scratch_2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $scratch_3
-  ;; CHECK-NEXT:       (local.get $scratch)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $scratch_1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $scratch_3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $scratch_1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 4)
   ;; CHECK-NEXT:   )
@@ -655,6 +1054,74 @@
       drop
       drop
       f32.const 4
+    end
+  )
+
+  ;; CHECK:      (func $if-tunnel (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.get $scratch)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (local.get $scratch)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.get $scratch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-tunnel (result i32)
+    ;; A parameter tunneled through nested ifs and blocks should reuse the same
+    ;; scratch local in both arms.
+    i32.const 0
+    i32.const 1
+    if (param i32) (result i32)
+      i32.const 2
+      if (param i32) (result i32)
+      end
+    else
+      block (param i32) (result i32)
+      end
+    end
+  )
+
+  ;; CHECK:      (func $if-tunnel-nop (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
+  ;; CHECK-NEXT:  (local.set $scratch
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (local.get $scratch)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-tunnel-nop (result i32)
+    ;; A none-typed instruction before an if does not prevent the outer input
+    ;; from being hoisted and tunneled into the if.
+    i32.const 0
+    block (param i32) (result i32)
+      nop
+      i32.const 1
+      if (param i32) (result i32)
+      end
     end
   )
 

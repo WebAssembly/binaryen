@@ -190,7 +190,7 @@ struct FunctionInfo {
   // require creating new imports for new signatures, etc. Functions that are
   // called via these intrinsics will not be optimized.
   // TODO: Fix this.
-  std::atomic<bool> usedInIntrinsic = false;
+  std::unordered_set<HeapType> callWithoutEffectsTypes;
 
   // Unreferenced functions can be optimized separately from referenced
   // functions with the same type. For unreferenced functions in that situation,
@@ -244,6 +244,9 @@ struct RootFuncTypeInfo {
 };
 
 struct DAE2 : public Pass {
+  // This pass changes locals and parameters.
+  bool invalidatesDWARF() override { return true; }
+
   // Analysis lattice.
   Used used;
 
@@ -621,8 +624,11 @@ struct GraphBuilder : public WalkerPass<ExpressionStackWalker<GraphBuilder>> {
 
   void visitCall(Call* curr) {
     if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
-      auto target = curr->operands.back()->cast<RefFunc>()->func;
-      funcInfos[funcIndices.at(target)].usedInIntrinsic = true;
+      auto* target = curr->operands.back();
+      if (target->type.isSignature()) {
+        funcInfos[index].callWithoutEffectsTypes.insert(
+          target->type.getHeapType());
+      }
     }
     auto* callee = getModule()->getFunction(curr->target);
     if (callee->getResults().isConcrete()) {
@@ -717,15 +723,6 @@ void DAE2::analyzeModule() {
     }
   }
 
-  // Functions called with call.without.effects cannot yet be optimized. Mark
-  // their parameters and results as used.
-  for (Index i = 0; i < wasm->functions.size(); ++i) {
-    if (funcInfos[i].usedInIntrinsic) {
-      markParamsUsed(i);
-      markResultsUsed(i);
-    }
-  }
-
   // JS-called functions will be called externally, so we cannot optimize out
   // their parameters or results.
   // TODO: Consider optimizing out a suffix of their parameters.
@@ -771,6 +768,12 @@ void DAE2::analyzeModule() {
   for (Index i = 0; i < wasm->functions.size(); ++i) {
     for (auto type : funcInfos[i].contTypes) {
       unrewritableRoots.insert(getRootType(type.getContinuation().type));
+    }
+
+    // Functions called with call.without.effects cannot yet be optimized. Mark
+    // their parameters and results as used.
+    for (auto type : funcInfos[i].callWithoutEffectsTypes) {
+      unrewritableRoots.insert(getRootType(type));
     }
   }
 

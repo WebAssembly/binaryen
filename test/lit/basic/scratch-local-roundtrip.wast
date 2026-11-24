@@ -42,19 +42,15 @@
   ;; CHECK:      (func $user-scratch-local (result i32)
   ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $scratch_1 i32)
-  ;; CHECK-NEXT:  (local $scratch_2 i32)
   ;; CHECK-NEXT:  (local.set $scratch_1
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $scratch_2
-  ;; CHECK-NEXT:     (local.get $scratch_1)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $scratch
   ;; CHECK-NEXT:     (i32.const 99)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $scratch_2)
+  ;; CHECK-NEXT:    (local.get $scratch_1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $scratch)
   ;; CHECK-NEXT:  )

@@ -33,8 +33,10 @@
 #include <memory>
 #include <ostream>
 #include <set>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "support/insert_ordered.h"
@@ -69,7 +71,9 @@ struct Value {
   };
 
   static Ref make() { return Ref(new Value); }
-  template<typename T> static Ref make(T t) { return Ref(new Value(t)); }
+  template<typename T> static Ref make(T&& t) {
+    return Ref(new Value(std::forward<T>(t)));
+  }
   static Ref makeArray() {
     Ref ret(new Value);
     ret->setArray();
@@ -113,11 +117,7 @@ struct Value {
 
   // constructors all copy their input
   Value() {}
-  explicit Value(const char* s) : type(Null) { setString(s); }
-  explicit Value(const std::string& s) : type(Null) { setString(s.c_str()); }
-  explicit Value(const std::string_view& s) : type(Null) {
-    setString(std::string(s));
-  }
+  explicit Value(std::string_view s) : type(Null) { setString(s); }
   explicit Value(double n) : type(Null) { setNumber(n); }
   explicit Value(ArrayStorage& a) : type(Null) {
     setArray();
@@ -140,13 +140,7 @@ struct Value {
     num = 0;
   }
 
-  Value& setString(const char* s) {
-    free();
-    type = String;
-    str = s;
-    return *this;
-  }
-  Value& setString(const IString& s) {
+  Value& setString(IString s) {
     free();
     type = String;
     str = s;
@@ -191,20 +185,20 @@ struct Value {
     return *this;
   }
 
-  bool isString() { return type == String; }
-  bool isNumber() { return type == Number; }
-  bool isArray() { return type == Array; }
-  bool isNull() { return type == Null; }
-  bool isBool() { return type == Bool; }
-  bool isObject() { return type == Object; }
+  bool isString() const { return type == String; }
+  bool isNumber() const { return type == Number; }
+  bool isArray() const { return type == Array; }
+  bool isNull() const { return type == Null; }
+  bool isBool() const { return type == Bool; }
+  bool isObject() const { return type == Object; }
 
-  bool isBool(bool b) {
+  bool isBool(bool b) const {
     return type == Bool && b == boo;
   } // avoid overloading == as it might overload over int
 
-  const char* getCString() {
+  std::string_view getString() const {
     assert(isString());
-    return str.str.data();
+    return str.view();
   }
   IString& getIString() {
     assert(isString());
@@ -317,11 +311,11 @@ struct Value {
         close++;
       }
       THROW_IF(!close, "unexpected end of JSON string");
-      *close = 0; // end this string, and reuse it straight from the input
+      *close = 0; // end this string
       char* raw = curr + 1;
       if (stringEncoding == ASCII) {
         // Just use the current string.
-        setString(raw);
+        setString(std::string_view(raw, close - raw));
       } else {
         assert(stringEncoding == WTF16);
         unescapeIntoWTF16(raw);
@@ -370,8 +364,7 @@ struct Value {
         curr++;
         char* close = strchr(curr, '"');
         THROW_IF(!close, "malformed key in JSON object");
-        *close = 0; // end this string, and reuse it straight from the input
-        IString key(curr);
+        IString key(std::string_view(curr, close - curr));
         curr = close + 1;
         skip();
         THROW_IF(*curr != ':', "missing ':', in JSON object");

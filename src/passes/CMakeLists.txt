@@ -51,6 +51,7 @@ set(passes_SOURCES
   GUFA.cpp
   Outlining.cpp
   Heap2Local.cpp
+  Heap2Local2.cpp
   HeapStoreOptimization.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp

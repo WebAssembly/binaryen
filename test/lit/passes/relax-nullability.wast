@@ -4,24 +4,25 @@
 
 ;; Locals, params, and blocks are relaxed.
 (module
-  ;; CHECK:      (type $struct (struct))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $0 (func (param anyref)))
+
+  ;; CHECK:       (type $1 (func (param anyref) (result (ref any))))
+
+  ;; CHECK:       (type $2 (func (param i32 anyref anyref) (result (ref any))))
+
+  ;; CHECK:       (type $3 (func (param i32) (result (ref any))))
+
+  ;; CHECK:       (type $4 (func (result (ref any))))
+
+  ;; CHECK:       (type $struct (struct))
   (type $struct (struct))
 
-  ;; CHECK:      (type $1 (func (result (ref any))))
+  ;; CHECK:       (type $6 (func (result anyref)))
 
-  ;; CHECK:      (type $2 (func (param anyref (ref null $struct)) (result (ref any))))
+  ;; CHECK:       (type $7 (func (param anyref (ref null $struct)) (result (ref any))))
 
-  ;; CHECK:      (type $3 (func (result anyref)))
-
-  ;; CHECK:      (type $4 (func (param i32) (result (ref any))))
-
-  ;; CHECK:      (type $5 (func (param i32 anyref anyref) (result (ref any))))
-
-  ;; CHECK:      (type $6 (func (param anyref) (result (ref any))))
-
-  ;; CHECK:      (type $7 (func (param anyref)))
-
-  ;; CHECK:      (func $relax-sig (type $2) (param $ref anyref) (param $1 (ref null $struct)) (result (ref any))
+  ;; CHECK:      (func $relax-sig (type $7) (param $ref anyref) (param $1 (ref null $struct)) (result (ref any))
   ;; CHECK-NEXT:  (ref.as_non_null
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
@@ -31,7 +32,7 @@
     (local.get $ref)
   )
 
-  ;; CHECK:      (func $relax-locals (type $3) (result anyref)
+  ;; CHECK:      (func $relax-locals (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $a anyref)
   ;; CHECK-NEXT:  (local $s (ref null $struct))
   ;; CHECK-NEXT:  (local $i32 i32)
@@ -53,7 +54,7 @@
     (local.get $a)
   )
 
-  ;; CHECK:      (func $relax-local-tee (type $1) (result (ref any))
+  ;; CHECK:      (func $relax-local-tee (type $4) (result (ref any))
   ;; CHECK-NEXT:  (local $s (ref null $struct))
   ;; CHECK-NEXT:  (ref.as_non_null
   ;; CHECK-NEXT:   (local.tee $s
@@ -66,7 +67,7 @@
     (local.tee $s (struct.new $struct))
   )
 
-  ;; CHECK:      (func $relax-control-flow (type $4) (param $cond i32) (result (ref any))
+  ;; CHECK:      (func $relax-control-flow (type $3) (param $cond i32) (result (ref any))
   ;; CHECK-NEXT:  (local $l anyref)
   ;; CHECK-NEXT:  (ref.as_non_null
   ;; CHECK-NEXT:   (block (result anyref)
@@ -102,7 +103,7 @@
     )
   )
 
-  ;; CHECK:      (func $relax-block-loop (type $1) (result (ref any))
+  ;; CHECK:      (func $relax-block-loop (type $4) (result (ref any))
   ;; CHECK-NEXT:  (local $l (ref null $struct))
   ;; CHECK-NEXT:  (ref.as_non_null
   ;; CHECK-NEXT:   (block (result (ref null $struct))
@@ -128,7 +129,7 @@
     )
   )
 
-  ;; CHECK:      (func $relax-select (type $5) (param $cond i32) (param $a anyref) (param $b anyref) (result (ref any))
+  ;; CHECK:      (func $relax-select (type $2) (param $cond i32) (param $a anyref) (param $b anyref) (result (ref any))
   ;; CHECK-NEXT:  (ref.as_non_null
   ;; CHECK-NEXT:   (select (result anyref)
   ;; CHECK-NEXT:    (local.get $a)
@@ -146,7 +147,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $6) (param $x anyref) (result (ref any))
+  ;; CHECK:      (func $caller (type $1) (param $x anyref) (result (ref any))
   ;; CHECK-NEXT:  (call $relax-sig
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -157,7 +158,7 @@
     (call $relax-sig (local.get $x) (struct.new $struct))
   )
 
-  ;; CHECK:      (func $preserves-existing-cast (type $7) (param $ref anyref)
+  ;; CHECK:      (func $preserves-existing-cast (type $0) (param $ref anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $relax-sig
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -185,9 +186,10 @@
   (type $shared-sig (func (param (ref any)) (result (ref any))))
 
   ;; Imported function sharing signature with an unrelaxable function (cannot be relaxed)
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $3 (func))
 
-  ;; CHECK:      (type $4 (func (param (ref any))))
+  ;; CHECK:       (type $4 (func (param (ref any))))
 
   ;; CHECK:      (type $5 (func (result i32)))
 
@@ -438,5 +440,58 @@
     ;; Although $super-func is referenced, $sub-func is not and we don't need
     ;; to preserve the subtyping relationship. Assign it a brand new relaxed
     ;; type that doesn't participate in subtyping.
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func (param (ref any)))))
+  (type $super (sub (func (param (ref any)))))
+  ;; CHECK:       (type $js-called (sub $super (func (param (ref any)))))
+  (type $js-called (sub $super (func (param (ref any)))))
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:       (type $sub (sub $js-called (func (param anyref))))
+  (type $sub (sub $js-called (func (param (ref any)))))
+
+  ;; CHECK:      (elem declare func $js-called-func $sub-func $super-func)
+
+  ;; CHECK:      (func $super-func (type $super) (param $0 (ref any))
+  ;; CHECK-NEXT: )
+  (func $super-func (type $super) (param (ref any))
+    ;; This is a supertype of a js.called function. It can't be relaxed since
+    ;; its subtype is unrelaxable and we'd break the subtyping relationship.
+  )
+
+  ;; CHECK:      (@binaryen.js.called)
+  ;; CHECK-NEXT: (func $js-called-func (type $js-called) (param $0 (ref any))
+  ;; CHECK-NEXT: )
+  (@binaryen.js.called)
+  (func $js-called-func (type $js-called) (param (ref any))
+    ;; Can't be unrelaxed because it may be called from JS.
+  )
+
+  ;; CHECK:      (func $sub-func (type $sub) (param $0 anyref)
+  ;; CHECK-NEXT: )
+  (func $sub-func (type $sub) (param (ref any))
+    ;; The supertype $js-called is called from JS, but this type is not. We can
+    ;; still relax.
+  )
+
+  ;; CHECK:      (func $reference (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $super-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $js-called-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $sub-func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reference
+    (drop (ref.func $super-func))
+    (drop (ref.func $js-called-func))
+    (drop (ref.func $sub-func))
   )
 )

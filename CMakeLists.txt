@@ -31,6 +31,9 @@ else()
 endif()
 option(BYN_ENABLE_LTO "Build with LTO" ${DEFAULT_LTO})
 
+option(BYN_PGO_GENERATE "Build with IR PGO instrumentation" OFF)
+set(BYN_PGO_PROFILE_USE_FILE "" CACHE FILEPATH "Profile data file for IR PGO (-fprofile-instr-use)")
+
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
 
@@ -269,6 +272,54 @@ if(BYN_ENABLE_LTO)
     # Under emscripten we also add `-flto` to the linker flags to tell the
     # compiler driver to choose LTO versions of the system libraries.
     add_link_flag("-flto=thin")
+  endif()
+endif()
+
+if(BYN_PGO_GENERATE AND BYN_PGO_PROFILE_USE_FILE)
+  message(FATAL_ERROR "BYN_PGO_GENERATE and BYN_PGO_PROFILE_USE_FILE cannot both be set")
+endif()
+
+if(BYN_PGO_GENERATE)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "PGO instrumentation is only supported by clang")
+  endif()
+  add_compile_flag("-fprofile-generate")
+  if(MSVC)
+    # On Windows with clang-cl, CMake invokes lld-link directly rather than
+    # linking through the compiler driver. clang-cl embeds a /DEFAULTLIB
+    # directive for clang_rt.profile-*.lib in each object file, so add clang's
+    # compiler-rt directory to the linker library search path.
+    # Note: COMMAND_ERROR_IS_FATAL requires CMake 3.19+.
+    execute_process(
+      COMMAND "${CMAKE_CXX_COMPILER}" -print-runtime-dir
+      OUTPUT_VARIABLE clang_runtime_dir
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY)
+    file(TO_CMAKE_PATH "${clang_runtime_dir}" clang_runtime_dir)
+    if(NOT IS_DIRECTORY "${clang_runtime_dir}")
+      message(FATAL_ERROR "Unable to find clang compiler-rt directory: ${clang_runtime_dir}")
+    endif()
+    add_link_flag("/libpath:\"${clang_runtime_dir}\"")
+  else()
+    add_link_flag("-fprofile-generate")
+  endif()
+endif()
+
+if(BYN_PGO_PROFILE_USE_FILE)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "PGO profile use is only supported by clang")
+  endif()
+  if(NOT EXISTS "${BYN_PGO_PROFILE_USE_FILE}")
+    message(FATAL_ERROR "PGO profile file not found: ${BYN_PGO_PROFILE_USE_FILE}")
+  endif()
+  file(TO_CMAKE_PATH "${BYN_PGO_PROFILE_USE_FILE}" byn_pgo_profile_path)
+  add_compile_flag("-fprofile-instr-use=\"${byn_pgo_profile_path}\"")
+  # Multiple tools (e.g. wasm-as, wasm-reduce) define main(), which collides
+  # with wasm-opt's main() entry in the IR profile and triggers a harmless CFG
+  # hash-mismatch warning under -Wbackend-plugin (promoted by -Werror).
+  add_compile_flag("-Wno-backend-plugin")
+  if(NOT MSVC)
+    add_link_flag("-fprofile-instr-use=\"${byn_pgo_profile_path}\"")
   endif()
 endif()
 
