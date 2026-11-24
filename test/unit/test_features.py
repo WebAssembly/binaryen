@@ -98,7 +98,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_simd(module, 'all used features should be allowed')
+        self.check_simd(module, 'Const type requires additional features')
 
     def test_simd_load(self):
         module = '''
@@ -119,7 +119,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_simd(module, 'all used features should be allowed')
+        self.check_simd(module, 'Unary operation requires additional features')
 
     def test_sign_ext(self):
         module = '''
@@ -129,7 +129,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_sign_ext(module, 'all used features should be allowed')
+        self.check_sign_ext(module, 'Unary operation requires additional features')
 
     def test_bulk_mem_inst(self):
         module = '''
