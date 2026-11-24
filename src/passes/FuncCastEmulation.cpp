@@ -172,59 +172,13 @@ struct FuncCastEmulation : public Pass {
         if (!ref) {
           continue;
         }
-        auto [iter, inserted] = funcThunks.insert({ref->func, nullptr});
-        if (inserted) {
-          iter->second = makeThunk(ref->func, module, numParams);
-        }
-        auto* thunk = iter->second;
-        ref->func = thunk->name;
+        ref->func = getThunk(ref->func, module, funcThunks, numParams)->name;
         ref->finalize(*module);
       }
     }
 
     if (hasArgument("fpcast-emu-export-thunks")) {
-      // Export fpcast$ thunks for non-imported function exports (excluding
-      // dynCall_* and already-prefixed fpcast$ exports) so dynamic linking can
-      // insert ABI-compatible thunks into the indirect function table.
-      std::vector<std::unique_ptr<Export>> newExports;
-      Builder builder(*module);
-      for (auto& ex : module->exports) {
-        if (ex->kind != ExternalKind::Function) {
-          continue;
-        }
-        Name funcName = *ex->getInternalName();
-        if (module->getFunction(funcName)->imported()) {
-          continue;
-        }
-        // Under !WASM_BIGINT, LegalizeJSInterface runs earlier and exports
-        // `orig$foo` for the unlegalized function while `foo` points to a
-        // legalstub. Wrap `orig$foo` as `fpcast$foo` and skip the `foo` stub.
-        std::string exportName = ex->name.toString();
-        if (ex->name.startsWith("orig$")) {
-          exportName = exportName.substr(5);
-        } else if (module->getExportOrNull("orig$" + exportName)) {
-          // `ex` is the legalized stub; its companion `orig$` export provides
-          // `fpcast$<exportName>` instead.
-          continue;
-        }
-        if (Name(exportName).startsWith("dynCall_") ||
-            Name(exportName).startsWith("fpcast$")) {
-          continue;
-        }
-        Name fpcastName = "fpcast$" + exportName;
-        if (module->getExportOrNull(fpcastName)) {
-          continue;
-        }
-        auto [iter, inserted] = funcThunks.insert({funcName, nullptr});
-        if (inserted) {
-          iter->second = makeThunk(funcName, module, numParams);
-        }
-        newExports.push_back(builder.makeExport(
-          fpcastName, iter->second->name, ExternalKind::Function));
-      }
-      for (auto& ex : newExports) {
-        module->addExport(std::move(ex));
-      }
+      exportThunks(module, funcThunks, numParams);
     }
 
     // update call_indirects
@@ -232,6 +186,62 @@ struct FuncCastEmulation : public Pass {
   }
 
 private:
+  // Export fpcast$ thunks for all function exports (excluding imported
+  // functions, dynCall_* and already-prefixed fpcast$ exports) so dynamic
+  // linking can insert ABI-compatible thunks into the indirect function table.
+  void exportThunks(Module* module,
+                    std::unordered_map<Name, Function*>& funcThunks,
+                    Index numParams) {
+    std::vector<std::unique_ptr<Export>> newExports;
+    Builder builder(*module);
+    for (auto& ex : module->exports) {
+      if (ex->kind != ExternalKind::Function) {
+        continue;
+      }
+      Name funcName = *ex->getInternalName();
+      if (module->getFunction(funcName)->imported()) {
+        continue;
+      }
+      // Under !WASM_BIGINT, LegalizeJSInterface runs earlier and exports
+      // `orig$foo` for the unlegalized function while `foo` points to a
+      // legalstub. Wrap `orig$foo` as `fpcast$foo` and skip the `foo` stub.
+      std::string exportName = ex->name.toString();
+      if (ex->name.startsWith("orig$")) {
+        exportName = exportName.substr(5);
+      } else if (module->getExportOrNull("orig$" + exportName)) {
+        // `ex` is the legalized stub; its companion `orig$` export provides
+        // `fpcast$<exportName>` instead.
+        continue;
+      }
+      if (Name(exportName).startsWith("dynCall_") ||
+          Name(exportName).startsWith("fpcast$")) {
+        continue;
+      }
+      Name fpcastName = "fpcast$" + exportName;
+      if (module->getExportOrNull(fpcastName)) {
+        continue;
+      }
+      auto* thunk = getThunk(funcName, module, funcThunks, numParams);
+      newExports.push_back(
+        builder.makeExport(fpcastName, thunk->name, ExternalKind::Function));
+    }
+    for (auto& ex : newExports) {
+      module->addExport(std::move(ex));
+    }
+  }
+
+  // Returns the thunk for `name`, creating and caching it if needed.
+  Function* getThunk(Name name,
+                     Module* module,
+                     std::unordered_map<Name, Function*>& funcThunks,
+                     Index numParams) {
+    auto [iter, inserted] = funcThunks.insert({name, nullptr});
+    if (inserted) {
+      iter->second = makeThunk(name, module, numParams);
+    }
+    return iter->second;
+  }
+
   // Creates a thunk for a function, casting args and return value as needed.
   Function* makeThunk(Name name, Module* module, Index numParams) {
     Name thunk = std::string("byn$fpcast-emu$") + name.toString();
