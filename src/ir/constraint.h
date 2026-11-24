@@ -331,8 +331,11 @@ struct BasicBlockConstraintMap {
   // Apply a set of constraints to a local, replacing anything before.
   void set(Index index, const AndedConstraintSet& constraints);
 
-  // Set the value in an expression to a local, replacing anything before.
-  void set(Index index, Expression* value);
+  // Set the value in an expression to a local, replacing anything before. The
+  // localType is provided so that we can infer if the value proves anything new
+  // beyond the local's type (e.g. non-nullable value written to a nullable
+  // local).
+  void set(Index index, Expression* value, std::optional<Type> localType=std::nullopt);
 
   // Mark a local as unknown and able to prove nothing.
   void setProvesNothing(Index index);

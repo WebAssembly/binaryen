@@ -622,7 +622,7 @@ struct ConstraintAnalysis
         }
       }
 
-      constraints.set(set->index, value);
+      constraints.set(set->index, value, getFunction()->getLocalType(set->index));
     }
   }
 
