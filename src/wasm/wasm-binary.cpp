@@ -1606,12 +1606,32 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   }
 
   if (hasInlinedScopes) {
-    // Synthesize non-empty OriginalScope entries (with isStackFrame=true) per
-    // source file for every authored frame (both outer functions at j == 0 and
-    // inlined frames at j > 0). Every outer function GeneratedRange must have a
-    // non-null Definition; otherwise consumers like Chrome DevTools treat a
-    // stack-frame range without a Definition as a hidden compiler helper and
-    // drop it (along with its inlined callees) from stack traces.
+    // Emit the ECMA-426 Scopes proposal "scopes" and "ranges" fields so
+    // consumers can reconstruct inlined call stacks. Binaryen's IR only stores
+    // per-instruction call-stack DebugLocations (no explicit lexical scope
+    // trees from the frontend), so we synthesize the two structures in stages:
+    //
+    //   1. Collect (ScopeKey -> ScopeBounds): Walk sourceMapLocations and group
+    //      all authored frames (both outer Wasm functions at j == 0 and inlined
+    //      callees at j > 0) into logical original function scopes, tracking
+    //      each scope's inclusive [minPos, maxPos] source span. Outer functions
+    //      at j == 0 must also receive an OriginalScope / Definition; otherwise
+    //      consumers like Chrome DevTools treat a stack-frame range without a
+    //      Definition as a hidden compiler helper and drop it (along with its
+    //      inlined callees) from stack traces.
+    //   2. Deduplicate (DedupKey): Turn each [minPos, maxPos] into a non-empty
+    //      half-open [start, end) interval (since OriginalScope.[[End]] is
+    //      exclusive) and merge distinct ScopeKeys in the same file that ended
+    //      up with identical (start, end, name).
+    //   3. Build & emit "scopes" (ScopeTreeNode): Arrange each file's scopes
+    //      into a properly nested interval tree so unsigned relative VLQ
+    //      positions never underflow, emit "scopes" in pre-order, and record
+    //      each ScopeKey's pre-order scope index in scopeIndices.
+    //   4. Build & emit "ranges" (OutRange): Walk sourceMapLocations again to
+    //      construct nested GeneratedRange trees per Wasm function (closing at
+    //      function boundaries and bridging intra-function gaps), linking each
+    //      range to its OriginalScope via scopeIndices and attaching CallSites
+    //      for inlined frames (j > 0), then serialize to "ranges".
     struct ScopePos {
       uint32_t line = 0; // 0-based
       uint32_t col = 0;  // 0-based
@@ -1634,6 +1654,18 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       return p;
     };
 
+    // Identifies which DebugLocation frames belong to the same synthesized
+    // OriginalScope within a source file:
+    //  - Named: grouped by (fileIndex, symbolNameIndex), so all locations
+    //    belonging to the same named function share one OriginalScope.
+    //  - UnnamedOuter (j == 0, no symbol name): grouped by (fileIndex,
+    //    Wasm funcIdx), keeping all locations of an unnamed Wasm function in
+    //    one scope without merging distinct unnamed functions in the same file.
+    //  - UnnamedInlined (j > 0, no symbol name): grouped by (fileIndex,
+    //    caller's file/line/col), keeping all instructions from a single
+    //    inlined call in one scope and one GeneratedRange while distinguishing
+    //    different unnamed callees (and separating an unnamed callee from an
+    //    unnamed caller in the same file).
     enum class ScopeKeyKind { Named, UnnamedOuter, UnnamedInlined };
     struct ScopeKey {
       BinaryLocation fileIndex = 0;
@@ -1668,6 +1700,11 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
               caller.columnNumber};
     };
 
+    // Tracks the inclusive [minPos, maxPos] source span (0-based) observed
+    // across all DebugLocations mapped to a ScopeKey, plus its optional name.
+    // Later converted to [minPos, nextScopePos(maxPos)) so the emitted
+    // OriginalScope has an exclusive [[End]] that contains every position in
+    // the scope (including mappings and inlined call sites).
     struct ScopeBounds {
       ScopePos minPos;
       ScopePos maxPos;
