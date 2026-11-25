@@ -365,12 +365,21 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct-get-infers-non-null (param $a (ref null $A))
     (drop
@@ -404,7 +413,9 @@
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct-set-infers-non-null (param $a (ref null $AMut)) (result i32)
     (struct.set $AMut 0
@@ -488,7 +499,9 @@
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:     (call $may-throw)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (ref.is_null
@@ -526,8 +539,14 @@
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-as-non-null-infer-and-dedup (param $a (ref null $A)) (result i32)
     ;; First ref.as_non_null cannot be removed, and proves $a non-null.
@@ -555,8 +574,10 @@
   ;;   ref.as_non_null MUST be kept, and proves $a non-null again afterward.
   ;; CHECK:      (func $drop-ref-as-non-null-tee (type $3) (param $a (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $a
-  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $a
+  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -566,7 +587,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-ref-as-non-null-tee (param $a (ref null $A)) (result i32)
     (drop
@@ -594,7 +617,9 @@
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-as-non-null-known-null-value (param $a (ref null $A)) (result (ref $A))
     (local.set $a
@@ -609,11 +634,12 @@
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $ref-as-non-null-known-null-drop (param $a (ref null $A)) (result i32)
     (local.set $a
@@ -663,10 +689,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $fallthrough-tee-and-get (param $a (ref null $A)) (param $b (ref null $A))
@@ -708,7 +738,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $fallthrough-tee-overwritten-a (param $a (ref null $AMut)) (param $b (ref null $AMut))
@@ -749,7 +781,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
@@ -792,7 +826,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $fallthrough-nullable-cast-and-block (param $a (ref null $Base)) (result i32)
     (drop
@@ -822,7 +858,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
@@ -869,10 +907,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array-ops (param $a (ref null $Array)) (param $b (ref null $Array))
@@ -921,7 +963,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $src)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array-copy-both-and-ordering (param $dst (ref null $Array)) (param $src (ref null $Array))
@@ -961,7 +1005,9 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i31-get (param $x i31ref) (result i32)
     (drop
@@ -982,10 +1028,14 @@
   ;; CHECK-NEXT:    (call_ref $Func
   ;; CHECK-NEXT:     (local.get $f)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $f)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $f)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1017,7 +1067,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $e)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1051,10 +1103,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $s1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $s2)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
@@ -1073,10 +1129,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $s3)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $s4)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $strings (param $s1 stringref) (param $s2 stringref) (param $s3 stringref) (param $s4 stringref)
@@ -1156,13 +1216,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $d2)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $obj)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $descriptors (param $d (ref null (exact $Desc))) (param $d2 (ref null (exact $Desc))) (param $obj (ref null $Described)) (param $any anyref)
@@ -1215,10 +1281,14 @@
   ;; CHECK-NEXT:   (local.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $c)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $continuations (param $f (ref null $Func)) (param $c (ref null $Cont))
@@ -1259,7 +1329,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (ref.is_null
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $merge-trap-and-set (param $a (ref null $A)) (param $c i32) (result i32)
     (if
@@ -1294,10 +1366,7 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $contradiction-after-null-struct-get (result i32)
     (local $a (ref null $A))

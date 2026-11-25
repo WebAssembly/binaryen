@@ -100,7 +100,7 @@ struct Info {
   bool inQueue;
   Index index;
 
-  // All relevant operations: local gets and sets and uses of them.
+  // All relevant operations that we optimize with.
   std::vector<Expression**> actions;
 
   // The branching instruction at the end of the block (or nullptr if there is
