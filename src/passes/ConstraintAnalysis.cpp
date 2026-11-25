@@ -631,6 +631,7 @@ struct ConstraintAnalysis
       //
       //  (local.set $x (ref.as_non_null (..)))
       //
+      // TODO: infer non-nullability from e.g. the ref of a struct.get
       auto localType = getFunction()->getLocalType(set->index);
       if (localType.isNullableRef() && set->value->type.isNonNullableRef()) {
         auto zero = Literal::makeZero(localType);
