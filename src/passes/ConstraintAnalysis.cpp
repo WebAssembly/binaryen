@@ -247,11 +247,17 @@ struct ConstraintAnalysis
     //   )
     //
     // In this example, at the time that the struct.set executes, $x has been
-    // set to a different value, so we cannot infer anything.
+    // set to a different value, so we cannot infer anything. Any set of the
+    // local that is read in `ref` is dangerous, if it appears after `ref`.
+    auto seenRef = false;
     for (auto* child : ChildIterator(curr)) {
-      for (auto* set : FindAll<LocalSet>(child).list) {
-        if (set->index == get->index) {
-          return;
+      if (child == ref) {
+        seenRef = true;
+      } else if (seenRef) {
+        for (auto* set : FindAll<LocalSet>(child).list) {
+          if (set->index == get->index) {
+            return;
+          }
         }
       }
     }
