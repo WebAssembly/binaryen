@@ -408,9 +408,7 @@
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.is_null
-  ;; CHECK-NEXT:   (local.get $a)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $struct-set-infers-non-null (param $a (ref null $AMut)) (result i32)
     (struct.set $AMut 0
@@ -494,9 +492,7 @@
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:     (call $may-throw)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.is_null
-  ;; CHECK-NEXT:     (local.get $a)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (ref.is_null
@@ -854,9 +850,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
@@ -903,14 +897,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array-ops (param $a (ref null $Array)) (param $b (ref null $Array))
@@ -959,9 +949,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $src)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array-copy-both-and-ordering (param $dst (ref null $Array)) (param $src (ref null $Array))
@@ -1024,14 +1012,10 @@
   ;; CHECK-NEXT:    (call_ref $Func
   ;; CHECK-NEXT:     (local.get $f)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.is_null
-  ;; CHECK-NEXT:     (local.get $f)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (ref.is_null
-  ;; CHECK-NEXT:     (local.get $f)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1212,19 +1196,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $d)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $d2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $obj)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $descriptors (param $d (ref null (exact $Desc))) (param $d2 (ref null (exact $Desc))) (param $obj (ref null $Described)) (param $any anyref)
@@ -1282,9 +1260,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $c)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $continuations (param $f (ref null $Func)) (param $c (ref null $Cont))
