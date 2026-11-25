@@ -1084,8 +1084,7 @@ void BasicBlockConstraintMap::set(Index index,
 }
 
 void BasicBlockConstraintMap::set(Index index,
-                                  Expression* value,
-                                  std::optional<Type> localType) {
+                                  Expression* value) {
   using namespace Match;
   using namespace Abstract;
 

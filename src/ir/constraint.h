@@ -336,8 +336,7 @@ struct BasicBlockConstraintMap {
   // beyond the local's type (e.g. non-nullable value written to a nullable
   // local).
   void set(Index index,
-           Expression* value,
-           std::optional<Type> localType = std::nullopt);
+           Expression* value);
 
   // Mark a local as unknown and able to prove nothing.
   void setProvesNothing(Index index);
