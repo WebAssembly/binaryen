@@ -72,6 +72,7 @@
 #include "cfg/wto.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -198,9 +199,48 @@ struct ConstraintAnalysis
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
+
+  // Various instructions trap on a null input, and therefore prove that the
+  // input is not null, after them. This receives the instruction and its ref
+  // that could cause a trap.
+  void trapOnNull(Expression* curr, Expression* ref) {
+    // The ref must be a local, so we know what is constrained.
+    // TODO: fallthrough etc.
+    auto* get = ref->dynCast<LocalGet>();
+    if (!get) {
+      return;
+    }
+
+    // If it is non-nullable then the type proves non-nullability anyhow, and we
+    // are not needed.
+    if (!ref->type.isNullableRef()) {
+      return;
+    }
+
+    // Check for changes in later children that alter the local:
+    //
+    //   (struct.set
+    //     (local.get $x)
+    //     (local.tee $x ..)
+    //   )
+    //
+    // In this example, at the time that the struct.set executes, $x has been
+    // set to a different value, so we cannot infer anything.
+    for (auto* child : ChildIterator(curr)) {
+      for (auto* set : FindAll<LocalSet>(child).list) {
+        if (set->index == get->index) {
+          return;
+        }
+      }
+    }
+
+    // Valid to optimize.
+    addAction();
+  }
+
   void visitRefAs(RefAs* curr) {
     if (curr->op == RefAsNonNull) {
-      addAction();
+      trapOnNull(curr, curr->value);
     }
   }
 
@@ -650,14 +690,13 @@ struct ConstraintAnalysis
     // above). ref.as_non_null of a local.get proves the local is not null, as
     // if it were we would trap and not continue.
     if (auto* refAs = curr->dynCast<RefAs>()) {
-      if (refAs->op == RefAsNonNull && refAs->value->type.isNullableRef()) {
-        if (auto* get = refAs->value->dynCast<LocalGet>()) {
-          if (relevantLocals[get->index]) {
-            auto zero = Literal::makeZero(get->type);
-            auto constraint = Constraint{Abstract::Ne, {zero}};
-            constraints.approximateAnd(get->index, constraint);
-          }
-        }
+      // We only put an optimizable RefAs in our actions.
+      assert(refAs->op == RefAsNonNull && refAs->value->type.isNullableRef());
+      auto* get = refAs->value->cast<LocalGet>();
+      if (relevantLocals[get->index]) {
+        auto zero = Literal::makeZero(get->type);
+        auto constraint = Constraint{Abstract::Ne, {zero}};
+        constraints.approximateAnd(get->index, constraint);
       }
     }
   }
