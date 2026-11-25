@@ -168,6 +168,46 @@
     )
     (drop (local.get $x))
   )
+  (func $spill-stack-operand
+    (call $spill-args
+      (call $spill-call-call0 (i32.const 1))
+      (call $spill-call-call0 (i32.const 2))
+    )
+  )
+  (func $spill-local-operand (param $p i32)
+    (call $spill-args
+      (local.get $p)
+      (block (result i32)
+        (local.set $p (i32.const 0))
+        (call $spill-call-call0 (i32.const 2))
+      )
+    )
+  )
+  (func $spill-stack-binary
+    (drop
+      (i32.add
+        (call $spill-call-call0 (i32.const 1))
+        (call $spill-call-call0 (i32.const 2))
+      )
+    )
+  )
+  (func $spill-stack-indirect-target (param $p i32)
+    (call_indirect (type $ii)
+      (local.get $p)
+      (i32.const 0)
+      (call $spill-call-call0 (i32.const 2))
+    )
+  )
+  (func $spill-tail-operands (param $x i32) (result i32)
+    (return
+      (return_call $spill-call-call0
+        (block (result i32)
+          (call $nothing)
+          (local.get $x)
+        )
+      )
+    )
+  )
 )
 
 (module
