@@ -335,8 +335,7 @@ struct BasicBlockConstraintMap {
   // localType is provided so that we can infer if the value proves anything new
   // beyond the local's type (e.g. non-nullable value written to a nullable
   // local).
-  void set(Index index,
-           Expression* value);
+  void set(Index index, Expression* value);
 
   // Mark a local as unknown and able to prove nothing.
   void setProvesNothing(Index index);

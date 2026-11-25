@@ -1083,8 +1083,7 @@ void BasicBlockConstraintMap::set(Index index,
   }
 }
 
-void BasicBlockConstraintMap::set(Index index,
-                                  Expression* value) {
+void BasicBlockConstraintMap::set(Index index, Expression* value) {
   using namespace Match;
   using namespace Abstract;
 
