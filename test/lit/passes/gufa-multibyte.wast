@@ -2,14 +2,14 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa --closed-world -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $0 (func))
-
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
 
+ ;; CHECK:      (type $1 (func))
+
  ;; CHECK:      (export "test" (func $test))
 
- ;; CHECK:      (func $test (type $0)
+ ;; CHECK:      (func $test (type $1)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i64.load32_u (type $array)
  ;; CHECK-NEXT:    (array.new_default $array

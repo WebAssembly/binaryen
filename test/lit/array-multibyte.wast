@@ -8,21 +8,15 @@
 
 (module
 
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (type $v128_array (array (mut v128)))
-
   ;; CHECK:      (type $i8_array (array (mut i8)))
-  ;; RTRIP:      (type $0 (func))
-
-  ;; RTRIP:      (type $v128_array (array (mut v128)))
-
   ;; RTRIP:      (type $i8_array (array (mut i8)))
   (type $i8_array (array (mut i8)))
 
-  ;; CHECK:      (type $i64_array (array (mut i64)))
+  ;; CHECK:      (type $v128_array (array (mut v128)))
 
-  ;; CHECK:      (type $4 (func (param (ref $v128_array))))
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $i64_array (array (mut i64)))
 
   ;; CHECK:      (type $i16_array (array (mut i16)))
 
@@ -36,6 +30,8 @@
 
   ;; CHECK:      (type $imm_i32_array (array i32))
 
+  ;; CHECK:      (type $10 (func (param (ref $v128_array))))
+
   ;; CHECK:      (type $11 (func (param (ref $i16_array) (ref $i32_array) (ref $i64_array) (ref $f32_array) (ref $f64_array) (ref $v128_array))))
 
   ;; CHECK:      (type $12 (func (param (ref $i8_array) (ref $v128_array) (ref $i64_array))))
@@ -45,9 +41,11 @@
   ;; CHECK:      (global $arr (ref $i8_array) (array.new_default $i8_array
   ;; CHECK-NEXT:  (i32.const 4)
   ;; CHECK-NEXT: ))
-  ;; RTRIP:      (type $i64_array (array (mut i64)))
+  ;; RTRIP:      (type $1 (func))
 
-  ;; RTRIP:      (type $4 (func (param (ref $v128_array))))
+  ;; RTRIP:      (type $v128_array (array (mut v128)))
+
+  ;; RTRIP:      (type $i64_array (array (mut i64)))
 
   ;; RTRIP:      (type $i16_array (array (mut i16)))
 
@@ -60,6 +58,8 @@
   ;; RTRIP:      (type $imm_i8_array (array i8))
 
   ;; RTRIP:      (type $imm_i32_array (array i32))
+
+  ;; RTRIP:      (type $10 (func (param (ref $v128_array))))
 
   ;; RTRIP:      (type $11 (func (param (ref $i16_array) (ref $i32_array) (ref $i64_array) (ref $f32_array) (ref $f64_array) (ref $v128_array))))
 
@@ -74,7 +74,7 @@
     (array.new_default $i8_array (i32.const 4))
   )
 
-  ;; CHECK:      (func $stores (type $0)
+  ;; CHECK:      (func $stores (type $2)
   ;; CHECK-NEXT:  (i32.store8 (type $i8_array)
   ;; CHECK-NEXT:   (global.get $arr)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -116,7 +116,7 @@
   ;; CHECK-NEXT:   (f64.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $stores (type $0)
+  ;; RTRIP:      (func $stores (type $1)
   ;; RTRIP-NEXT:  (i32.store8 (type $i8_array)
   ;; RTRIP-NEXT:   (global.get $arr)
   ;; RTRIP-NEXT:   (i32.const 1)
@@ -170,7 +170,7 @@
     (f64.store (type $i8_array) (global.get $arr) (i32.const 1) (f64.const 2.0))
   )
 
-  ;; CHECK:      (func $stores_null (type $0)
+  ;; CHECK:      (func $stores_null (type $2)
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayStore we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
@@ -268,7 +268,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $stores_null (type $0)
+  ;; RTRIP:      (func $stores_null (type $1)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (ref.null none)
   ;; RTRIP-NEXT:  )
@@ -362,7 +362,7 @@
     (f64.store (type $i8_array) (ref.null $i8_array) (i32.const 1) (f64.const 2.0))
   )
 
-  ;; CHECK:      (func $stores_unreachable (type $0)
+  ;; CHECK:      (func $stores_unreachable (type $2)
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayStore we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
@@ -460,7 +460,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $stores_unreachable (type $0)
+  ;; RTRIP:      (func $stores_unreachable (type $1)
   ;; RTRIP-NEXT:  (unreachable)
   ;; RTRIP-NEXT: )
   (func $stores_unreachable
@@ -474,7 +474,7 @@
     (i64.store32 (type $i8_array) (unreachable) (i32.const 1) (i64.const 2))
     (f64.store (type $i8_array) (unreachable) (i32.const 1) (f64.const 2.0))
   )
-  ;; CHECK:      (func $loads (type $0)
+  ;; CHECK:      (func $loads (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.load8_u (type $i8_array)
   ;; CHECK-NEXT:    (global.get $arr)
@@ -542,7 +542,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $loads (type $0)
+  ;; RTRIP:      (func $loads (type $1)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (i32.load8_u (type $i8_array)
   ;; RTRIP-NEXT:    (global.get $arr)
@@ -624,7 +624,7 @@
     (drop (f64.load (type $i8_array) (global.get $arr) (i32.const 1)))
   )
 
-  ;; CHECK:      (func $loads_null (type $0)
+  ;; CHECK:      (func $loads_null (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -747,7 +747,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $loads_null (type $0)
+  ;; RTRIP:      (func $loads_null (type $1)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (ref.null none)
   ;; RTRIP-NEXT:  )
@@ -862,7 +862,7 @@
     (drop (f64.load (type $i8_array) (ref.null $i8_array) (i32.const 1)))
   )
 
-  ;; CHECK:      (func $loads_unreachable (type $0)
+  ;; CHECK:      (func $loads_unreachable (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -985,7 +985,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $loads_unreachable (type $0)
+  ;; RTRIP:      (func $loads_unreachable (type $1)
   ;; RTRIP-NEXT:  (unreachable)
   ;; RTRIP-NEXT: )
   (func $loads_unreachable
@@ -1002,14 +1002,14 @@
     (drop (f64.load (type $i8_array) (unreachable) (i32.const 1)))
   )
 
-  ;; CHECK:      (func $stores_index_unreachable (type $0)
+  ;; CHECK:      (func $stores_index_unreachable (type $2)
   ;; CHECK-NEXT:  (i32.store8 (type $i8_array)
   ;; CHECK-NEXT:   (global.get $arr)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $stores_index_unreachable (type $0)
+  ;; RTRIP:      (func $stores_index_unreachable (type $1)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (global.get $arr)
   ;; RTRIP-NEXT:  )
@@ -1019,14 +1019,14 @@
     (i32.store8 (type $i8_array) (global.get $arr) (unreachable) (i32.const 2))
   )
 
-  ;; CHECK:      (func $stores_value_unreachable (type $0)
+  ;; CHECK:      (func $stores_value_unreachable (type $2)
   ;; CHECK-NEXT:  (i32.store8 (type $i8_array)
   ;; CHECK-NEXT:   (global.get $arr)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $stores_value_unreachable (type $0)
+  ;; RTRIP:      (func $stores_value_unreachable (type $1)
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (global.get $arr)
   ;; RTRIP-NEXT:  )
@@ -1361,7 +1361,7 @@
 
   ;; When the access is unreachable we have no type to print, and the type we
   ;; pick must still be valid for the alignment.
-  ;; CHECK:      (func $unreachable_load_align (type $4) (param $av (ref $v128_array))
+  ;; CHECK:      (func $unreachable_load_align (type $10) (param $av (ref $v128_array))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.load (type $v128_array) align=8
   ;; CHECK-NEXT:    (local.get $av)
@@ -1369,7 +1369,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $unreachable_load_align (type $4) (param $av (ref $v128_array))
+  ;; RTRIP:      (func $unreachable_load_align (type $10) (param $av (ref $v128_array))
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (local.get $av)
   ;; RTRIP-NEXT:  )
@@ -1379,14 +1379,14 @@
     (drop (v128.load (type $v128_array) align=8 (local.get $av) (unreachable)))
   )
 
-  ;; CHECK:      (func $unreachable_store_align (type $4) (param $av (ref $v128_array))
+  ;; CHECK:      (func $unreachable_store_align (type $10) (param $av (ref $v128_array))
   ;; CHECK-NEXT:  (v128.store (type $v128_array)
   ;; CHECK-NEXT:   (local.get $av)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $unreachable_store_align (type $4) (param $av (ref $v128_array))
+  ;; RTRIP:      (func $unreachable_store_align (type $10) (param $av (ref $v128_array))
   ;; RTRIP-NEXT:  (drop
   ;; RTRIP-NEXT:   (local.get $av)
   ;; RTRIP-NEXT:  )

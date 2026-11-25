@@ -6,9 +6,10 @@
 (module
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
+  ;; CHECK:      (type $array (array (mut i32)))
+
   ;; CHECK:      (type $packed (struct (field (mut i8))))
   (type $packed (struct (field (mut i8))))
-  ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
   ;; CHECK:      (type $array-packed (array (mut i8)))
   (type $array-packed (array (mut i8)))
@@ -430,7 +431,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.get (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array.get (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.get $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
@@ -484,7 +485,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-add (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-add (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.add $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -499,7 +500,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-sub (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-sub (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.sub $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -514,7 +515,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-and (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-and (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.and $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -529,7 +530,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-or (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-or (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.or $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -544,7 +545,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-xor (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-xor (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.xor $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -559,7 +560,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-xchg (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-xchg (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.xchg $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -574,7 +575,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-xchg-acqrel (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-xchg-acqrel (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.xchg acqrel acqrel $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -589,7 +590,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-cmpxchg (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-cmpxchg (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -606,7 +607,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-rmw-cmpxchg-acqrel (type $4) (param $0 (ref null $array)) (result i32)
+  ;; CHECK:      (func $array-rmw-cmpxchg-acqrel (type $3) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg acqrel acqrel $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)

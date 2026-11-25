@@ -2679,18 +2679,17 @@
 )
 
 (module
- ;; CHECK:      (type $void (func))
-
  ;; CHECK:      (type $val (sub (struct)))
  (type $val (sub (struct)))
  (type $subval (sub $val (struct)))
- ;; CHECK:      (type $cont (cont $void))
+ ;; CHECK:      (type $void (func))
 
  ;; CHECK:      (type $struct (struct (field (mut (ref null $val)))))
  (type $struct (struct (field (mut (ref null $val)))))
  ;; CHECK:      (type $arr (array (mut (ref null $val))))
  (type $arr (array (mut (ref null $val))))
  (type $void (func))
+ ;; CHECK:      (type $cont (cont $void))
  (type $cont (cont $void))
 
  ;; CHECK:      (func $struct.atomic.xchg (type $void)
