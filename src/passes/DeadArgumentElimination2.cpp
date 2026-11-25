@@ -247,6 +247,10 @@ struct DAE2 : public Pass {
   // This pass changes locals and parameters.
   bool invalidatesDWARF() override { return true; }
 
+  // Optimizer already handles non-nullable local fixups on modified functions
+  // before global type rewriting updates referenced function types.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // Analysis lattice.
   Used used;
 
