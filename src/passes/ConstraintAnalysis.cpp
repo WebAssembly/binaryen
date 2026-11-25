@@ -622,8 +622,7 @@ struct ConstraintAnalysis
         }
       }
 
-      auto localType = getFunction()->getLocalType(set->index);
-      constraints.set(set->index, value, localType);
+      constraints.set(set->index, value);
 
       // Apply a non-nullability constraint: if we write a non-nullable value to
       // a nullable local, then we know it is now non-nullable. Note that we
@@ -632,6 +631,7 @@ struct ConstraintAnalysis
       //
       //  (local.set $x (ref.as_non_null (..)))
       //
+      auto localType = getFunction()->getLocalType(set->index);
       if (localType.isNullableRef() && set->value->type.isNonNullableRef()) {
         auto zero = Literal::makeZero(localType);
         auto c = Constraint{Abstract::Ne, {zero}};
