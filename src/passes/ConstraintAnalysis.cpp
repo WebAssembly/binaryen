@@ -272,6 +272,8 @@ struct ConstraintAnalysis
       trapOnNull(curr, curr->value);
     }
   }
+  // TODO: This list overlaps with OptimizeInstructions trapOnNull logic, and
+  //       can maybe be deduplicated?
   void visitStructGet(StructGet* curr) {
     trapOnNull(curr, curr->ref);
   }
