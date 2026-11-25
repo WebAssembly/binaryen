@@ -3132,7 +3132,10 @@ private:
 
     // We similarly want to find the fallthrough expression of `right`. But this
     // time, it is the expressions that execute before, not after, the
-    // fallthrough that can affect its value.
+    // fallthrough that can affect its value. The exception is when we're in a
+    // named loop; in that case, expressions after the fallthrough can also
+    // affect its value because they execute in prior loop iterations.
+    bool inLoop = false;
     while (true) {
       auto* next = Properties::getImmediateFallthrough(
         right, getPassOptions(), *getModule());
@@ -3144,11 +3147,19 @@ private:
       // container.
       for (auto* child : ChildIterator(right)) {
         if (child == next) {
-          // Skip children that execute after the fallthrough value, such as
-          // br_if conditions.
+          if (inLoop) {
+            // Once we have entered a loop, later children can interfere as
+            // well.
+            continue;
+          }
+          // Outside a loop, children after the fallthrough cannot execute
+          // before it, so we can skip them.
           break;
         }
         interferingEffects.walk(child);
+      }
+      if (auto* loop = right->dynCast<Loop>(); loop && loop->name) {
+        inLoop = true;
       }
       right = next;
     }
