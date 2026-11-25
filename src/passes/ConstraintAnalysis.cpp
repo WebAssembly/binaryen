@@ -623,6 +623,21 @@ struct ConstraintAnalysis
       }
 
       constraints.set(set->index, value);
+
+      // Apply a non-nullability constraint: if we write a non-nullable value to
+      // a nullable local, then we know it is now non-nullable. Note that we
+      // test set->value and not the fallthrough value, as the original value
+      // may flow through a cast, making it more refined:
+      //
+      //  (local.set $x (ref.as_non_null (..)))
+      //
+      // TODO: infer non-nullability from e.g. the ref of a struct.get
+      auto localType = getFunction()->getLocalType(set->index);
+      if (localType.isNullableRef() && set->value->type.isNonNullableRef()) {
+        auto zero = Literal::makeZero(localType);
+        auto c = Constraint{Abstract::Ne, {zero}};
+        constraints.approximateAnd(set->index, c);
+      }
     }
   }
 
