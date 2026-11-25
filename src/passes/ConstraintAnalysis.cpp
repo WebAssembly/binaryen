@@ -201,9 +201,30 @@ struct ConstraintAnalysis
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
 
   // Various instructions trap on a null input, and therefore prove that the
-  // input is not null, after them. This receives the instruction and its ref
-  // that could cause a trap.
+  // input is not null, after them. We represent all such actions using a
+  // RefAsNonNull in our actions (i.e. a StructGet shows up as a RefAsNonNull,
+  // which reflects the only important behavior of the StructGet, for us). As
+  // actions store an Expression**, we allocate a "box" for each, with a pointer
+  // to the RefAs, so that we can refer to that pointer as an Expression**.
+  struct RefAsBox {
+    RefAs refAs;
+    Expression* referrer;
+
+    RefAsBox(Expression* value) {
+      refAs.op = RefAsNonNull;
+      refAs.value = value;
+      referrer = &refAs;
+    }
+  };
+  std::vector<std::unique_ptr<RefAsBox>> refAsBoxes;
+
+  // Receives the instruction and its ref that could cause a trap.
   void trapOnNull(Expression* curr, Expression* ref) {
+    if (!currBasicBlock) {
+      // Nowhere to store anything.
+      return;
+    }
+
     // The ref must be a local, so we know what is constrained.
     // TODO: fallthrough etc.
     auto* get = ref->dynCast<LocalGet>();
@@ -235,13 +256,17 @@ struct ConstraintAnalysis
     }
 
     // Valid to optimize.
-    addAction();
+    refAsBoxes.emplace_back(std::make_unique<RefAsBox>(ref));
+    currBasicBlock->contents.actions.push_back(&refAsBoxes.back()->referrer);
   }
 
   void visitRefAs(RefAs* curr) {
     if (curr->op == RefAsNonNull) {
       trapOnNull(curr, curr->value);
     }
+  }
+  void visitStructGet(StructGet* curr) {
+    trapOnNull(curr, curr->ref);
   }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
