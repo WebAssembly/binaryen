@@ -205,7 +205,8 @@ struct ConstraintAnalysis
   // RefAsNonNull in our actions (i.e. a StructGet shows up as a RefAsNonNull,
   // which reflects the only important behavior of the StructGet, for us). As
   // actions store an Expression**, we allocate a "box" for each, with a pointer
-  // to the RefAs, so that we can refer to that pointer as an Expression**.
+  // to the RefAs, so that we can refer to that referring pointer as an
+  // Expression**.
   struct RefAsBox {
     RefAs refAs;
     Expression* referrer;
@@ -255,9 +256,15 @@ struct ConstraintAnalysis
       }
     }
 
-    // Valid to optimize.
-    refAsBoxes.emplace_back(std::make_unique<RefAsBox>(ref));
-    currBasicBlock->contents.actions.push_back(&refAsBoxes.back()->referrer);
+    // Valid to optimize. Add a normal action for a RefAs, and otherwise
+    // generate a boxed RefAs to represent this not-RefAs-but-behaving-like-a-
+    // RefAs in our actions.
+    if (curr->is<RefAs>()) {
+      addAction();
+    } else {
+      refAsBoxes.emplace_back(std::make_unique<RefAsBox>(ref));
+      currBasicBlock->contents.actions.push_back(&refAsBoxes.back()->referrer);
+    }
   }
 
   void visitRefAs(RefAs* curr) {
