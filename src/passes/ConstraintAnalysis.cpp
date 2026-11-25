@@ -437,11 +437,6 @@ struct ConstraintAnalysis
   void optimizeConstraint(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
-    if (!curr->type.isNumber()) {
-      // We optimize things that evaluate to integers, like x == 7, and not
-      // references like ref.as_non_null(x).
-      return;
-    }
 
     // Note that we don't need to try to parse a series of constraints with
     // ParsedAndedConstraints: if there is a tree of ANDed things, we will
