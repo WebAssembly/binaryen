@@ -923,6 +923,21 @@ localConstraintParseInternal(Expression* curr,
     return parseBinaryArguments(Abstract::Eq, refEq->left, refEq->right);
   }
 
+std::cout << "a1\n";
+  if (auto* refAs = curr->dynCast<RefAs>()) {
+    if (refAs->op == RefAsNonNull && refAs->value->type.isNullableRef()) {
+      if (auto* get = refAs->value->dynCast<LocalGet>()) {
+        // ref.as_non_null of a local.get proves the local is not null, as if it
+        // were we would trap and not continue.
+std::cout << "a1.1\n";
+        auto zero = Literal::makeZero(get->type);
+std::cout << "a1.2 " << *curr << " : " << zero << "\n";
+        return LocalConstraint{get->index, Constraint{Abstract::Ne, {zero}}};
+      }
+    }
+  }
+std::cout << "a2\n";
+
   return {};
 }
 

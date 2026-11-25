@@ -198,6 +198,11 @@ struct ConstraintAnalysis
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
+  void visitRefAs(RefAs* curr) {
+    if (curr->op == RefAsNonNull) {
+      addAction();
+    }
+  }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
@@ -328,7 +333,6 @@ struct ConstraintAnalysis
 
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
-
     // If we find local.gets that we can optimize, we queue those changes here.
     // This order is useful for the following reason:
     //
@@ -433,6 +437,11 @@ struct ConstraintAnalysis
   void optimizeConstraint(Expression** currp,
                           const BasicBlockConstraintMap& constraints) {
     auto* curr = *currp;
+    if (!curr->type.isNumber()) {
+      // We optimize things that evaluate to integers, like x == 7, and not
+      // references like ref.as_non_null(x).
+      return;
+    }
 
     // Note that we don't need to try to parse a series of constraints with
     // ParsedAndedConstraints: if there is a tree of ANDed things, we will
