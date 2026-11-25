@@ -544,9 +544,7 @@
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.is_null
-  ;; CHECK-NEXT:   (local.get $a)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $ref-as-non-null-infer-and-dedup (param $a (ref null $A)) (result i32)
     ;; First ref.as_non_null cannot be removed, and proves $a non-null.
@@ -639,7 +637,10 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-as-non-null-known-null-drop (param $a (ref null $A)) (result i32)
     (local.set $a

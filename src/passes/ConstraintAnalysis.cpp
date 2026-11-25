@@ -647,6 +647,23 @@ struct ConstraintAnalysis
         auto c = Constraint{Abstract::Ne, {zero}};
         constraints.approximateAnd(set->index, c);
       }
+
+      return;
+    }
+
+    // Some constraints can be inferred without a local.set (which was handled
+    // above). ref.as_non_null of a local.get proves the local is not null, as
+    // if it were we would trap and not continue.
+    if (auto* refAs = curr->dynCast<RefAs>()) {
+      if (refAs->op == RefAsNonNull && refAs->value->type.isNullableRef()) {
+        if (auto* get = refAs->value->dynCast<LocalGet>()) {
+          if (relevantLocals[get->index]) {
+            auto zero = Literal::makeZero(get->type);
+            auto constraint = Constraint{Abstract::Ne, {zero}};
+            constraints.approximateAnd(get->index, constraint);
+          }
+        }
+      }
     }
   }
 
