@@ -232,15 +232,13 @@
   ;; CHECK-NEXT:    (call $get-nullable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.is_null
-  ;; CHECK-NEXT:   (local.get $a)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $fallthrough-ref-as-non-null (param $a (ref null $A)) (result i32)
-    ;; ref.as_non_null wraps a nullable call. We look at the fallthrough, which
-    ;; is nullable, but should still be able to infer that $a becomes non-
-    ;; nullable.
-    ;; TODO
+    ;; ref.as_non_null wraps a nullable call. We should not be confused by the
+    ;; fact that the original value that falls through is nullable: we can
+    ;; use the fact that it was cast to a non-nullable value, and optimize the
+    ;; ref.is_null to 0.
     (local.set $a
       (ref.as_non_null
         (call $get-nullable)
