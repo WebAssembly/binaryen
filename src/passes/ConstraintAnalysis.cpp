@@ -626,8 +626,8 @@ struct ConstraintAnalysis
 
       // Apply a non-nullability constraint: if we write a non-nullable value to
       // a nullable local, then we know it is now non-nullable. Note that we
-      // test set->value and not the fallthrough value. The original value may
-      // flow through a cast, making it more refined:
+      // test set->value and not the fallthrough value, as the original value
+      // may flow through a cast, making it more refined:
       //
       //  (local.set $x (ref.as_non_null (..)))
       //
