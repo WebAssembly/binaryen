@@ -21,7 +21,7 @@
   ;; CHECK:      (memory $unshared 1 1)
   (memory $unshared 1 1)
 
-  ;; CHECK:      (func $memory.size-shared-shared (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $memory.size-shared-shared (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (memory.size $shared)
@@ -43,7 +43,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $memory.size-unshared-shared (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $memory.size-unshared-shared (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.atomic.set $shared-struct 0
@@ -103,7 +103,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-acquire (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $read-acquire (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -131,7 +131,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $acquire-read (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $acquire-read (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared-struct 0
@@ -680,7 +680,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $br-on-read-acquire (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $br-on-read-acquire (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block $l (result i32)
@@ -741,7 +741,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $br-on-acquire-read (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $br-on-acquire-read (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $l
   ;; CHECK-NEXT:   (br_if $l
@@ -801,7 +801,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $read-struct-fence (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $read-struct-fence (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.get $shared-struct 0
@@ -842,7 +842,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $write-struct-fence (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $write-struct-fence (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block (result i32)
@@ -1922,7 +1922,7 @@
 
   ;; Relaxed with Fence
 
-  ;; CHECK:      (func $read-relaxed-fence (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $read-relaxed-fence (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.atomic.get relaxed $shared-struct 0
@@ -1942,7 +1942,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $write-relaxed-fence (type $3) (param $shared (ref null $shared-struct)) (result i32)
+  ;; CHECK:      (func $write-relaxed-fence (type $5) (param $shared (ref null $shared-struct)) (result i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (block (result i32)

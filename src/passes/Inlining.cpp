@@ -1519,6 +1519,10 @@ struct Inlining : public Pass {
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func);
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
+
+        // Update the size, as we may try to inline into the target additional
+        // times.
+        infos[func->name].size += infos[inlinedName].size;
       }
     }
 

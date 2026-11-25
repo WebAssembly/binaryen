@@ -24,7 +24,7 @@
   (array.new $array (i64.const -39) (i32.const 1))
  )
 
- ;; CHECK:      (func $struct-rmw-xchg (type $0) (result i64)
+ ;; CHECK:      (func $struct-rmw-xchg (type $2) (result i64)
  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $struct 0
  ;; CHECK-NEXT:   (global.get $struct)
  ;; CHECK-NEXT:   (i64.const 0)
@@ -37,7 +37,7 @@
   )
  )
 
- ;; CHECK:      (func $struct-rmw-cmpxchg (type $0) (result i64)
+ ;; CHECK:      (func $struct-rmw-cmpxchg (type $2) (result i64)
  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
  ;; CHECK-NEXT:   (global.get $struct)
  ;; CHECK-NEXT:   (i64.const -39)
@@ -52,7 +52,7 @@
   )
  )
 
- ;; CHECK:      (func $array-rmw-xchg (type $0) (result i64)
+ ;; CHECK:      (func $array-rmw-xchg (type $2) (result i64)
  ;; CHECK-NEXT:  (array.atomic.rmw.xchg acqrel acqrel $array
  ;; CHECK-NEXT:   (global.get $array)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -67,7 +67,7 @@
   )
  )
 
- ;; CHECK:      (func $array-rmw-cmpxchg (type $0) (result i64)
+ ;; CHECK:      (func $array-rmw-cmpxchg (type $2) (result i64)
  ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg acqrel acqrel $array
  ;; CHECK-NEXT:   (global.get $array)
  ;; CHECK-NEXT:   (i32.const 0)
