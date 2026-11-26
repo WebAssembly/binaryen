@@ -96,7 +96,6 @@ set(passes_SOURCES
   Precompute.cpp
   Print.cpp
   PrintBoundary.cpp
-  PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
   RemoveStart.cpp
