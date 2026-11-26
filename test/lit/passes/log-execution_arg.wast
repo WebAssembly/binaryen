@@ -13,7 +13,7 @@
 
   ;; CHECK:      (func $nopp
   ;; CHECK-NEXT:  (call $log_execution
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
