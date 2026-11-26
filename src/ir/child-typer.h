@@ -290,11 +290,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitDataDrop(DataDrop* curr) {}
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    assert(wasm.getMemory(curr->destMemory)->addressType ==
-           wasm.getMemory(curr->sourceMemory)->addressType);
     notePointer(&curr->dest, curr->destMemory);
     notePointer(&curr->source, curr->sourceMemory);
-    notePointer(&curr->size, curr->destMemory);
+
+    // The size depends on both dest and source.
+    auto* sourceMemory = wasm.getMemory(curr->sourceMemory);
+    auto* destMemory = wasm.getMemory(curr->destMemory);
+    Type sizeType =
+      sourceMemory->is64() && destMemory->is64() ? Type::i64 : Type::i32;
+    note(&curr->size, sizeType);
   }
 
   void visitMemoryFill(MemoryFill* curr) {
