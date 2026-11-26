@@ -15,10 +15,11 @@
  */
 
 //
-// Generalize the types of locals as much as possible, both to eliminate
-// unnecessarily refined types from the type section and (TODO) to weaken casts
-// that cast to unnecessarily refined types. If the casts are weakened enough,
-// they will be able to be removed by OptimizeInstructions/StripRefiningCasts.
+// Generalize the types of locals (and, in trapsNeverHappen mode, ref.cast
+// targets) as much as possible, both to eliminate unnecessarily refined types
+// from the type section and to weaken casts that cast to unnecessarily refined
+// types. If the casts are weakened enough, they will be able to be removed by
+// OptimizeInstructions/StripRefiningCasts.
 //
 
 #include <optional>
@@ -29,6 +30,7 @@
 #include "ir/branch-utils.h"
 #include "ir/child-typer.h"
 #include "ir/glbs.h"
+#include "ir/intrinsics.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-traversal.h"
@@ -142,6 +144,16 @@ Type getTop(Type type) {
   return Type(type.getHeapType().getTop(), Nullable);
 }
 
+// Whether we can generalize the target type of a RefCast. Without
+// trapsNeverHappen, weakening a cast could remove a trap. We also do not yet
+// generalize ref.cast_desc_eq (whose target type is determined by its
+// descriptor operand) or unreachable casts.
+// TODO: Also generalize ref.cast_desc_eq, and generalize casts without TNH when
+// the input's original static type already guaranteed the outcome.
+bool canGeneralizeCast(RefCast* cast, bool trapsNeverHappen) {
+  return trapsNeverHappen && !cast->desc && cast->type.isRef();
+}
+
 // Use ChildTyper to find all subtyping constraints on expressions and locals,
 // and compute the greatest lower bound (GLB) of the required supertypes for
 // each local so that each local is given the least-refined valid type.
@@ -168,6 +180,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
   using WorkItem = std::variant<Expression*, Index>;
   std::vector<WorkItem> worklist;
 
+  bool trapsNeverHappen;
   Expression* currExpr = nullptr;
 
   // Walker for the code, using ControlFlowWalker for findBreakTarget.
@@ -180,9 +193,10 @@ struct Generalizer : public ChildTyper<Generalizer> {
     }
   } walker{*this};
 
-  Generalizer(Module& wasm, Function* func)
+  Generalizer(Module& wasm, Function* func, bool trapsNeverHappen)
     : Super(wasm, func), localGLBs(func->getNumLocals()),
-      localSetValues(func->getNumLocals()) {}
+      localSetValues(func->getNumLocals()), trapsNeverHappen(trapsNeverHappen) {
+  }
 
   void walk() {
     addConstraint(func->body, func->getResults());
@@ -377,7 +391,13 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
   void visitRefCast(RefCast* curr) {
     Super::visitRefCast(curr);
-    noteExactCast(curr->ref, curr->type);
+    // If this cast cannot be generalized, its target type is fixed, so if it is
+    // exact we must constrain the input right away (see noteExactCast). If it
+    // can be generalized, we defer this to propagate() so the input is only
+    // constrained if downstream uses require the cast result to be exact.
+    if (!canGeneralizeCast(curr, trapsNeverHappen)) {
+      noteExactCast(curr->ref, curr->type);
+    }
   }
 
   void visitBrOn(BrOn* curr) {
@@ -442,6 +462,18 @@ struct Generalizer : public ChildTyper<Generalizer> {
     // TODO: Track constraints on tuple elements.
     for (auto* op : curr->operands) {
       addConstraint(op, op->type);
+    }
+  }
+
+  void visitCall(Call* curr) {
+    Super::visitCall(curr);
+
+    if (Intrinsics(wasm).isCallWithoutEffects(curr)) {
+      // Do not allow the funcref passed at the end to generalize, as its type
+      // must match the params sent.
+      assert(!curr->operands.empty());
+      auto* last = curr->operands.back();
+      addConstraint(last, last->type);
     }
   }
 
@@ -609,6 +641,13 @@ struct Generalizer : public ChildTyper<Generalizer> {
             elems[extract->index] = type;
             addConstraint(extract->tuple, Type(elems));
           }
+        } else if (auto* cast = expr->dynCast<RefCast>()) {
+          // A generalizable cast will generalize to an inexact target type
+          // unless downstream uses require its result `type` to be exact. Only
+          // in that case must we constrain `cast->ref` via noteExactCast.
+          if (canGeneralizeCast(cast, trapsNeverHappen)) {
+            noteExactCast(cast->ref, type);
+          }
         }
         if (auto it = exprSubs.find(expr); it != exprSubs.end()) {
           for (auto* sub : it->second) {
@@ -628,6 +667,7 @@ struct Generalizer : public ChildTyper<Generalizer> {
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   std::vector<Type> localTypes;
+  std::unordered_map<Expression*, GLBFinder> exprGLBs;
   bool refinalize = false;
 
   bool isFunctionParallel() override { return true; }
@@ -643,11 +683,11 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     runner.add("dce");
     runner.runOnFunction(func);
 
-    Generalizer generalizer(*wasm, func);
+    Generalizer generalizer(*wasm, func, getPassOptions().trapsNeverHappen);
     generalizer.walk();
     generalizer.propagate();
 
-    // Optimize local types. TODO: Optimize casts as well.
+    // Optimize local types.
     auto numLocals = func->getNumLocals();
     auto numParams = func->getNumParams();
     localTypes.resize(numLocals);
@@ -666,7 +706,9 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
       }
     }
 
-    // Update gets and sets accordingly.
+    exprGLBs = std::move(generalizer.exprGLBs);
+
+    // Update gets, sets, and casts accordingly.
     Super::runOnFunction(wasm, func);
 
     if (refinalize) {
@@ -684,6 +726,18 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee() && localTypes[curr->index] != curr->type) {
       curr->type = localTypes[curr->index];
+      refinalize = true;
+    }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (!canGeneralizeCast(curr, getPassOptions().trapsNeverHappen)) {
+      return;
+    }
+    auto& glb = exprGLBs[curr];
+    auto newType = glb.noted() ? glb.getGLB() : getTop(curr->type);
+    if (newType != curr->type) {
+      curr->type = newType;
       refinalize = true;
     }
   }
