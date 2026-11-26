@@ -936,8 +936,8 @@ function asmFunc(imports) {
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
   $1_1 = i64toi32_i32$0;
   i64toi32_i32$0 = $0_1;
-  HEAP32[i64toi32_i32$0 >> 2] = $1_1;
   HEAP32[(i64toi32_i32$0 + 4 | 0) >> 2] = i64toi32_i32$1;
+  HEAP32[i64toi32_i32$0 >> 2] = $1_1;
   return get() | 0 | 0;
  }
  
