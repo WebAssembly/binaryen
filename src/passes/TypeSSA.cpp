@@ -129,6 +129,10 @@ struct Analyzer
     news.push_back(curr);
     visitExpression(curr);
   }
+  void visitRefFunc(RefFunc* curr) {
+    news.push_back(curr);
+    visitExpression(curr);
+  }
 
   // Find casts to exact types. Allocations of these types will not be able to
   // be optimized.
@@ -320,6 +324,10 @@ struct TypeSSA : public Pass {
 
   News newsToModify;
 
+  // Track which functions we have already queued for modification, so we only
+  // create one new type per function, satisfying validation rules.
+  std::unordered_set<Name> processedFunctions;
+
   // As we generate new names, use a consistent index.
   Index nameCounter = 0;
 
@@ -330,6 +338,11 @@ struct TypeSSA : public Pass {
         disallowed = disallowedTypes.contains(curr->type.getHeapType());
       }
       if (!disallowed && isInteresting(curr)) {
+        if (auto* refFunc = curr->dynCast<RefFunc>()) {
+          if (!processedFunctions.insert(refFunc->func).second) {
+            continue;
+          }
+        }
         newsToModify.push_back(curr);
       }
     }
@@ -369,6 +382,8 @@ struct TypeSSA : public Pass {
           builder[i] = oldType.getArray();
           break;
         case HeapTypeKind::Func:
+          builder[i] = oldType.getSignature();
+          break;
         case HeapTypeKind::Cont:
         case HeapTypeKind::Basic:
           WASM_UNREACHABLE("unexpected kind");
@@ -401,6 +416,10 @@ struct TypeSSA : public Pass {
       auto oldType = curr->type.getHeapType();
       auto newType = newTypes[i];
       curr->type = Type(newType, NonNullable, Exact);
+
+      if (auto* refFunc = curr->dynCast<RefFunc>()) {
+        module->getFunction(refFunc->func)->type = curr->type;
+      }
 
       // If the old type has a nice name, make a nice name for the new one.
       if (typeNames.contains(oldType)) {
@@ -512,6 +531,11 @@ struct TypeSSA : public Pass {
           return false;
         }
       }
+      return true;
+    } else if (curr->is<RefFunc>()) {
+      // Any ref.func is interesting to type-ssa as assigning it a unique
+      // type lets passes distinguish references to this function from others
+      // with the same signature.
       return true;
     } else {
       WASM_UNREACHABLE("unknown new");
