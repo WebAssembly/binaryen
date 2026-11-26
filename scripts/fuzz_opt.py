@@ -2764,6 +2764,7 @@ opt_choices = [
     ("--gufa",),
     ("--gufa-cast-all",),
     ("--gufa-optimizing",),
+    ("--local-gufa",),
     ("--local-cse",),
     ("--heap2local",),
     ("--heap-store-optimization",),

@@ -361,8 +361,10 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
     return Type::isSubType(a.getType(), b.getType());
   }
 
-  if (a.isFullConeType()) {
-    // We've already ruled out b being a full cone type before.
+  if (a.hasFullCone()) {
+    // We've already ruled out b being a full cone type before. Note that this
+    // also handles the case where a is a Global with an inexact type (whose
+    // cone depth is FullDepth), avoiding overflow below.
     return false;
   }
 
@@ -528,14 +530,18 @@ struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
 // main flow will begin.
 struct InfoCollector
   : public BreakTargetWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
-  SharedInfo& shared;
+  // Whole-program shared info, or nullptr when analyzing a single function
+  // locally.
+  SharedInfo* shared;
   CollectedFuncInfo& info;
   const PassOptions& options;
 
-  InfoCollector(SharedInfo& shared,
+  InfoCollector(SharedInfo* shared,
                 CollectedFuncInfo& info,
                 const PassOptions& options)
     : shared(shared), info(info), options(options) {}
+
+  bool isLocal() const { return !shared; }
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -669,6 +675,10 @@ struct InfoCollector
                 curr->func, ExternalKind::Function, curr->type));
     }
 
+    if (isLocal()) {
+      return;
+    }
+
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
     // We do so here in the RefFunc so that we only do it for functions that
@@ -773,6 +783,17 @@ struct InfoCollector
   // Globals read and write from their location.
   void visitGlobalGet(GlobalGet* curr) {
     if (isRelevant(curr->type)) {
+      if (isLocal()) {
+        auto* global = getModule()->getGlobal(curr->name);
+        if (global->mutable_ == Immutable && !curr->type.isTuple()) {
+          addRoot(curr,
+                  PossibleContents::global(
+                    curr->name, ExternalKind::Global, curr->type));
+        } else {
+          addRoot(curr);
+        }
+        return;
+      }
       // FIXME: we allow tuples in globals, so GlobalLocation needs a tupleIndex
       //        and we should loop here.
       assert(!curr->type.isTuple());
@@ -781,6 +802,9 @@ struct InfoCollector
     }
   }
   void visitGlobalSet(GlobalSet* curr) {
+    if (isLocal()) {
+      return;
+    }
     if (isRelevant(curr->value->type)) {
       info.links.push_back(
         {ExpressionLocation{curr->value, 0}, GlobalLocation{curr->name}});
@@ -794,13 +818,15 @@ struct InfoCollector
   void handleCall(T* curr,
                   std::function<Location(Index)> makeParamLocation,
                   std::function<Location(Index)> makeResultLocation) {
-    Index i = 0;
-    for (auto* operand : curr->operands) {
-      if (isRelevant(operand->type)) {
-        info.links.push_back(
-          {ExpressionLocation{operand, 0}, makeParamLocation(i)});
+    if (!isLocal()) {
+      Index i = 0;
+      for (auto* operand : curr->operands) {
+        if (isRelevant(operand->type)) {
+          info.links.push_back(
+            {ExpressionLocation{operand, 0}, makeParamLocation(i)});
+        }
+        i++;
       }
-      i++;
     }
 
     // Add results, if anything flows out.
@@ -818,11 +844,25 @@ struct InfoCollector
       for (Index i = 0; i < results.size(); i++) {
         auto result = results[i];
         if (isRelevant(result)) {
-          info.links.push_back(
-            {makeResultLocation(i), ResultLocation{getFunction(), i}});
+          auto from = makeResultLocation(i);
+          Location to = ResultLocation{getFunction(), i};
+          if (from != to) {
+            info.links.push_back({from, to});
+          }
         }
       }
     }
+  }
+
+  // In local mode, a call to an unknown function (any function other than the
+  // current one, or any indirect call) can return any value of the callee's
+  // result types.
+  template<typename T> void handleUnknownCall(T* curr, Type results) {
+    assert(isLocal());
+    handleCall(
+      curr,
+      [&](Index i) -> Location { WASM_UNREACHABLE("unused in local mode"); },
+      [&](Index i) { return getTypeLocation(results[i]); });
   }
 
   // Calls send values to params in their possible targets, and receive
@@ -830,6 +870,25 @@ struct InfoCollector
 
   template<typename T> void handleDirectCall(T* curr, Name targetName) {
     auto* target = getModule()->getFunction(targetName);
+    if (isLocal()) {
+      if (target == getFunction()) {
+        // Direct self-recursion: we know all return values of this function,
+        // so connect to our own ResultLocation. (Params are already rooted
+        // with their full types, so no need to send operands.)
+        handleCall(
+          curr,
+          [&](Index i) -> Location {
+            WASM_UNREACHABLE("unused in local mode");
+          },
+          [&](Index i) {
+            assert(i <= target->getResults().size());
+            return ResultLocation{target, i};
+          });
+      } else {
+        handleUnknownCall(curr, target->getResults());
+      }
+      return;
+    }
     handleCall(
       curr,
       [&](Index i) {
@@ -851,6 +910,10 @@ struct InfoCollector
     }
     // Connect us to the given type.
     auto sig = targetType.getSignature();
+    if (isLocal()) {
+      handleUnknownCall(curr, sig.results);
+      return;
+    }
     handleCall(
       curr,
       [&](Index i) {
@@ -874,7 +937,7 @@ struct InfoCollector
     //       even reuse ConeReadLocation if we generalized it to function types.
     for (Index i = 0; i < sig.results.size(); i++) {
       if (isRelevant(sig.results[i])) {
-        shared.subTypes.iterSubTypes(
+        shared->subTypes.iterSubTypes(
           targetType, [&](HeapType subType, Index depth) {
             info.links.push_back({SignatureResultLocation{subType, i},
                                   ExpressionLocation{curr, i}});
@@ -940,8 +1003,9 @@ struct InfoCollector
 
     // If this goes to a public table, then we must root the output, as the
     // table could contain anything at all, and calling functions there could
-    // return anything at all.
-    if (shared.publicTables.contains(curr->table)) {
+    // return anything at all. (In local mode, handleIndirectCall already rooted
+    // the output.)
+    if (!isLocal() && shared->publicTables.contains(curr->table)) {
       addRoot(curr);
     }
     // TODO: the table identity could also be used here in more ways
@@ -984,6 +1048,10 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    if (isLocal()) {
+      return;
+    }
     auto type = curr->type.getHeapType();
     if (curr->isWithDefault()) {
       // Link the default values to the struct's fields.
@@ -1001,10 +1069,13 @@ struct InfoCollector
       info.links.push_back({ExpressionLocation{curr->desc, 0},
                             DataLocation{type, DataLocation::DescriptorIndex}});
     }
-    addRoot(curr, PossibleContents::exactType(curr->type));
   }
   void visitArrayNew(ArrayNew* curr) {
     if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    if (isLocal()) {
       return;
     }
     auto type = curr->type.getHeapType();
@@ -1015,13 +1086,15 @@ struct InfoCollector
       info.links.push_back(
         {getNullLocation(type.getArray().element.type), DataLocation{type, 0}});
     }
-    addRoot(curr, PossibleContents::exactType(curr->type));
   }
   void visitArrayNewData(ArrayNewData* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
+    if (isLocal()) {
+      return;
+    }
     auto heapType = curr->type.getHeapType();
     Type elemType = heapType.getArray().element.type;
     addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(elemType));
@@ -1031,6 +1104,9 @@ struct InfoCollector
       return;
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
+    if (isLocal()) {
+      return;
+    }
     auto heapType = curr->type.getHeapType();
     Type segType = getModule()->getElementSegment(curr->segment)->type;
     addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
@@ -1038,6 +1114,10 @@ struct InfoCollector
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    if (isLocal()) {
       return;
     }
     if (!curr->values.empty()) {
@@ -1048,7 +1128,6 @@ struct InfoCollector
         return DataLocation{type, 0};
       });
     }
-    addRoot(curr, PossibleContents::exactType(curr->type));
   }
 
   // Struct operations access the struct fields' locations.
@@ -1069,7 +1148,7 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
   }
   void visitStructSet(StructSet* curr) {
-    if (curr->ref->type == Type::unreachable) {
+    if (isLocal() || curr->ref->type == Type::unreachable) {
       return;
     }
     // See comment on visitStructGet. Here we also connect the value.
@@ -1080,8 +1159,10 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    addChildParentLink(curr->ref, curr);
-    addChildParentLink(curr->value, curr);
+    if (!isLocal()) {
+      addChildParentLink(curr->ref, curr);
+      addChildParentLink(curr->value, curr);
+    }
     // TODO: Model the output
     addRoot(curr);
   }
@@ -1089,9 +1170,11 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    addChildParentLink(curr->ref, curr);
-    addChildParentLink(curr->expected, curr);
-    addChildParentLink(curr->replacement, curr);
+    if (!isLocal()) {
+      addChildParentLink(curr->ref, curr);
+      addChildParentLink(curr->expected, curr);
+      addChildParentLink(curr->replacement, curr);
+    }
     // TODO: Model the output
     addRoot(curr);
   }
@@ -1108,7 +1191,7 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
-    if (curr->ref->type == Type::unreachable) {
+    if (isLocal() || curr->ref->type == Type::unreachable) {
       return;
     }
     addChildParentLink(curr->ref, curr);
@@ -1122,7 +1205,7 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
   }
   void visitArrayStore(ArrayStore* curr) {
-    if (curr->ref->type == Type::unreachable) {
+    if (isLocal() || curr->ref->type == Type::unreachable) {
       return;
     }
     addChildParentLink(curr->ref, curr);
@@ -1135,7 +1218,7 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitArrayCopy(ArrayCopy* curr) {
-    if (curr->type == Type::unreachable) {
+    if (isLocal() || curr->type == Type::unreachable) {
       return;
     }
     // Our flow handling of GC data is not simple: we have special code for each
@@ -1153,7 +1236,7 @@ struct InfoCollector
     visitArraySet(set);
   }
   void visitArrayFill(ArrayFill* curr) {
-    if (curr->type == Type::unreachable) {
+    if (isLocal() || curr->type == Type::unreachable) {
       return;
     }
     // See ArrayCopy, above.
@@ -1164,6 +1247,9 @@ struct InfoCollector
   }
 
   void handleArrayWrite(Expression* ref) {
+    if (isLocal()) {
+      return;
+    }
     // Check for both unreachability and a bottom type. In either case we have
     // no work to do, and would error on an assertion below in finding the array
     // type.
@@ -1193,8 +1279,10 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    addChildParentLink(curr->ref, curr);
-    addChildParentLink(curr->value, curr);
+    if (!isLocal()) {
+      addChildParentLink(curr->ref, curr);
+      addChildParentLink(curr->value, curr);
+    }
     // TODO: Model the output
     addRoot(curr);
   }
@@ -1202,9 +1290,11 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    addChildParentLink(curr->ref, curr);
-    addChildParentLink(curr->expected, curr);
-    addChildParentLink(curr->replacement, curr);
+    if (!isLocal()) {
+      addChildParentLink(curr->ref, curr);
+      addChildParentLink(curr->expected, curr);
+      addChildParentLink(curr->replacement, curr);
+    }
     // TODO: Model the output
     addRoot(curr);
   }
@@ -1275,8 +1365,9 @@ struct InfoCollector
       assert(pop->type.size() == params.size());
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
-          info.links.push_back(
-            {TagLocation{tag, i}, ExpressionLocation{pop, i}});
+          auto source = isLocal() ? getTypeLocation(params[i])
+                                  : Location{TagLocation{tag, i}};
+          info.links.push_back({source, ExpressionLocation{pop, i}});
         }
       }
 
@@ -1303,8 +1394,9 @@ struct InfoCollector
 
         for (Index i = 0; i < params.size(); i++) {
           if (isRelevant(params[i])) {
-            info.links.push_back(
-              {TagLocation{tag, i}, getBreakTargetLocation(target, i)});
+            auto source = isLocal() ? getTypeLocation(params[i])
+                                    : Location{TagLocation{tag, i}};
+            info.links.push_back({source, getBreakTargetLocation(target, i)});
           }
         }
 
@@ -1319,6 +1411,9 @@ struct InfoCollector
     }
   }
   template<typename T> void handleThrow(T* curr) {
+    if (isLocal()) {
+      return;
+    }
     auto& operands = curr->operands;
     if (!isRelevant(operands)) {
       return;
@@ -1365,6 +1460,10 @@ struct InfoCollector
   void visitContNew(ContNew* curr) {
     // TODO: optimize when possible
     addRoot(curr);
+
+    if (isLocal()) {
+      return;
+    }
 
     // The function reference that is passed in here will be called, just as if
     // we were a call_ref, except at a potentially later time.
@@ -1422,8 +1521,9 @@ struct InfoCollector
       // Add the values from the tag.
       for (Index i = 0; i < params.size(); i++) {
         if (isRelevant(params[i])) {
-          info.links.push_back(
-            {TagLocation{tag, i}, getBreakTargetLocation(target, i)});
+          auto source = isLocal() ? getTypeLocation(params[i])
+                                  : Location{TagLocation{tag, i}};
+          info.links.push_back({source, getBreakTargetLocation(target, i)});
         }
       }
 
@@ -2098,7 +2198,11 @@ struct Flower {
   Module& wasm;
   const PassOptions& options;
 
-  Flower(Module& wasm, const PassOptions& options);
+  // If |func| is provided, analyze only that function locally without
+  // whole-program information; otherwise analyze the entire module.
+  Flower(Module& wasm, const PassOptions& options, Function* func = nullptr);
+
+  bool isLocal() const { return !subTypes; }
 
   // Each LocationIndex will have one LocationInfo that contains the relevant
   // information we need for each location.
@@ -2285,7 +2389,20 @@ private:
                    const PossibleContents& valueContents,
                    Index fieldIndex);
 
-  // We will need subtypes during the flow, so compute them once ahead of time.
+  // Helpers for constructing the flow graph in global or local mode and
+  // running the flow.
+  void
+  addCollectedInfo(const CollectedFuncInfo& info,
+                   InsertOrderedMap<LocationIndex, PossibleContents>& roots);
+  void
+  collectGlobalInfo(InsertOrderedMap<LocationIndex, PossibleContents>& roots);
+  void
+  collectLocalInfo(Function* func,
+                   InsertOrderedMap<LocationIndex, PossibleContents>& roots);
+  void runFlow(const InsertOrderedMap<LocationIndex, PossibleContents>& roots);
+
+  // We will need subtypes during the flow in global mode, so compute them once
+  // ahead of time. Left null in local mode.
   std::unique_ptr<SubTypes> subTypes;
 
   // The depth of children for each type. This is 0 if the type has no
@@ -2299,11 +2416,43 @@ private:
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
   Index getNormalizedConeDepth(Type type, Index depth) {
-    auto iter = maxDepths.find(type.getHeapType());
-    // A max depth must be in the map (otherwise we would use the default 0,
-    // making it exact, almost certainly incorrectly).
-    assert(iter != maxDepths.end());
-    return std::min(depth, iter->second);
+    if (subTypes) {
+      auto iter = maxDepths.find(type.getHeapType());
+      // A max depth must be in the map (otherwise we would use the default 0,
+      // making it exact, almost certainly incorrectly).
+      assert(iter != maxDepths.end());
+      return std::min(depth, iter->second);
+    }
+
+    // In local mode we do not have whole-program subtype info, so we can only
+    // bound the depth using properties of the type itself.
+    auto heapType = type.getHeapType();
+    if (!heapType.isBasic()) {
+      return heapType.isOpen() ? depth : 0;
+    }
+    switch (heapType.getBasic(Unshared)) {
+      case HeapType::i31:
+      case HeapType::exn:
+      case HeapType::string:
+      case HeapType::none:
+      case HeapType::noext:
+      case HeapType::nofunc:
+      case HeapType::nocont:
+      case HeapType::noexn:
+      case HeapType::nowaitqueue:
+        return 0;
+      case HeapType::ext:
+      case HeapType::waitqueue:
+        return std::min(depth, Index(1));
+      case HeapType::any:
+      case HeapType::eq:
+      case HeapType::struct_:
+      case HeapType::array:
+      case HeapType::func:
+      case HeapType::cont:
+        return depth;
+    }
+    WASM_UNREACHABLE("unexpected basic heap type");
   }
 
   void normalizeConeType(PossibleContents& cone) {
@@ -2322,9 +2471,69 @@ private:
 #endif
 };
 
-Flower::Flower(Module& wasm, const PassOptions& options)
+Flower::Flower(Module& wasm, const PassOptions& options, Function* func)
   : wasm(wasm), options(options) {
+  // The merged roots. (Note that all other forms of merged data are declared at
+  // the class level, since we need them during the flow, but the roots are only
+  // needed to start the flow, so we can declare them here.)
+  //
+  // This must be insert-ordered for the same reason as |workQueue| is, see
+  // above.
+  InsertOrderedMap<LocationIndex, PossibleContents> roots;
 
+  if (func) {
+    if (func->imported()) {
+      return;
+    }
+    collectLocalInfo(func, roots);
+  } else {
+    collectGlobalInfo(roots);
+  }
+
+  runFlow(roots);
+}
+
+void Flower::addCollectedInfo(
+  const CollectedFuncInfo& info,
+  InsertOrderedMap<LocationIndex, PossibleContents>& roots) {
+  for (auto& link : info.links) {
+    links.insert(getIndexes(link));
+  }
+  for (auto& [root, value] : info.roots) {
+    roots[getIndex(root)] = value;
+
+    // Ensure an index even for a root with no links to it - everything needs
+    // an index.
+    getIndex(root);
+  }
+  for (auto [child, parent] : info.childParents) {
+    // In practice we do not have any childParent connections with a tuple;
+    // assert on that just to be safe.
+    assert(!child->type.isTuple());
+    childParents[getIndex(ExpressionLocation{child, 0})] =
+      getIndex(ExpressionLocation{parent, 0});
+  }
+}
+
+void Flower::collectLocalInfo(
+  Function* func, InsertOrderedMap<LocationIndex, PossibleContents>& roots) {
+  CollectedFuncInfo info;
+  InfoCollector finder(nullptr, info, options);
+  finder.walkFunctionInModule(func, &wasm);
+
+  addCollectedInfo(info, roots);
+
+  // Without whole-program analysis, assume any value of the declared type can
+  // arrive in each parameter.
+  auto params = func->getParams();
+  for (Index i = 0; i < params.size(); i++) {
+    roots[getIndex(ParamLocation{func, i})] =
+      PossibleContents::fromType(params[i]);
+  }
+}
+
+void Flower::collectGlobalInfo(
+  InsertOrderedMap<LocationIndex, PossibleContents>& roots) {
   // If traps never happen, create a TNH oracle.
   //
   // Atm this oracle only helps on GC content, so disable it without GC.
@@ -2371,7 +2580,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Collect information from each function.
   ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
     wasm, [&](Function* func, CollectedFuncInfo& info) {
-      InfoCollector finder(shared, info, options);
+      InfoCollector finder(&shared, info, options);
 
       if (func->imported()) {
         // Imports return unknown values.
@@ -2394,7 +2603,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
-  InfoCollector finder(shared, globalInfo, options);
+  InfoCollector finder(&shared, globalInfo, options);
   finder.walkModuleCode(&wasm);
 
 #if POSSIBLE_CONTENTS_DEBUG
@@ -2427,37 +2636,13 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "merging+indexing phase\n";
 #endif
 
-  // The merged roots. (Note that all other forms of merged data are declared at
-  // the class level, since we need them during the flow, but the roots are only
-  // needed to start the flow, so we can declare them here.)
-  //
-  // This must be insert-ordered for the same reason as |workQueue| is, see
-  // above.
-  InsertOrderedMap<LocationIndex, PossibleContents> roots;
-
   // Any function that may be called from the outside, like an export, is a
   // root, since they can be called with unknown parameters. Collect all such
   // functions.
   std::unordered_set<Name> calledFromOutside;
 
   for (auto& [func, info] : analysis.map) {
-    for (auto& link : info.links) {
-      links.insert(getIndexes(link));
-    }
-    for (auto& [root, value] : info.roots) {
-      roots[getIndex(root)] = value;
-
-      // Ensure an index even for a root with no links to it - everything needs
-      // an index.
-      getIndex(root);
-    }
-    for (auto [child, parent] : info.childParents) {
-      // In practice we do not have any childParent connections with a tuple;
-      // assert on that just to be safe.
-      assert(!child->type.isTuple());
-      childParents[getIndex(ExpressionLocation{child, 0})] =
-        getIndex(ExpressionLocation{parent, 0});
-    }
+    addCollectedInfo(info, roots);
 
     for (auto func : info.calledFromOutside) {
       calledFromOutside.insert(func);
@@ -2599,7 +2784,14 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
 #if POSSIBLE_CONTENTS_DEBUG
   std::cout << "... " << timer.lastElapsed() << "\n";
+#endif
+}
+
+void Flower::runFlow(
+  const InsertOrderedMap<LocationIndex, PossibleContents>& roots) {
+#if POSSIBLE_CONTENTS_DEBUG
   std::cout << "Link-targets phase\n";
+  Timer timer;
 #endif
 
   // Add all links to the targets vectors of the source locations, which we will
@@ -3288,6 +3480,38 @@ void Flower::readFromData(Type declaredType,
   auto cone = refContents.getCone();
   auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
 
+  if (isLocal()) {
+    // Without whole-program analysis we do not know what values were written
+    // to GC data elsewhere in the program, so assume any value allowed by the
+    // inferred reference type (or nothing if it is a bottom type, which can
+    // only be null and therefore traps).
+    if (read->type == Type::unreachable) {
+      return;
+    }
+    auto heapType = cone.type.getHeapType();
+    if (heapType.isBottom()) {
+      return;
+    }
+
+    PossibleContents result;
+    if (read->is<ArrayLoad>()) {
+      result = PossibleContents::fromType(read->type);
+    } else if (fieldIndex == DataLocation::DescriptorIndex) {
+      auto desc = heapType.getDescriptorType();
+      assert(desc);
+      // Descriptor subtyping mirrors the described type's subtyping one-to-one,
+      // so the descriptor has the same exactness and cone depth.
+      auto descType = Type(*desc, NonNullable, cone.type.getExactness());
+      result = PossibleContents::coneType(descType, normalizedDepth);
+    } else {
+      auto field = GCTypeUtils::getField(heapType, fieldIndex);
+      assert(field);
+      result = PossibleContents::fromType(field->type);
+    }
+    updateContents(ExpressionLocation{read, 0}, result);
+    return;
+  }
+
   // We create a ConeReadLocation for the canonical cone of this type, to
   // avoid bloating the graph, see comment on ConeReadLocation().
   auto coneReadLocation =
@@ -3341,6 +3565,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 void Flower::writeToData(Expression* ref,
                          const PossibleContents& valueContents,
                          Index fieldIndex) {
+  assert(!isLocal());
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -3412,8 +3637,8 @@ void Flower::dump(Location location) {
 
 } // anonymous namespace
 
-void ContentOracle::analyze() {
-  Flower flower(wasm, options);
+void ContentOracle::analyze(Function* func) {
+  Flower flower(wasm, options, func);
   for (LocationIndex i = 0; i < flower.locations.size(); i++) {
     locationContents[flower.getLocation(i)] = flower.getContents(i);
   }

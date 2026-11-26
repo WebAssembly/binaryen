@@ -255,6 +255,10 @@ void PassRegistry::registerPasses() {
   registerPass("local-cse",
                "common subexpression elimination inside basic blocks",
                createLocalCSEPass);
+  registerPass("local-gufa",
+               "Grand Unified Flow Analysis: optimize each function locally "
+               "without whole-program analysis",
+               createLocalGUFAPass);
   registerPass("local-subtyping",
                "apply more specific subtypes to locals where possible",
                createLocalSubtypingPass);

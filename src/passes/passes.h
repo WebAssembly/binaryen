@@ -80,6 +80,7 @@ Pass* createLegalizeAndPruneJSInterfacePass();
 Pass* createLegalizeJSInterfacePass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
+Pass* createLocalGUFAPass();
 Pass* createLocalSubtypingPass();
 Pass* createLogExecutionPass();
 Pass* createIntrinsicLoweringPass();
