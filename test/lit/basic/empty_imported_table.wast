@@ -14,10 +14,10 @@
   ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 0 0 funcref))
 
   ;; CHECK-TEXT:      (memory $0 0)
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 0 0 funcref))
+  ;; CHECK-BIN:      (import "env" "table" (table $table 0 0 funcref))
 
   ;; CHECK-BIN:      (memory $0 0)
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 0 0 funcref))
+  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $table 0 0 funcref))
 
   ;; CHECK-BIN-NODEBUG:      (memory $0 0)
   (memory $0 0)
