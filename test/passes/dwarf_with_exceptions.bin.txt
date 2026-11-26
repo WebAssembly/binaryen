@@ -274,7 +274,7 @@ DWARF debug info
 
 Contains section .debug_info (63 bytes)
 Contains section .debug_abbrev (41 bytes)
-Contains section .debug_line (162 bytes)
+Contains section .debug_line (165 bytes)
 Contains section .debug_str (178 bytes)
 
 .debug_abbrev contents:
@@ -326,7 +326,7 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x0000009e
+    total_length: 0x000000a1
          version: 4
  prologue_length: 0x00000031
  min_inst_length: 1
@@ -358,59 +358,107 @@ file_names[  1]:
             0x0000000000000005      2      0      1   0             0  is_stmt
 
 
-0x00000045: 00 DW_LNE_set_address (0x000000000000000e)
-0x0000004c: 03 DW_LNS_advance_line (4)
-0x0000004e: 05 DW_LNS_set_column (5)
-0x00000050: 0a DW_LNS_set_prologue_end
-0x00000051: 01 DW_LNS_copy
+0x00000045: 02 DW_LNS_advance_pc (9)
+0x00000047: 03 DW_LNS_advance_line (4)
+0x00000049: 05 DW_LNS_set_column (5)
+0x0000004b: 0a DW_LNS_set_prologue_end
+0x0000004c: 01 DW_LNS_copy
             0x000000000000000e      4      5      1   0             0  is_stmt prologue_end
 
 
-0x00000052: 00 DW_LNE_set_address (0x0000000000000012)
-0x00000059: 03 DW_LNS_advance_line (5)
-0x0000005b: 05 DW_LNS_set_column (3)
-0x0000005d: 01 DW_LNS_copy
+0x0000004d: 02 DW_LNS_advance_pc (4)
+0x0000004f: 03 DW_LNS_advance_line (5)
+0x00000051: 05 DW_LNS_set_column (3)
+0x00000053: 01 DW_LNS_copy
             0x0000000000000012      5      3      1   0             0  is_stmt
 
 
-0x0000005e: 00 DW_LNE_set_address (0x000000000000001f)
-0x00000065: 03 DW_LNS_advance_line (6)
-0x00000067: 05 DW_LNS_set_column (5)
-0x00000069: 01 DW_LNS_copy
+0x00000054: 02 DW_LNS_advance_pc (13)
+0x00000056: 03 DW_LNS_advance_line (6)
+0x00000058: 05 DW_LNS_set_column (5)
+0x0000005a: 01 DW_LNS_copy
             0x000000000000001f      6      5      1   0             0  is_stmt
 
 
-0x0000006a: 00 DW_LNE_set_address (0x000000000000003e)
-0x00000071: 03 DW_LNS_advance_line (7)
-0x00000073: 05 DW_LNS_set_column (3)
-0x00000075: 06 DW_LNS_negate_stmt
-0x00000076: 01 DW_LNS_copy
+0x0000005b: 02 DW_LNS_advance_pc (4)
+0x0000005d: 03 DW_LNS_advance_line (0)
+0x0000005f: 06 DW_LNS_negate_stmt
+0x00000060: 01 DW_LNS_copy
+            0x0000000000000023      0      5      1   0             0 
+
+
+0x00000061: 02 DW_LNS_advance_pc (4)
+0x00000063: 05 DW_LNS_set_column (0)
+0x00000065: 01 DW_LNS_copy
+            0x0000000000000027      0      0      1   0             0 
+
+
+0x00000066: 02 DW_LNS_advance_pc (1)
+0x00000068: 03 DW_LNS_advance_line (7)
+0x0000006a: 05 DW_LNS_set_column (3)
+0x0000006c: 06 DW_LNS_negate_stmt
+0x0000006d: 01 DW_LNS_copy
+            0x0000000000000028      7      3      1   0             0  is_stmt
+
+
+0x0000006e: 02 DW_LNS_advance_pc (17)
+0x00000070: 03 DW_LNS_advance_line (0)
+0x00000072: 05 DW_LNS_set_column (0)
+0x00000074: 06 DW_LNS_negate_stmt
+0x00000075: 01 DW_LNS_copy
+            0x0000000000000039      0      0      1   0             0 
+
+
+0x00000076: 02 DW_LNS_advance_pc (1)
+0x00000078: 03 DW_LNS_advance_line (7)
+0x0000007a: 05 DW_LNS_set_column (3)
+0x0000007c: 06 DW_LNS_negate_stmt
+0x0000007d: 01 DW_LNS_copy
+            0x000000000000003a      7      3      1   0             0  is_stmt
+
+
+0x0000007e: 02 DW_LNS_advance_pc (3)
+0x00000080: 03 DW_LNS_advance_line (0)
+0x00000082: 06 DW_LNS_negate_stmt
+0x00000083: 01 DW_LNS_copy
+            0x000000000000003d      0      3      1   0             0 
+
+
+0x00000084: 02 DW_LNS_advance_pc (1)
+0x00000086: 03 DW_LNS_advance_line (7)
+0x00000088: 01 DW_LNS_copy
             0x000000000000003e      7      3      1   0             0 
 
 
-0x00000077: 00 DW_LNE_set_address (0x0000000000000041)
-0x0000007e: 01 DW_LNS_copy
+0x00000089: 02 DW_LNS_advance_pc (2)
+0x0000008b: 03 DW_LNS_advance_line (0)
+0x0000008d: 01 DW_LNS_copy
+            0x0000000000000040      0      3      1   0             0 
+
+
+0x0000008e: 02 DW_LNS_advance_pc (1)
+0x00000090: 03 DW_LNS_advance_line (7)
+0x00000092: 01 DW_LNS_copy
             0x0000000000000041      7      3      1   0             0 
 
 
-0x0000007f: 00 DW_LNE_set_address (0x0000000000000044)
-0x00000086: 03 DW_LNS_advance_line (8)
-0x00000088: 05 DW_LNS_set_column (1)
-0x0000008a: 06 DW_LNS_negate_stmt
-0x0000008b: 01 DW_LNS_copy
+0x00000093: 02 DW_LNS_advance_pc (2)
+0x00000095: 03 DW_LNS_advance_line (0)
+0x00000097: 01 DW_LNS_copy
+            0x0000000000000043      0      3      1   0             0 
+
+
+0x00000098: 02 DW_LNS_advance_pc (1)
+0x0000009a: 03 DW_LNS_advance_line (8)
+0x0000009c: 05 DW_LNS_set_column (1)
+0x0000009e: 06 DW_LNS_negate_stmt
+0x0000009f: 01 DW_LNS_copy
             0x0000000000000044      8      1      1   0             0  is_stmt
 
 
-0x0000008c: 00 DW_LNE_set_address (0x0000000000000045)
-0x00000093: 01 DW_LNS_copy
-            0x0000000000000045      8      1      1   0             0  is_stmt
-
-
-0x00000094: 00 DW_LNE_set_address (0x00000000ffffff64)
-0x0000009b: 03 DW_LNS_advance_line (7)
-0x0000009d: 05 DW_LNS_set_column (3)
-0x0000009f: 00 DW_LNE_end_sequence
-            0x00000000ffffff64      7      3      1   0             0  is_stmt end_sequence
+0x000000a0: 02 DW_LNS_advance_pc (1)
+0x000000a2: 00 DW_LNE_end_sequence
+            0x0000000000000045      8      1      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
@@ -537,7 +585,7 @@ file_names[  1]:
  )
  ;; custom section ".debug_info", size 63
  ;; custom section ".debug_abbrev", size 41
- ;; custom section ".debug_line", size 162
+ ;; custom section ".debug_line", size 165
  ;; custom section ".debug_str", size 178
  ;; custom section "producers", size 134
  ;; features section: mutable-globals, sign-ext, exception-handling
