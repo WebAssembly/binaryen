@@ -64,7 +64,7 @@ struct LocalizePointerOperands
         return;
       }
       needsLocals |= pointer && hasCalls.contains(child);
-      pointer |= child->type == pointerType && !child->is<Const>();
+      pointer |= child->type == pointerType;
     }
     if (!needsLocals) {
       return;

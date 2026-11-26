@@ -76,11 +76,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   FindAllPointers<Return> finder(func->body);
   for (auto** ptr : finder.list) {
     auto* ret = (*ptr)->cast<Return>();
-    if (ret->value && ret->value->type == Type::unreachable) {
-      // The return is not reached. Any exits in its value restore the stack.
-      continue;
-    }
-    if (ret->value) {
+    if (ret->value && ret->value->type != Type::unreachable) {
       // handle the returned value
       auto* block = builder.makeBlock();
       auto temp = builder.addVar(func, ret->value->type);
@@ -95,50 +91,13 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
       *ptr = builder.makeSequence(makeStackRestore(), ret);
     }
   }
-  // Tail calls leave the function after evaluating their operands. Keep the
-  // spill area visible until the last operand has finished, then restore it
-  // before transferring control to the callee.
-  auto restoreBeforeTailCall = [&](Expression** ptr,
-                                   bool isReturn,
-                                   Expression** lastOperand) {
-    if (!isReturn) {
-      return;
-    }
-    if (!lastOperand) {
-      *ptr = builder.makeSequence(makeStackRestore(), *ptr);
-      return;
-    }
-    auto type = (*lastOperand)->type;
-    if (type == Type::unreachable) {
-      return;
-    }
-    auto temp = builder.addVar(func, type);
-    *lastOperand = builder.makeBlock({builder.makeLocalSet(temp, *lastOperand),
-                                      makeStackRestore(),
-                                      builder.makeLocalGet(temp, type)});
-  };
-  for (auto** ptr : FindAllPointers<Call>(func->body).list) {
-    auto* call = (*ptr)->cast<Call>();
-    restoreBeforeTailCall(ptr,
-                          call->isReturn,
-                          call->operands.empty() ? nullptr
-                                                 : &call->operands.back());
-  }
-  for (auto** ptr : FindAllPointers<CallIndirect>(func->body).list) {
-    auto* call = (*ptr)->cast<CallIndirect>();
-    restoreBeforeTailCall(ptr, call->isReturn, &call->target);
-  }
-  for (auto** ptr : FindAllPointers<CallRef>(func->body).list) {
-    auto* call = (*ptr)->cast<CallRef>();
-    restoreBeforeTailCall(ptr, call->isReturn, &call->target);
-  }
   // add stack restores to the body
   if (func->body->type == Type::none) {
     block->list.push_back(func->body);
     block->list.push_back(makeStackRestore());
   } else if (func->body->type == Type::unreachable) {
     block->list.push_back(func->body);
-    // There is no fallthrough. Returns and tail calls restore the stack above.
+    // no need to restore the old stack value, we're gone anyhow
   } else {
     // save the return value
     auto temp = builder.addVar(func, func->getResults());
