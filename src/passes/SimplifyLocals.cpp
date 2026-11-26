@@ -54,6 +54,7 @@
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
 #include <ir/utils.h>
+#include <optional>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -90,6 +91,74 @@ struct SimplifyLocals
 
   // locals in current linear execution trace, which we try to sink
   Sinkables sinkables;
+
+  // Effects seen since the last full invalidation flush. We merge them and
+  // defer scanning all sinkables until a point where we must inspect or move
+  // the full sinkable set.
+  std::optional<EffectAnalyzer> pendingInvalidations;
+
+  void clearSinkables() {
+    sinkables.clear();
+    pendingInvalidations.reset();
+  }
+
+  Sinkables takeSinkables() {
+    flushPendingInvalidations();
+    pendingInvalidations.reset();
+    return std::move(sinkables);
+  }
+
+  void eraseSinkable(typename Sinkables::iterator it) {
+    sinkables.erase(it);
+    if (sinkables.empty()) {
+      pendingInvalidations.reset();
+    }
+  }
+
+  void eraseSinkable(Index key) {
+    sinkables.erase(key);
+    if (sinkables.empty()) {
+      pendingInvalidations.reset();
+    }
+  }
+
+  void mergePendingInvalidations(const EffectAnalyzer& effects) {
+    if (sinkables.empty()) {
+      pendingInvalidations.reset();
+      return;
+    }
+    if (!pendingInvalidations) {
+      pendingInvalidations.emplace(this->getPassOptions(), *this->getModule());
+    }
+    pendingInvalidations->mergeIn(effects);
+  }
+
+  void resolvePendingInvalidations(Index index) {
+    if (!pendingInvalidations) {
+      return;
+    }
+    auto it = sinkables.find(index);
+    if (it != sinkables.end() &&
+        pendingInvalidations->orderedAfter(it->second.effects)) {
+      eraseSinkable(it);
+    }
+  }
+
+  void flushPendingInvalidations() {
+    if (!pendingInvalidations) {
+      return;
+    }
+    if (!sinkables.empty()) {
+      checkInvalidations(*pendingInvalidations);
+    }
+    pendingInvalidations.reset();
+  }
+
+  void addSinkable(Index key, Expression** currp) {
+    flushPendingInvalidations();
+    sinkables.emplace(std::pair{
+      key, SinkableInfo(currp, this->getPassOptions(), *this->getModule())});
+  }
 
   // Information about an exit from a block: the break, and the
   // sinkables. For the final exit from a block (falling off)
@@ -135,8 +204,7 @@ struct SimplifyLocals
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
       } else {
-        self->blockBreaks[br->name].push_back(
-          {currp, std::move(self->sinkables)});
+        self->blockBreaks[br->name].push_back({currp, self->takeSinkables()});
       }
     } else if (curr->is<Block>()) {
       return; // handled in visitBlock
@@ -153,7 +221,7 @@ struct SimplifyLocals
       }
       // TODO: we could use this info to stop gathering data on these blocks
     }
-    self->sinkables.clear();
+    self->clearSinkables();
   }
 
   static void doNoteIfCondition(
@@ -161,7 +229,7 @@ struct SimplifyLocals
     Expression** currp) {
     // we processed the condition of this if-else, and now control flow branches
     // into either the true or the false sides
-    self->sinkables.clear();
+    self->clearSinkables();
   }
 
   static void
@@ -170,13 +238,13 @@ struct SimplifyLocals
     auto* iff = (*currp)->cast<If>();
     if (iff->ifFalse) {
       // We processed the ifTrue side of this if-else, save it on the stack.
-      self->ifStack.push_back(std::move(self->sinkables));
+      self->ifStack.push_back(self->takeSinkables());
     } else {
       // This is an if without an else.
       if (allowStructure) {
         self->optimizeIfReturn(iff, currp);
       }
-      self->sinkables.clear();
+      self->clearSinkables();
     }
   }
 
@@ -191,10 +259,12 @@ struct SimplifyLocals
       self->optimizeIfElseReturn(iff, currp, self->ifStack.back());
     }
     self->ifStack.pop_back();
-    self->sinkables.clear();
+    self->clearSinkables();
   }
 
   void visitBlock(Block* curr) {
+    flushPendingInvalidations();
+
     bool hasBreaks = curr->name.is() && blockBreaks[curr->name].size() > 0;
 
     if (allowStructure) {
@@ -204,25 +274,29 @@ struct SimplifyLocals
     // post-block cleanups
     if (curr->name.is()) {
       if (unoptimizableBlocks.contains(curr->name)) {
-        sinkables.clear();
+        clearSinkables();
         unoptimizableBlocks.erase(curr->name);
       }
 
       if (hasBreaks) {
         // more than one path to here, so nonlinear
-        sinkables.clear();
+        clearSinkables();
         blockBreaks.erase(curr->name);
       }
     }
   }
 
   void visitLoop(Loop* curr) {
+    flushPendingInvalidations();
+
     if (allowStructure) {
       optimizeLoopReturn(curr);
     }
   }
 
   void optimizeLocalGet(LocalGet* curr) {
+    resolvePendingInvalidations(curr->index);
+
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
       auto* set = (*found->second.item)
@@ -284,7 +358,7 @@ struct SimplifyLocals
       // reuse the local.get that is dying
       *found->second.item = curr;
       ExpressionManipulator::nop(curr);
-      sinkables.erase(found);
+      eraseSinkable(found);
       anotherCycle = true;
     }
   }
@@ -300,6 +374,10 @@ struct SimplifyLocals
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
+    if (sinkables.empty()) {
+      return;
+    }
+
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
     for (auto& [index, info] : sinkables) {
@@ -308,7 +386,7 @@ struct SimplifyLocals
       }
     }
     for (auto index : invalidated) {
-      sinkables.erase(index);
+      eraseSinkable(index);
     }
   }
 
@@ -321,9 +399,17 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
+    if (self->sinkables.empty()) {
+      if (!allowNesting) {
+        self->expressionStack.push_back(curr);
+      }
+      return;
+    }
+
     // Certain expressions cannot be sinked into 'try'/'try_table', and so at
     // the start of 'try'/'try_table' we forget about them.
     if (curr->is<Try>() || curr->is<TryTable>()) {
+      self->flushPendingInvalidations();
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
         // Expressions that may throw cannot be moved into a try (which might
@@ -334,13 +420,13 @@ struct SimplifyLocals
         }
       }
       for (auto index : invalidated) {
-        self->sinkables.erase(index);
+        self->eraseSinkable(index);
       }
     }
 
     EffectAnalyzer effects(self->getPassOptions(), *self->getModule());
     if (effects.checkPre(curr)) {
-      self->checkInvalidations(effects);
+      self->mergePendingInvalidations(effects);
     }
 
     if (!allowNesting) {
@@ -409,6 +495,8 @@ struct SimplifyLocals
     auto* set = (*currp)->dynCast<LocalSet>();
 
     if (set) {
+      self->resolvePendingInvalidations(set->index);
+
       // if we see a set that was already potentially-sinkable, then the
       // previous store is dead, leave just the value
       auto found = self->sinkables.find(set->index);
@@ -419,22 +507,20 @@ struct SimplifyLocals
         Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(previous);
         drop->value = previousValue;
         drop->finalize();
-        self->sinkables.erase(found);
+        self->eraseSinkable(found);
         self->anotherCycle = true;
       }
     }
 
     EffectAnalyzer effects(self->getPassOptions(), *self->getModule());
     if (effects.checkPost(original)) {
-      self->checkInvalidations(effects);
+      self->mergePendingInvalidations(effects);
     }
 
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(!self->sinkables.contains(index));
-      self->sinkables.emplace(std::pair{
-        index,
-        SinkableInfo(currp, self->getPassOptions(), *self->getModule())});
+      self->addSinkable(index, currp);
     }
 
     if (!allowNesting) {
@@ -468,6 +554,8 @@ struct SimplifyLocals
   std::vector<Loop*> loopsToEnlarge;
 
   void optimizeLoopReturn(Loop* loop) {
+    flushPendingInvalidations();
+
     // If there is a sinkable thing in an eligible loop, we can optimize
     // it in a trivial way to the outside of the loop.
     if (loop->type != Type::none) {
@@ -498,11 +586,13 @@ struct SimplifyLocals
     this->replaceCurrent(set);
     // We moved things around, clear all tracking; we'll do another cycle
     // anyhow.
-    sinkables.clear();
+    clearSinkables();
     anotherCycle = true;
   }
 
   void optimizeBlockReturn(Block* block) {
+    flushPendingInvalidations();
+
     if (!block->name.is() || unoptimizableBlocks.contains(block->name)) {
       return;
     }
@@ -624,13 +714,15 @@ struct SimplifyLocals
     auto* newLocalSet =
       Builder(*this->getModule()).makeLocalSet(sharedIndex, block);
     this->replaceCurrent(newLocalSet);
-    sinkables.clear();
+    clearSinkables();
     anotherCycle = true;
     block->finalize();
   }
 
   // optimize local.sets from both sides of an if into a return value
   void optimizeIfElseReturn(If* iff, Expression** currp, Sinkables& ifTrue) {
+    flushPendingInvalidations();
+
     assert(iff->ifFalse);
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
@@ -753,6 +845,8 @@ struct SimplifyLocals
   // that happens, other passes can "undo" this by turning an if with a copy
   // arm into a one-sided if.
   void optimizeIfReturn(If* iff, Expression** currp) {
+    flushPendingInvalidations();
+
     // If this if is unreachable code, we have nothing to do.
     if (iff->type != Type::none || iff->ifTrue->type != Type::none) {
       return;
@@ -973,7 +1067,7 @@ struct SimplifyLocals
       anotherCycle = true;
     }
     // clean up
-    sinkables.clear();
+    clearSinkables();
     blockBreaks.clear();
     unoptimizableBlocks.clear();
     return anotherCycle;
