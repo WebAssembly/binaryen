@@ -289,9 +289,13 @@ struct LineState {
   }
 
   bool needToEmit() {
-    // Zero values imply we can ignore this line.
+    // Check only the address, not the line. Emit line-zero rows so instructions
+    // with no source attribution do not inherit the preceding source line.
+    // DWARF 4, section 6.2.2 (line register):
+    // https://dwarfstd.org/doc/DWARF4.pdf#page=124
+    // A zero address marks a dead entry:
     // https://github.com/WebAssembly/debugging/issues/9#issuecomment-567720872
-    return line != 0 && addr != 0;
+    return addr != 0;
   }
 
   // Given an old state, emit the diff from it to this state into a new line
