@@ -72,6 +72,7 @@
 #include "cfg/wto.h"
 #include "ir/constraint.h"
 #include "ir/drop.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "ir/properties.h"
@@ -100,7 +101,7 @@ struct Info {
   bool inQueue;
   Index index;
 
-  // All relevant operations: local gets and sets and uses of them.
+  // All relevant operations that we optimize with.
   std::vector<Expression**> actions;
 
   // The branching instruction at the end of the block (or nullptr if there is
@@ -198,6 +199,117 @@ struct ConstraintAnalysis
   void visitBinary(Binary* curr) { addAction(); }
   void visitRefEq(RefEq* curr) { addAction(); }
   void visitRefIsNull(RefIsNull* curr) { addAction(); }
+
+  // Various instructions trap on a null input, and therefore prove that the
+  // input is not null, after them. We represent all such actions using a
+  // RefAsNonNull in our actions (i.e. a StructGet shows up as a RefAsNonNull,
+  // which reflects the only important behavior of the StructGet, for us). As
+  // actions store an Expression**, we allocate a "box" for each, with a pointer
+  // to the RefAs, so that we can refer to that referring pointer as an
+  // Expression**.
+  struct RefAsBox {
+    RefAs refAs;
+    Expression* referrer;
+
+    RefAsBox(Expression* value) {
+      refAs.op = RefAsNonNull;
+      refAs.value = value;
+      referrer = &refAs;
+    }
+  };
+  std::vector<std::unique_ptr<RefAsBox>> refAsBoxes;
+
+  // Receives the instruction and its ref that could cause a trap.
+  void trapOnNull(Expression* curr, Expression* ref) {
+    if (!ref) {
+      // No value (e.g. StructNew's desc when it doesn't have one).
+      return;
+    }
+
+    if (!currBasicBlock) {
+      // Nowhere to store anything.
+      return;
+    }
+
+    // The ref must be a local, so we know what is constrained.
+    // TODO: local.tee, fallthrough, etc.
+    auto* get = ref->dynCast<LocalGet>();
+    if (!get) {
+      return;
+    }
+
+    // If it is non-nullable then the type proves non-nullability anyhow, and we
+    // are not needed.
+    if (!ref->type.isNullableRef()) {
+      return;
+    }
+
+    // Check for changes in later children that alter the local:
+    //
+    //   (struct.set
+    //     (local.get $x)
+    //     (local.tee $x ..)
+    //   )
+    //
+    // In this example, at the time that the struct.set executes, $x has been
+    // set to a different value, so we cannot infer anything. Any set of the
+    // local that is read in `ref` is dangerous, if it appears after `ref`.
+    auto seenRef = false;
+    for (auto* child : ChildIterator(curr)) {
+      if (child == ref) {
+        seenRef = true;
+      } else if (seenRef) {
+        for (auto* set : FindAll<LocalSet>(child).list) {
+          if (set->index == get->index) {
+            return;
+          }
+        }
+      }
+    }
+
+    // Valid to optimize. Add a normal action for a RefAs, and otherwise
+    // generate a boxed RefAs to represent this not-RefAs-but-behaving-like-a-
+    // RefAs in our actions.
+    if (curr->is<RefAs>()) {
+      addAction();
+    } else {
+      refAsBoxes.emplace_back(std::make_unique<RefAsBox>(ref));
+      currBasicBlock->contents.actions.push_back(&refAsBoxes.back()->referrer);
+    }
+  }
+
+  void visitRefAs(RefAs* curr) {
+    if (curr->op == RefAsNonNull) {
+      trapOnNull(curr, curr->value);
+    }
+  }
+  // TODO: This list overlaps with OptimizeInstructions trapOnNull logic, and
+  //       can maybe be deduplicated?
+  void visitStructNew(StructNew* curr) { trapOnNull(curr, curr->desc); }
+  void visitStructGet(StructGet* curr) { trapOnNull(curr, curr->ref); }
+  void visitStructSet(StructSet* curr) { trapOnNull(curr, curr->ref); }
+  void visitStructRMW(StructRMW* curr) { trapOnNull(curr, curr->ref); }
+  void visitStructCmpxchg(StructCmpxchg* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayGet(ArrayGet* curr) { trapOnNull(curr, curr->ref); }
+  void visitArraySet(ArraySet* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayLen(ArrayLen* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayCopy(ArrayCopy* curr) {
+    trapOnNull(curr, curr->destRef);
+    trapOnNull(curr, curr->srcRef);
+  }
+  void visitArrayRMW(ArrayRMW* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) { trapOnNull(curr, curr->ref); }
+  void visitRefCast(RefCast* curr) {
+    // Casts to non-null, trap on null.
+    if (curr->type.isNonNullableRef()) {
+      trapOnNull(curr, curr->ref);
+    }
+    trapOnNull(curr, curr->desc);
+  }
+  void visitBrOn(BrOn* curr) { trapOnNull(curr, curr->desc); }
+  void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr, curr->ref); }
+  void visitCallRef(CallRef* curr) { trapOnNull(curr, curr->target); }
+  void visitResume(Resume* curr) { trapOnNull(curr, curr->cont); }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
@@ -328,7 +440,6 @@ struct ConstraintAnalysis
 
   // After inferring all we can, apply it to optimize the code.
   void optimize() {
-
     // If we find local.gets that we can optimize, we queue those changes here.
     // This order is useful for the following reason:
     //
@@ -631,12 +742,27 @@ struct ConstraintAnalysis
       //
       //  (local.set $x (ref.as_non_null (..)))
       //
-      // TODO: infer non-nullability from e.g. the ref of a struct.get
       auto localType = getFunction()->getLocalType(set->index);
       if (localType.isNullableRef() && set->value->type.isNonNullableRef()) {
         auto zero = Literal::makeZero(localType);
         auto c = Constraint{Abstract::Ne, {zero}};
         constraints.approximateAnd(set->index, c);
+      }
+
+      return;
+    }
+
+    // Some constraints can be inferred without a local.set (which was handled
+    // above). ref.as_non_null of a local.get proves the local is not null, as
+    // if it were we would trap and not continue.
+    if (auto* refAs = curr->dynCast<RefAs>()) {
+      // We only put an optimizable RefAs in our actions.
+      assert(refAs->op == RefAsNonNull && refAs->value->type.isNullableRef());
+      auto* get = refAs->value->cast<LocalGet>();
+      if (relevantLocals[get->index]) {
+        auto zero = Literal::makeZero(get->type);
+        auto constraint = Constraint{Abstract::Ne, {zero}};
+        constraints.approximateAnd(get->index, constraint);
       }
     }
   }

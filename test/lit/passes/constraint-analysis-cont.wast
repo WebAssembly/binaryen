@@ -7,11 +7,15 @@
  (type $func (func))
  ;; CHECK:      (type $cont (cont $func))
  (type $cont (cont $func))
+ ;; CHECK:      (type $func-i32 (func (param i32)))
+ (type $func-i32 (func (param i32)))
+ ;; CHECK:      (type $cont-i32 (cont $func-i32))
+ (type $cont-i32 (cont $func-i32))
 
  ;; CHECK:      (tag $tag (type $func))
  (tag $tag (type $func))
 
- ;; CHECK:      (func $func (type $2) (param $cont (ref $cont))
+ ;; CHECK:      (func $func (type $5) (param $cont (ref $cont))
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (block $out
  ;; CHECK-NEXT:   (drop
@@ -70,6 +74,150 @@
     (local.get $x)
     (i32.const 1)
    )
+  )
+ )
+
+ ;; CHECK:      (func $resume-trap-on-null (type $2) (param $cont (ref null $cont)) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $h (result (ref $cont))
+ ;; CHECK-NEXT:    (resume $cont (on $tag $h)
+ ;; CHECK-NEXT:     (local.get $cont)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $resume-trap-on-null (param $cont (ref null $cont)) (result i32)
+  ;; resume traps on a null continuation before resuming, so both the
+  ;; fallthrough and the suspend handler know $cont is not null.
+  (drop
+   (block $h (result (ref $cont))
+    (resume $cont (on $tag $h)
+     (local.get $cont)
+    )
+    (return
+     (ref.is_null
+      (local.get $cont)
+     )
+    )
+   )
+  )
+  (ref.is_null
+   (local.get $cont)
+  )
+ )
+
+ ;; CHECK:      (func $resume-trap-on-null-eh (type $2) (param $cont (ref null $cont)) (result i32)
+ ;; CHECK-NEXT:  (block $catch
+ ;; CHECK-NEXT:   (try_table (catch_all $catch)
+ ;; CHECK-NEXT:    (resume $cont
+ ;; CHECK-NEXT:     (local.get $cont)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $resume-trap-on-null-eh (param $cont (ref null $cont)) (result i32)
+  ;; Null continuation traps before resuming, so even a catch handler knows
+  ;; $cont is not null.
+  (block $catch
+   (try_table (catch_all $catch)
+    (resume $cont
+     (local.get $cont)
+    )
+    (return
+     (ref.is_null
+      (local.get $cont)
+     )
+    )
+   )
+  )
+  (ref.is_null
+   (local.get $cont)
+  )
+ )
+
+ ;; CHECK:      (func $resume-modify-in-operand (type $6) (param $cont (ref null $cont-i32)) (param $other (ref null $cont-i32)) (result i32)
+ ;; CHECK-NEXT:  (resume $cont-i32
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (local.set $cont
+ ;; CHECK-NEXT:     (local.get $other)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $cont)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $resume-modify-in-operand (param $cont (ref null $cont-i32)) (param $other (ref null $cont-i32)) (result i32)
+  ;; Operands execute before the continuation target, so modifying $cont in an
+  ;; operand does not prevent inferring $cont != null from the subsequent
+  ;; local.get $cont.
+  (resume $cont-i32
+   (block (result i32)
+    (local.set $cont
+     (local.get $other)
+    )
+    (i32.const 1)
+   )
+   (local.get $cont)
+  )
+  (ref.is_null
+   (local.get $cont)
+  )
+ )
+
+ ;; CHECK:      (func $resume-known-null (type $2) (param $cont (ref null $cont)) (result i32)
+ ;; CHECK-NEXT:  (local.set $cont
+ ;; CHECK-NEXT:   (ref.null nocont)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $h (result (ref $cont))
+ ;; CHECK-NEXT:    (block ;; (replaces unreachable Resume we can't emit)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (ref.null nocont)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume-known-null (param $cont (ref null $cont)) (result i32)
+  ;; Resuming a known-null continuation unconditionally traps, making both the
+  ;; fallthrough and the handler unreachable.
+  (local.set $cont
+   (ref.null $cont)
+  )
+  (drop
+   (block $h (result (ref $cont))
+    (resume $cont (on $tag $h)
+     (local.get $cont)
+    )
+    (return
+     (ref.is_null
+      (local.get $cont)
+     )
+    )
+   )
+  )
+  (ref.is_null
+   (local.get $cont)
   )
  )
 )
