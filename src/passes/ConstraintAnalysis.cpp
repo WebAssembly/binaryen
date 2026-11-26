@@ -285,40 +285,20 @@ struct ConstraintAnalysis
   }
   // TODO: This list overlaps with OptimizeInstructions trapOnNull logic, and
   //       can maybe be deduplicated?
-  void visitStructNew(StructNew* curr) {
-    trapOnNull(curr, curr->desc);
-  }
-  void visitStructGet(StructGet* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitStructSet(StructSet* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitStructRMW(StructRMW* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitStructCmpxchg(StructCmpxchg* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitArrayGet(ArrayGet* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitArraySet(ArraySet* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitArrayLen(ArrayLen* curr) {
-    trapOnNull(curr, curr->ref);
-  }
+  void visitStructNew(StructNew* curr) { trapOnNull(curr, curr->desc); }
+  void visitStructGet(StructGet* curr) { trapOnNull(curr, curr->ref); }
+  void visitStructSet(StructSet* curr) { trapOnNull(curr, curr->ref); }
+  void visitStructRMW(StructRMW* curr) { trapOnNull(curr, curr->ref); }
+  void visitStructCmpxchg(StructCmpxchg* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayGet(ArrayGet* curr) { trapOnNull(curr, curr->ref); }
+  void visitArraySet(ArraySet* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayLen(ArrayLen* curr) { trapOnNull(curr, curr->ref); }
   void visitArrayCopy(ArrayCopy* curr) {
     trapOnNull(curr, curr->destRef);
     trapOnNull(curr, curr->srcRef);
   }
-  void visitArrayRMW(ArrayRMW* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-    trapOnNull(curr, curr->ref);
-  }
+  void visitArrayRMW(ArrayRMW* curr) { trapOnNull(curr, curr->ref); }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) { trapOnNull(curr, curr->ref); }
   void visitRefCast(RefCast* curr) {
     // Casts to non-null, trap on null.
     if (curr->type.isNonNullableRef()) {
@@ -326,18 +306,10 @@ struct ConstraintAnalysis
     }
     trapOnNull(curr, curr->desc);
   }
-  void visitBrOn(BrOn* curr) {
-    trapOnNull(curr, curr->desc);
-  }
-  void visitRefGetDesc(RefGetDesc* curr) {
-    trapOnNull(curr, curr->ref);
-  }
-  void visitCallRef(CallRef* curr) {
-    trapOnNull(curr, curr->target);
-  }
-  void visitResume(Resume* curr) {
-    trapOnNull(curr, curr->cont);
-  }
+  void visitBrOn(BrOn* curr) { trapOnNull(curr, curr->desc); }
+  void visitRefGetDesc(RefGetDesc* curr) { trapOnNull(curr, curr->ref); }
+  void visitCallRef(CallRef* curr) { trapOnNull(curr, curr->target); }
+  void visitResume(Resume* curr) { trapOnNull(curr, curr->cont); }
 
   static void doStartIfTrue(ConstraintAnalysis* self, Expression** currp) {
     // We are right after the condition, so we are in the block before the If's
