@@ -654,15 +654,19 @@ TEST_F(SourceMapTest, UnnamedInlinedScopesRoundTrip) {
   writer.write();
 
   std::string mapStr = mapStream.str();
-  // caller.c only appears at j == 0 unnamed -> null in "scopes".
-  // callee.c has an unnamed inlined scope at 0-based line 31 ('f'), col 6 ('G')
-  // encoded as "BEfG,CAA".
+  // caller.c has an unnamed outer scope spanning 0-based [11:4, 14:9) encoded
+  // as "BELE,CDJ" (so the outer stack frame has a non-null Definition covering
+  // both nop1 and the call site at 14:8).
+  // callee.c has an unnamed inlined scope spanning 0-based [31:6, 32:3)
+  // encoded as "BEfG,CBD".
   EXPECT_THAT(mapStr, ::testing::HasSubstr("\"names\":[]"));
-  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"scopes\":[null,\"BEfG,CAA\"]"));
-  // Outer unnamed stack frame uses flags=0x4 ('EE'), inner inlined frame uses
-  // flags=0x2 ('EC') with Definition (source 1, scope 0) and CallSite at
-  // caller.c (0='A'), line 14 ('O'), col 8 ('I') => "IAOI".
-  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"ranges\":[\"EE"));
+  EXPECT_THAT(mapStr,
+              ::testing::HasSubstr("\"scopes\":[\"BELE,CDJ\",\"BEfG,CBD\"]"));
+  // Outer unnamed stack frame uses flags=0x6 ('EG', hasDefinition|isStackFrame)
+  // with Definition (source 0, scope 0), inner inlined frame uses flags=0x2
+  // ('EC') with Definition (source 1, scope 0) and CallSite at caller.c
+  // (0='A'), line 14 ('O'), col 8 ('I') => "IAOI".
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"ranges\":[\"EG"));
   EXPECT_THAT(mapStr, ::testing::HasSubstr(",ECBCA,IAOI,FC,FA\"]"));
 
   std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
@@ -735,12 +739,12 @@ TEST_F(SourceMapTest, MixedNamedAndUnnamedInlinedStackRoundTrip) {
   writer.write();
 
   std::string mapStr = mapStream.str();
-  // Scope 0 (Outer at 9:5, name 0): BFJFA,CAA
-  // Scope 1 (unnamed at 19:3): BEKD,CAA (leaves lastNameIdx = 0)
-  // Scope 2 (Inner at 29:1, name 1 -> diff +1 = 'C'): BFKBC,CAA
+  // Scope 0 (Outer at [9:5, 9:6), name 0): BFJFA,CAB
+  // Scope 1 (unnamed at [19:3, 19:4)): BEKD,CAB (leaves lastNameIdx = 0)
+  // Scope 2 (Inner at [29:1, 29:2), name 1 -> diff +1 = 'C'): BFKBC,CAB
   EXPECT_THAT(
     mapStr,
-    ::testing::HasSubstr("\"scopes\":[\"BFJFA,CAA,BEKD,CAA,BFKBC,CAA\"]"));
+    ::testing::HasSubstr("\"scopes\":[\"BFJFA,CAB,BEKD,CAB,BFKBC,CAB\"]"));
 
   std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
   std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
@@ -940,11 +944,11 @@ TEST_F(SourceMapTest, RangesDoNotMergeAcrossFunctions) {
     }
     return count;
   };
-  // f1 and f2 are two separate 'EG' ranges (not merged across f_unmapped).
-  EXPECT_EQ(countItemsWithPrefix("EG"), 2u);
-  // f3 and f4 are two separate 'EE' ranges (not merged across function
-  // boundary).
-  EXPECT_EQ(countItemsWithPrefix("EE"), 2u);
+  // f1, f2, f3, and f4 are four separate 'EG' (hasDefinition | isStackFrame)
+  // ranges (never merged across f_unmapped or function boundaries, and never
+  // emitted as definition-less 'EE' compiler-helper ranges).
+  EXPECT_EQ(countItemsWithPrefix("EG"), 4u);
+  EXPECT_EQ(countItemsWithPrefix("EE"), 0u);
 
   // Round-trip verification.
   std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
@@ -980,4 +984,177 @@ TEST_F(SourceMapTest, RangesDoNotMergeAcrossFunctions) {
   EXPECT_EQ(
     m2.functions[4]->debugLocations.at(m2.functions[4]->body)[0].lineNumber,
     50u);
+}
+
+TEST_F(SourceMapTest, UnnamedSameFileOuterAndInlinedScopes) {
+  // Regression test: an unnamed outer function (main at a.cpp:8:2) inlining an
+  // unnamed callee (foo at a.cpp:4:2) in the same file must synthesize two
+  // distinct non-empty OriginalScopes and attach a non-null Definition ('EG')
+  // to the outer GeneratedRange so browsers do not drop the frame as a hidden
+  // compiler helper.
+  Module m1;
+  m1.debugInfoFileNames = {"a.cpp"};
+
+  Builder builder(m1);
+  auto* unreach = builder.makeUnreachable();
+  auto func = builder.makeFunction(
+    "main", {}, Signature(Type::none, Type::none), {}, unreach);
+  func->debugLocations[unreach] = {
+    Function::DebugLocation{0, 8, 2, std::nullopt},
+    Function::DebugLocation{0, 4, 2, std::nullopt}};
+  m1.addFunction(std::move(func));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "a.wasm.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"names\":[]"));
+  // Scope 0 (foo): [3:2, 3:3) => "BEDC,CAB"
+  // Scope 1 (main): [7:2, 7:3) => "BEEC,CAB" (lineDiff=4='E', col=2='C')
+  EXPECT_THAT(mapStr,
+              ::testing::HasSubstr("\"scopes\":[\"BEDC,CAB,BEEC,CAB\"]"));
+  // Outer range: flags=0x6 ('EG'), def=(src 0, scope 1 => srcDiff=0 'A',
+  // scpDiff=+1 'C').
+  // Inner range: flags=0x2 ('EC'), colDiff=0 ('A'), def=(src 0, scope 0 =>
+  // srcDiff=0 'A', scpDiff=-1 'D'), callSite=a.cpp:7:2 ('IAHC').
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("\"ranges\":[\"EG"));
+  EXPECT_THAT(mapStr, ::testing::HasSubstr("AC,ECAAD,IAHC,FB,FA\"]"));
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 1u);
+  auto* f2 = m2.functions[0].get();
+  ASSERT_TRUE(f2->debugLocations.count(f2->body));
+  const auto& locs = f2->debugLocations.at(f2->body);
+  ASSERT_EQ(locs.size(), 2u);
+  EXPECT_EQ(locs[0].fileIndex, 0u);
+  EXPECT_EQ(locs[0].lineNumber, 8u);
+  EXPECT_EQ(locs[0].columnNumber, 2u);
+  EXPECT_EQ(locs[0].symbolNameIndex, std::nullopt);
+  EXPECT_EQ(locs[1].fileIndex, 0u);
+  EXPECT_EQ(locs[1].lineNumber, 4u);
+  EXPECT_EQ(locs[1].columnNumber, 2u);
+  EXPECT_EQ(locs[1].symbolNameIndex, std::nullopt);
+}
+
+TEST_F(SourceMapTest, OverlappingAndNestedOriginalScopes) {
+  // Verify that nested and partially overlapping OriginalScopes in the same
+  // file produce valid nested 'B'...'C' trees without unsigned VLQ underflow
+  // and round-trip accurately.
+  Module m1;
+  m1.debugInfoFileNames = {"app.cpp"};
+  m1.debugInfoSymbolNames = {"Outer", "Inner", "FuncA", "FuncB"};
+
+  Builder builder(m1);
+
+  // Outer spans [10:0, 30:1), enclosing Inner [15:2, 20:5).
+  auto* n1 = builder.makeNop();
+  auto* n2 = builder.makeNop();
+  auto* n3 = builder.makeNop();
+  auto* n4 = builder.makeNop();
+  auto fOuter = builder.makeFunction("outer",
+                                     {},
+                                     Signature(Type::none, Type::none),
+                                     {},
+                                     builder.makeBlock({n1, n2, n3, n4}));
+  fOuter->debugLocations[n1] = {
+    Function::DebugLocation{0, 10, 0, std::optional<BinaryLocation>(0)}};
+  fOuter->debugLocations[n2] = {
+    Function::DebugLocation{0, 12, 0, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 15, 2, std::optional<BinaryLocation>(1)}};
+  fOuter->debugLocations[n3] = {
+    Function::DebugLocation{0, 12, 0, std::optional<BinaryLocation>(0)},
+    Function::DebugLocation{0, 20, 4, std::optional<BinaryLocation>(1)}};
+  fOuter->debugLocations[n4] = {
+    Function::DebugLocation{0, 30, 0, std::optional<BinaryLocation>(0)}};
+  m1.addFunction(std::move(fOuter));
+
+  // Partially overlapping spans: FuncA [40:0, 50:1) and FuncB [45:0, 55:1).
+  auto* a1 = builder.makeNop();
+  auto* a2 = builder.makeNop();
+  auto fA = builder.makeFunction("funcA",
+                                 {},
+                                 Signature(Type::none, Type::none),
+                                 {},
+                                 builder.makeBlock({a1, a2}));
+  fA->debugLocations[a1] = {
+    Function::DebugLocation{0, 40, 0, std::optional<BinaryLocation>(2)}};
+  fA->debugLocations[a2] = {
+    Function::DebugLocation{0, 50, 0, std::optional<BinaryLocation>(2)}};
+  m1.addFunction(std::move(fA));
+
+  auto* b1 = builder.makeNop();
+  auto* b2 = builder.makeNop();
+  auto fB = builder.makeFunction("funcB",
+                                 {},
+                                 Signature(Type::none, Type::none),
+                                 {},
+                                 builder.makeBlock({b1, b2}));
+  fB->debugLocations[b1] = {
+    Function::DebugLocation{0, 45, 0, std::optional<BinaryLocation>(3)}};
+  fB->debugLocations[b2] = {
+    Function::DebugLocation{0, 55, 0, std::optional<BinaryLocation>(3)}};
+  m1.addFunction(std::move(fB));
+
+  BufferWithRandomAccess wasmBuf;
+  std::stringstream mapStream;
+  PassOptions options;
+  WasmBinaryWriter writer(&m1, wasmBuf, options);
+  writer.setSourceMap(&mapStream, "out.map");
+  writer.write();
+
+  std::string mapStr = mapStream.str();
+  // Scope 0 (Outer, [9:0, 29:1), name 0): BFJAA
+  //   Scope 1 (Inner, [14:2, 19:5), name 1): BFFCC,CFF
+  // Outer closes at 29:1: CKB
+  // Scope 2 (FuncA, widened to [39:0, 54:1), name 2): BFKAC
+  //   Scope 3 (FuncB, [44:0, 54:1), name 3): BFFAC,CKB
+  // FuncA closes at 54:1: CAA
+  EXPECT_THAT(mapStr,
+              ::testing::HasSubstr(
+                "\"scopes\":[\"BFJAA,BFFCC,CFF,CKB,BFKAC,BFFAC,CKB,CAA\"]"));
+
+  std::vector<char> wasmBytes(wasmBuf.begin(), wasmBuf.end());
+  std::vector<char> mapBytes(mapStr.begin(), mapStr.end());
+
+  Module m2;
+  WasmBinaryReader binaryReader(m2, FeatureSet::MVP, wasmBytes, mapBytes);
+  binaryReader.read();
+
+  ASSERT_EQ(m2.functions.size(), 3u);
+  auto* outerBlock = m2.functions[0]->body->cast<Block>();
+  ASSERT_EQ(outerBlock->list.size(), 4u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[0])[0].lineNumber, 10u);
+  ASSERT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[1]).size(), 2u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[1])[0].lineNumber, 12u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[1])[1].lineNumber, 15u);
+  ASSERT_EQ(m2.functions[0]->debugLocations.at(outerBlock->list[2]).size(), 2u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[2])[1].lineNumber, 20u);
+  EXPECT_EQ(
+    m2.functions[0]->debugLocations.at(outerBlock->list[3])[0].lineNumber, 30u);
+
+  auto* aBlock = m2.functions[1]->body->cast<Block>();
+  EXPECT_EQ(m2.functions[1]->debugLocations.at(aBlock->list[0])[0].lineNumber,
+            40u);
+  EXPECT_EQ(m2.functions[1]->debugLocations.at(aBlock->list[1])[0].lineNumber,
+            50u);
+
+  auto* bBlock = m2.functions[2]->body->cast<Block>();
+  EXPECT_EQ(m2.functions[2]->debugLocations.at(bBlock->list[0])[0].lineNumber,
+            45u);
+  EXPECT_EQ(m2.functions[2]->debugLocations.at(bBlock->list[1])[0].lineNumber,
+            55u);
 }

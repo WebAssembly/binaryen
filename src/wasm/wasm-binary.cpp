@@ -1609,95 +1609,263 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   }
 
   if (hasInlinedScopes) {
-    // Synthesize OriginalScope entries per source file for all named frames,
-    // plus an unnamed OriginalScope (name=null, isStackFrame=true) per source
-    // file for unnamed inlined frames (j > 0) so every GeneratedRange with a
-    // CallSite has a non-null Definition as required by the Scopes spec.
-    struct SynthesizedScope {
-      BinaryLocation line = 1;
-      BinaryLocation col = 0;
+    // Emit the ECMA-426 Scopes proposal "scopes" and "ranges" fields so
+    // consumers can reconstruct inlined call stacks. Binaryen's IR only stores
+    // per-instruction call-stack DebugLocations (no explicit lexical scope
+    // trees from the frontend), so we synthesize the two structures in stages:
+    //
+    //   1. Collect (ScopeKey -> ScopeBounds): Walk sourceMapLocations and group
+    //      all authored frames (both outer Wasm functions at j == 0 and inlined
+    //      callees at j > 0) into logical original function scopes, tracking
+    //      each scope's inclusive [minPos, maxPos] source span. Outer functions
+    //      at j == 0 must also receive an OriginalScope / Definition; otherwise
+    //      consumers like Chrome DevTools treat a stack-frame range without a
+    //      Definition as a hidden compiler helper and drop it (along with its
+    //      inlined callees) from stack traces.
+    //   2. Deduplicate (DedupKey): Turn each [minPos, maxPos] into a non-empty
+    //      half-open [start, end) interval (since OriginalScope.[[End]] is
+    //      exclusive) and merge distinct ScopeKeys in the same file that ended
+    //      up with identical (start, end, name).
+    //   3. Build & emit "scopes" (ScopeTreeNode): Arrange each file's scopes
+    //      into a properly nested interval tree so unsigned relative VLQ
+    //      positions never underflow, emit "scopes" in pre-order, and record
+    //      each ScopeKey's pre-order scope index in scopeIndices.
+    //   4. Build & emit "ranges" (OutRange): Walk sourceMapLocations again to
+    //      construct nested GeneratedRange trees per Wasm function (closing at
+    //      function boundaries and bridging intra-function gaps), linking each
+    //      range to its OriginalScope via scopeIndices and attaching CallSites
+    //      for inlined frames (j > 0), then serialize to "ranges".
+    struct ScopePos {
+      uint32_t line = 0; // 0-based
+      uint32_t col = 0;  // 0-based
+      bool operator==(const ScopePos& other) const = default;
+      bool operator<(const ScopePos& other) const {
+        return std::tie(line, col) < std::tie(other.line, other.col);
+      }
+      bool operator<=(const ScopePos& other) const { return !(other < *this); }
+    };
+    auto toScopePos = [](const Function::DebugLocation& dl) -> ScopePos {
+      return {dl.lineNumber > 0 ? dl.lineNumber - 1 : 0, dl.columnNumber};
+    };
+    auto nextScopePos = [](ScopePos p) -> ScopePos {
+      if (p.col < std::numeric_limits<uint32_t>::max()) {
+        return {p.line, p.col + 1};
+      }
+      if (p.line < std::numeric_limits<uint32_t>::max()) {
+        return {p.line + 1, 0};
+      }
+      return p;
+    };
+
+    // Identifies which DebugLocation frames belong to the same synthesized
+    // OriginalScope within a source file:
+    //  - Named: grouped by (fileIndex, symbolNameIndex), so all locations
+    //    belonging to the same named function share one OriginalScope.
+    //  - UnnamedOuter (j == 0, no symbol name): grouped by (fileIndex,
+    //    Wasm funcIdx), keeping all locations of an unnamed Wasm function in
+    //    one scope without merging distinct unnamed functions in the same file.
+    //  - UnnamedInlined (j > 0, no symbol name): grouped by (fileIndex,
+    //    caller's file/line/col), keeping all instructions from a single
+    //    inlined call in one scope and one GeneratedRange while distinguishing
+    //    different unnamed callees (and separating an unnamed callee from an
+    //    unnamed caller in the same file).
+    enum class ScopeKeyKind { Named, UnnamedOuter, UnnamedInlined };
+    struct ScopeKey {
+      BinaryLocation fileIndex = 0;
+      ScopeKeyKind kind = ScopeKeyKind::Named;
+      // Named: symbolNameIndex.
+      // UnnamedOuter: Wasm function index.
+      // UnnamedInlined: caller's fileIndex / lineNumber / columnNumber.
+      uint64_t id1 = 0;
+      uint32_t id2 = 0;
+      uint32_t id3 = 0;
+      bool operator<(const ScopeKey& other) const {
+        return std::tie(fileIndex, kind, id1, id2, id3) <
+               std::tie(
+                 other.fileIndex, other.kind, other.id1, other.id2, other.id3);
+      }
+    };
+    auto makeScopeKey = [](size_t funcIdx,
+                           const Function::DebugLocations& locs,
+                           size_t j) -> ScopeKey {
+      const auto& dl = locs[j];
+      if (dl.symbolNameIndex) {
+        return {dl.fileIndex, ScopeKeyKind::Named, *dl.symbolNameIndex, 0, 0};
+      }
+      if (j == 0) {
+        return {dl.fileIndex, ScopeKeyKind::UnnamedOuter, funcIdx, 0, 0};
+      }
+      const auto& caller = locs[j - 1];
+      return {dl.fileIndex,
+              ScopeKeyKind::UnnamedInlined,
+              caller.fileIndex,
+              caller.lineNumber,
+              caller.columnNumber};
+    };
+
+    // Tracks the inclusive [minPos, maxPos] source span (0-based) observed
+    // across all DebugLocations mapped to a ScopeKey, plus its optional name.
+    // Later converted to [minPos, nextScopePos(maxPos)) so the emitted
+    // OriginalScope has an exclusive [[End]] that contains every position in
+    // the scope (including mappings and inlined call sites).
+    struct ScopeBounds {
+      ScopePos minPos;
+      ScopePos maxPos;
       std::optional<BinaryLocation> nameIndex;
     };
-    using ScopeKey = std::pair<BinaryLocation, std::optional<BinaryLocation>>;
-    std::map<ScopeKey, std::pair<BinaryLocation, BinaryLocation>> minPos;
-    for (const auto& [_, locs] : sourceMapLocations) {
-      if (!locs) {
-        continue;
-      }
-      for (size_t j = 0; j < locs->size(); ++j) {
-        const auto& dl = (*locs)[j];
-        if ((dl.symbolNameIndex || j > 0) &&
-            dl.fileIndex < wasm->debugInfoFileNames.size()) {
-          ScopeKey key{dl.fileIndex, dl.symbolNameIndex};
-          std::pair<BinaryLocation, BinaryLocation> pos{dl.lineNumber,
-                                                        dl.columnNumber};
-          auto it = minPos.find(key);
-          if (it == minPos.end() || pos < it->second) {
-            minPos[key] = pos;
+    std::map<ScopeKey, ScopeBounds> scopeBoundsMap;
+    {
+      size_t funcIdx = 0;
+      for (const auto& [offset, locs] : sourceMapLocations) {
+        while (funcIdx < functionEndOffsets.size() &&
+               offset >= functionEndOffsets[funcIdx]) {
+          ++funcIdx;
+        }
+        if (!locs) {
+          continue;
+        }
+        for (size_t j = 0; j < locs->size(); ++j) {
+          const auto& dl = (*locs)[j];
+          if (dl.fileIndex >= wasm->debugInfoFileNames.size()) {
+            continue;
+          }
+          ScopeKey key = makeScopeKey(funcIdx, *locs, j);
+          ScopePos pos = toScopePos(dl);
+          auto it = scopeBoundsMap.find(key);
+          if (it == scopeBoundsMap.end()) {
+            scopeBoundsMap.emplace(key,
+                                   ScopeBounds{pos, pos, dl.symbolNameIndex});
+          } else {
+            if (pos < it->second.minPos) {
+              it->second.minPos = pos;
+            }
+            if (it->second.maxPos < pos) {
+              it->second.maxPos = pos;
+            }
           }
         }
       }
     }
 
-    std::vector<std::vector<SynthesizedScope>> perFileScopes(
+    struct ScopeTreeNode {
+      ScopePos start;
+      ScopePos end;
+      std::optional<BinaryLocation> nameIndex;
+      std::vector<ScopeKey> keys;
+      std::vector<size_t> children;
+    };
+    // Deduplicate scopes in the same file that end up with identical
+    // (start, end, name) bounds. Because unnamed frames are keyed by Wasm
+    // function index or call site, the same unnamed original function can
+    // produce multiple ScopeKeys (e.g. inlined at N call sites, or both
+    // inlined and kept out-of-line). Merging them avoids emitting redundant
+    // identical OriginalScopes (which would also artificially nest inside one
+    // another in the scope tree below) and lets all their GeneratedRanges
+    // share one OriginalScope definition.
+    using DedupKey =
+      std::tuple<ScopePos, ScopePos, std::optional<BinaryLocation>>;
+    std::vector<std::map<DedupKey, std::vector<ScopeKey>>> perFileDedup(
       wasm->debugInfoFileNames.size());
-    for (const auto& [key, pos] : minPos) {
-      perFileScopes[key.first].push_back(
-        SynthesizedScope{pos.first, pos.second, key.second});
+    for (const auto& [key, bounds] : scopeBoundsMap) {
+      DedupKey dk{bounds.minPos, nextScopePos(bounds.maxPos), bounds.nameIndex};
+      perFileDedup[key.fileIndex][dk].push_back(key);
     }
 
     std::map<ScopeKey, BinaryLocation> scopeIndices;
-    for (size_t fileIdx = 0; fileIdx < perFileScopes.size(); ++fileIdx) {
-      auto& scopes = perFileScopes[fileIdx];
-      std::sort(scopes.begin(),
-                scopes.end(),
-                [](const SynthesizedScope& a, const SynthesizedScope& b) {
-                  uint32_t aLine0 = a.line > 0 ? a.line - 1 : 0;
-                  uint32_t bLine0 = b.line > 0 ? b.line - 1 : 0;
-                  return std::tie(aLine0, a.col, a.nameIndex) <
-                         std::tie(bLine0, b.col, b.nameIndex);
-                });
-      for (size_t i = 0; i < scopes.size(); ++i) {
-        scopeIndices[{BinaryLocation(fileIdx), scopes[i].nameIndex}] =
-          BinaryLocation(i);
-      }
-    }
-
     *sourceMap << ",\"scopes\":[";
-    for (size_t i = 0; i < perFileScopes.size(); ++i) {
+    for (size_t i = 0; i < perFileDedup.size(); ++i) {
       if (i > 0) {
         *sourceMap << ",";
       }
-      const auto& scopes = perFileScopes[i];
-      if (scopes.empty()) {
+      if (perFileDedup[i].empty()) {
         *sourceMap << "null";
         continue;
       }
-      *sourceMap << "\"";
-      uint32_t lastLine = 0;
-      uint32_t lastCol = 0;
-      int32_t lastNameIdx = 0;
-      for (size_t j = 0; j < scopes.size(); ++j) {
-        if (j > 0) {
-          *sourceMap << ",";
+      std::vector<ScopeTreeNode> nodes;
+      nodes.reserve(perFileDedup[i].size());
+      for (auto& [dk, keys] : perFileDedup[i]) {
+        nodes.push_back(ScopeTreeNode{std::get<0>(dk),
+                                      std::get<1>(dk),
+                                      std::get<2>(dk),
+                                      std::move(keys),
+                                      {}});
+      }
+      // Sort by start ascending, then end descending so enclosing scopes
+      // precede nested scopes and unsigned relative positions never underflow.
+      std::sort(nodes.begin(),
+                nodes.end(),
+                [](const ScopeTreeNode& a, const ScopeTreeNode& b) {
+                  if (a.start != b.start) {
+                    return a.start < b.start;
+                  }
+                  if (a.end != b.end) {
+                    return b.end < a.end;
+                  }
+                  return a.nameIndex < b.nameIndex;
+                });
+
+      std::vector<size_t> roots;
+      std::vector<size_t> openStack;
+      for (size_t idx = 0; idx < nodes.size(); ++idx) {
+        while (!openStack.empty() &&
+               nodes[openStack.back()].end <= nodes[idx].start) {
+          openStack.pop_back();
         }
-        const auto& scope = scopes[j];
-        // 'B' (OriginalScopeStart) with flags = 0x4 (is stack frame) => 'E',
-        // or 0x1 (has name) | 0x4 (is stack frame) => 'F'.
-        *sourceMap << (scope.nameIndex ? "BF" : "BE");
-        uint32_t line0 = scope.line > 0 ? scope.line - 1 : 0;
-        uint32_t lineDiff = line0 - lastLine;
-        uint32_t colDiff = (lineDiff == 0) ? (scope.col - lastCol) : scope.col;
-        lastLine = line0;
-        lastCol = scope.col;
+        if (openStack.empty()) {
+          roots.push_back(idx);
+        } else {
+          nodes[openStack.back()].children.push_back(idx);
+          // Widen ancestors if a child extends past them (partial overlap) so
+          // every parent strictly encloses its children.
+          for (size_t ancIdx : openStack) {
+            if (nodes[ancIdx].end < nodes[idx].end) {
+              nodes[ancIdx].end = nodes[idx].end;
+            }
+          }
+        }
+        openStack.push_back(idx);
+      }
+
+      *sourceMap << "\"";
+      ScopePos lastPos{0, 0};
+      int32_t lastNameIdx = 0;
+      BinaryLocation nextScopeIdx = 0;
+      bool firstScopeItem = true;
+      auto emitScopePos = [&](ScopePos pos) {
+        assert(lastPos <= pos);
+        uint32_t lineDiff = pos.line - lastPos.line;
+        uint32_t colDiff = (lineDiff == 0) ? (pos.col - lastPos.col) : pos.col;
+        lastPos = pos;
         writeBase64VLQUnsigned(*sourceMap, lineDiff);
         writeBase64VLQUnsigned(*sourceMap, colDiff);
-        if (scope.nameIndex) {
-          writeBase64VLQ(*sourceMap, int32_t(*scope.nameIndex) - lastNameIdx);
-          lastNameIdx = int32_t(*scope.nameIndex);
+      };
+      auto emitScopeNode = [&](size_t nodeIdx, auto& self) -> void {
+        const auto& node = nodes[nodeIdx];
+        BinaryLocation myIdx = nextScopeIdx++;
+        for (const auto& key : node.keys) {
+          scopeIndices[key] = myIdx;
         }
-        // 'C' (OriginalScopeEnd) at the same position (lineDiff=0, colDiff=0).
-        *sourceMap << ",CAA";
+        if (!firstScopeItem) {
+          *sourceMap << ",";
+        }
+        firstScopeItem = false;
+        // 'B' (OriginalScopeStart) with flags = 0x4 (is stack frame) => 'E',
+        // or 0x1 (has name) | 0x4 (is stack frame) => 'F'.
+        *sourceMap << (node.nameIndex ? "BF" : "BE");
+        emitScopePos(node.start);
+        if (node.nameIndex) {
+          writeBase64VLQ(*sourceMap, int32_t(*node.nameIndex) - lastNameIdx);
+          lastNameIdx = int32_t(*node.nameIndex);
+        }
+        for (size_t childIdx : node.children) {
+          self(childIdx, self);
+        }
+        // 'C' (OriginalScopeEnd) at the exclusive end position.
+        *sourceMap << ",C";
+        emitScopePos(node.end);
+      };
+      for (size_t rootIdx : roots) {
+        emitScopeNode(rootIdx, emitScopeNode);
       }
       *sourceMap << "\"";
     }
@@ -1772,8 +1940,8 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       for (size_t j = 0; j < locs->size(); ++j) {
         const auto& dl = (*locs)[j];
         TargetFrame tf;
-        if (dl.symbolNameIndex || j > 0) {
-          auto it = scopeIndices.find({dl.fileIndex, dl.symbolNameIndex});
+        if (dl.fileIndex < wasm->debugInfoFileNames.size()) {
+          auto it = scopeIndices.find(makeScopeKey(funcIdx, *locs, j));
           if (it != scopeIndices.end()) {
             tf.def = ScopeDef{dl.fileIndex, it->second};
           }
