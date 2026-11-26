@@ -469,6 +469,30 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] export from_char_code
+  ;; CHECK-NEXT: [fuzz-exec] note result: from_char_code => string("A")
+  (func $from_char_code (export "from_char_code") (result stringref)
+    (string.from_char_code
+      (i32.const 65)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] export from_char_code.no_trap
+  ;; CHECK-NEXT: [fuzz-exec] note result: from_char_code.no_trap => string("\uffff")
+  (func $from_char_code.no_trap (export "from_char_code.no_trap") (result stringref)
+    (string.from_char_code
+      (i32.const -1)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] export from_char_code.upper_bits
+  ;; CHECK-NEXT: [fuzz-exec] note result: from_char_code.upper_bits => string("A")
+  (func $from_char_code.upper_bits (export "from_char_code.upper_bits") (result stringref)
+    (string.from_char_code
+      (i32.const 0x10041)
+    )
+  )
+
   ;; CHECK:      [fuzz-exec] export string.measure
   ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
   (func $string.measure (export "string.measure") (result i32)
@@ -620,6 +644,15 @@
 ;; CHECK:      [fuzz-exec] export invalid_code_point
 ;; CHECK-NEXT: [trap invalid code point]
 
+;; CHECK:      [fuzz-exec] export from_char_code
+;; CHECK-NEXT: [fuzz-exec] note result: from_char_code => string("A")
+
+;; CHECK:      [fuzz-exec] export from_char_code.no_trap
+;; CHECK-NEXT: [fuzz-exec] note result: from_char_code.no_trap => string("\uffff")
+
+;; CHECK:      [fuzz-exec] export from_char_code.upper_bits
+;; CHECK-NEXT: [fuzz-exec] note result: from_char_code.upper_bits => string("A")
+
 ;; CHECK:      [fuzz-exec] export string.measure
 ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
 
@@ -648,6 +681,9 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
+;; CHECK-NEXT: [fuzz-exec] comparing from_char_code
+;; CHECK-NEXT: [fuzz-exec] comparing from_char_code.no_trap
+;; CHECK-NEXT: [fuzz-exec] comparing from_char_code.upper_bits
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing invalid_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing isolated_high_code_point

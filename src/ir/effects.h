@@ -1252,6 +1252,9 @@ private:
           // Invalid code points.
           parent.implicitTrap = true;
           return;
+        case StringNewFromCharCode:
+          // Invalid code points are ok.
+          return;
       }
     }
     void visitStringConst(StringConst* curr) {}

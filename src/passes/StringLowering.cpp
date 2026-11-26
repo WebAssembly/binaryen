@@ -219,14 +219,14 @@ struct StringLowering : public StringGathering {
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
 
+    // Replace string.* etc. operations with imported ones.
+    replaceInstructions(module);
+
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
 
     // Lower the string.const globals into imports.
     makeImports(module);
-
-    // Replace string.* etc. operations with imported ones.
-    replaceInstructions(module);
 
     // ReFinalize to apply all the above changes.
     ReFinalize().run(getPassRunner(), module);
@@ -360,6 +360,8 @@ struct StringLowering : public StringGathering {
   Name lengthImport;
   Name charCodeAtImport;
   Name substringImport;
+  Name fromCharCodeImport;
+  Name castImport;
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).
@@ -404,6 +406,10 @@ struct StringLowering : public StringGathering {
     // string.substring: string, start, end -> string
     substringImport =
       addImport(module, "substring", {nullExt, Type::i32, Type::i32}, nnExt);
+    // string.fromCharCode: charCode -> ext
+    fromCharCodeImport = addImport(module, "fromCharCode", Type::i32, nnExt);
+    // string.cast: externref -> string
+    castImport = addImport(module, "cast", nullExt, nnExt);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -417,6 +423,36 @@ struct StringLowering : public StringGathering {
 
       Replacer(StringLowering& lowering) : lowering(lowering) {}
 
+      void visitRefCast(RefCast* curr) {
+        // Ignore non-string RefCast.
+        if (!curr->type.isString()) {
+          return;
+        }
+
+        Builder builder(*getModule());
+        if (curr->type.isNonNullableRef()) {
+          replaceCurrent(
+            builder.makeCall(lowering.castImport, {curr->ref}, lowering.nnExt));
+          return;
+        }
+
+        // Casts cannot be found outside of a function (e.g. a global
+        // initializer) since ref.cast is not a constant expression.
+        assert(getFunction());
+        // (if (ref.is_null (local.tee $temp (..)))
+        //   (then (ref.null noextern))
+        //   (else (call $cast (local.get $temp)))
+        // )
+        auto temp = Builder::addVar(getFunction(), lowering.nullExt);
+        replaceCurrent(builder.makeIf(
+          builder.makeRefIsNull(
+            builder.makeLocalTee(temp, curr->ref, lowering.nullExt)),
+          builder.makeRefNull(HeapType::ext),
+          builder.makeCall(lowering.castImport,
+                           {builder.makeLocalGet(temp, lowering.nullExt)},
+                           lowering.nnExt)));
+      }
+
       void visitStringNew(StringNew* curr) {
         Builder builder(*getModule());
         switch (curr->op) {
@@ -428,6 +464,10 @@ struct StringLowering : public StringGathering {
           case StringNewFromCodePoint:
             replaceCurrent(builder.makeCall(
               lowering.fromCodePointImport, {curr->ref}, lowering.nnExt));
+            return;
+          case StringNewFromCharCode:
+            replaceCurrent(builder.makeCall(
+              lowering.fromCharCodeImport, {curr->ref}, lowering.nnExt));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");

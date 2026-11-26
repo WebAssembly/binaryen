@@ -1270,6 +1270,10 @@ enum ASTNodes {
   StringCompare = 0xa8,
   StringFromCodePoint = 0xa9,
   StringHash = 0xaa,
+  // Not in stringref specification. Corresponds to JS string builtin
+  // from_char_code. The stringref proposal is not active, so we don't need to
+  // worry about compatibility.
+  StringFromCharCode = 0xab,
   StringNewWTF16Array = 0xb1,
   StringEncodeWTF16Array = 0xb3,
   StringNewLossyUTF8Array = 0xb4,

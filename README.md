@@ -108,12 +108,13 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      this is guaranteed to be valid for wasm parsers.)
 
    * Binaryen supports a `stringref` type. This is similar to the currently-
-     inactive [stringref proposal], with the difference that the string type is a
-     subtype of `externref` rather than `anyref`. Doing so allows toolchains to
-     emit code in a form that uses [js string builtins] which Binaryen can then
-     "lift" into stringref in its internal IR, optimize (for example, a
-     concatenation of "a" and "b" can be optimized at compile time to "ab"), and
-     then "lower" that into js string builtins once more.
+     inactive [stringref proposal] except that the string type is a subtype of
+     `externref` rather than `anyref` and that it has a `fromCharCode` operation.
+     Doing so allows toolchains to emit code in a form that uses
+     [js string builtins] which Binaryen can then "lift" into stringref in its
+     internal IR, optimize (for example, a concatenation of "a" and "b" can
+     be optimized at compile time to "ab"), and then "lower" that into js string
+     builtins once more.
 
  * Blocks
 

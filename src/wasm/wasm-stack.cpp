@@ -3007,6 +3007,9 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
     case StringNewFromCodePoint:
       o << U32LEB(BinaryConsts::StringFromCodePoint);
       break;
+    case StringNewFromCharCode:
+      o << U32LEB(BinaryConsts::StringFromCharCode);
+      break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
   }

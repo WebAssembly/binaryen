@@ -1310,6 +1310,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         return;
       }
       case StringNewFromCodePoint:
+      case StringNewFromCharCode:
         note(&curr->ref, Type::i32);
         return;
     }

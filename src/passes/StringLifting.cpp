@@ -49,6 +49,8 @@ struct StringLifting : public Pass {
   Name lengthImport;
   Name charCodeAtImport;
   Name substringImport;
+  Name fromCharCodeImport;
+  Name castImport;
 
   void run(Module* module) override {
     // Whether we found any work to do.
@@ -195,6 +197,18 @@ struct StringLifting : public Pass {
         }
         substringImport = func->name;
         found = true;
+      } else if (func->base == "fromCharCode") {
+        if (type.getHeapType() != Signature(i32, refExtern)) {
+          Fatal() << "StringLifting: bad type for fromCharCode: " << type;
+        }
+        fromCharCodeImport = func->name;
+        found = true;
+      } else if (func->base == "cast") {
+        if (type.getHeapType() != Signature(externref, refExtern)) {
+          Fatal() << "StringLifting: bad type for cast: " << type;
+        }
+        castImport = func->name;
+        found = true;
       } else {
         std::cerr << "warning: unknown strings import: " << func->base << '\n';
       }
@@ -276,6 +290,20 @@ struct StringLifting : public Pass {
                            .makeStringSliceWTF(curr->operands[0],
                                                curr->operands[1],
                                                curr->operands[2]));
+        } else if (curr->target == parent.fromCharCodeImport) {
+          replaceCurrent(
+            Builder(*getModule())
+              .makeStringNew(StringNewFromCharCode, curr->operands[0]));
+        } else if (curr->target == parent.castImport) {
+          replaceCurrent(Builder(*getModule())
+                           .makeRefCast(curr->operands[0],
+                                        Type(HeapType::string, NonNullable)));
+        }
+
+        // An expression that previously had type externref was replaced by a
+        // subtype, stringref; refinalize the IR.
+        if (getCurrent() != curr) {
+          modified = true;
         }
       }
 

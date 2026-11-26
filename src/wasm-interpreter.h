@@ -2753,6 +2753,15 @@ public:
         std::string str = wtf16.str();
         return Literal(str);
       }
+      case StringNewFromCharCode: {
+        // Only output the last 16 bits, and unlike StringNewFromCodePoint, do
+        // not trap on invalid code points.
+        uint32_t charCode = ptr.getSingleValue().getUnsigned() & 0xFFFF;
+        std::stringstream wtf16;
+        String::writeWTF16CodePoint(wtf16, charCode);
+        std::string str = wtf16.str();
+        return Literal(str);
+      }
       default:
         // TODO: others
         return Flow(NONCONSTANT_FLOW);

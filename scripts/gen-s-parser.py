@@ -686,6 +686,7 @@ instructions = [
     ("string.new_lossy_utf8_array",  "makeStringNew(StringNewLossyUTF8Array)"),
     ("string.new_wtf16_array", "makeStringNew(StringNewWTF16Array)"),
     ("string.from_code_point", "makeStringNew(StringNewFromCodePoint)"),
+    ("string.from_char_code", "makeStringNew(StringNewFromCharCode)"),
     ("string.const",         "makeStringConst()"),
     ("string.measure_utf8",  "makeStringMeasure(StringMeasureUTF8)"),
     ("string.measure_wtf16", "makeStringMeasure(StringMeasureWTF16)"),

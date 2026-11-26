@@ -624,6 +624,7 @@ enum StringNewOp {
   StringNewLossyUTF8Array,
   StringNewWTF16Array,
   StringNewFromCodePoint,
+  StringNewFromCharCode,
 };
 
 enum StringMeasureOp {

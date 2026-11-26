@@ -1294,7 +1294,8 @@ public:
                            Expression* ref,
                            Expression* start = nullptr,
                            Expression* end = nullptr) {
-    assert((start && end) != (op == StringNewFromCodePoint));
+    assert((start && end) !=
+           (op == StringNewFromCodePoint || op == StringNewFromCharCode));
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ref = ref;
