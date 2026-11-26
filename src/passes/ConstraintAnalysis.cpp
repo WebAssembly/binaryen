@@ -232,7 +232,7 @@ struct ConstraintAnalysis
     }
 
     // The ref must be a local, so we know what is constrained.
-    // TODO: fallthrough etc.
+    // TODO: local.tee, fallthrough, etc.
     auto* get = ref->dynCast<LocalGet>();
     if (!get) {
       return;
