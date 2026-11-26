@@ -72,7 +72,8 @@ void Value::stringify(std::ostream& os, bool pretty, int indent) {
           os << ',';
         }
         maybeNewline();
-        os << "\"" << key << "\":";
+        Value().setString(key).stringify(os);
+        os << ':';
         if (pretty) {
           os << ' ';
         }

@@ -50,6 +50,13 @@ TEST_F(JSONTest, StringifyObject) {
 })");
 }
 
+TEST_F(JSONTest, StringifyObjectEscapedKeys) {
+  auto object = json::Value::makeObject();
+  object["\"\\\n"] = json::Value::make(42);
+  object["\xc3\xa9"] = json::Value::make();
+  checkOutput(object, R"({"\"\\\n":42,"\u00e9":null})");
+}
+
 TEST_F(JSONTest, StringifyNesting) {
   auto array = json::Value::makeArray();
   auto object = json::Value::makeObject();
