@@ -49,6 +49,10 @@ class SourceMapReader {
   uint32_t col = 0;
   uint32_t symbol = 0;
 
+  // Array sizes for bounds checking VLQ-decoded indices.
+  uint32_t numFiles = 0;
+  uint32_t numSymbols = 0;
+
   // Whether the last read record had position and symbol information.
   bool hasInfo = false;
   bool hasSymbol = false;
