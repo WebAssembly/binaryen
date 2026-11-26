@@ -133,7 +133,7 @@ static void removeSegment(Module& wasm, Name segment) {
   wasm.getDataSegment(segment)->data.resize(0);
 }
 
-static Address getExportedAddress(Module& wasm, Export* export_) {
+static Address getExportedAddress(const Module& wasm, const Export* export_) {
   Global* g = wasm.getGlobal((export_->kind == ExternalKind::Global)
                                ? *export_->getInternalName()
                                : Name());
@@ -145,8 +145,8 @@ static void removeData(Module& wasm,
                        const std::vector<Address>& segmentOffsets,
                        Name start_sym,
                        Name end_sym) {
-  Export* start = wasm.getExportOrNull(start_sym);
-  Export* end = wasm.getExportOrNull(end_sym);
+  const Export* start = wasm.getExportOrNull(start_sym);
+  const Export* end = wasm.getExportOrNull(end_sym);
   if (!start && !end) {
     BYN_TRACE("removeData: start/stop symbols not found (" << start_sym << ", "
                                                            << end_sym << ")\n");
