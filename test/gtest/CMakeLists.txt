@@ -30,6 +30,7 @@ set(unittest_SOURCES
   leaves.cpp
   local-graph.cpp
   module-utils.cpp
+  name-section.cpp
   possible-contents.cpp
   principal-type.cpp
   printing.cpp

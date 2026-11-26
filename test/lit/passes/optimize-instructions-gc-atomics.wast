@@ -156,7 +156,7 @@
     )
   )
 
-  ;; CHECK:      (func $select-struct-rmw (type $4) (param $x (ref $shared)) (result i32)
+  ;; CHECK:      (func $select-struct-rmw (type $5) (param $x (ref $shared)) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (struct.atomic.rmw.add $shared 0
   ;; CHECK-NEXT:    (local.get $x)
@@ -186,7 +186,7 @@
     )
   )
 
-  ;; CHECK:      (func $select-struct-cmpxchg (type $4) (param $x (ref $shared)) (result i32)
+  ;; CHECK:      (func $select-struct-cmpxchg (type $5) (param $x (ref $shared)) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (struct.atomic.rmw.cmpxchg $shared 0
   ;; CHECK-NEXT:    (local.get $x)

@@ -5326,6 +5326,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.const ")")
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $paren-in-string
    ;; We should not be tripped up by an extra close parenthesis inside a string.
    (drop
