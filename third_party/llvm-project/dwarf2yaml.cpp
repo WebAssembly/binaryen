@@ -379,8 +379,10 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
               (dwarf::LineNumberExtendedOps)LineData.getU8(&Offset);
           switch (NewOp.SubOpcode) {
           case dwarf::DW_LNE_set_address:
-          case dwarf::DW_LNE_set_discriminator:
             NewOp.Data = LineData.getAddress(&Offset);
+            break;
+          case dwarf::DW_LNE_set_discriminator:
+            NewOp.Data = LineData.getULEB128(&Offset);
             break;
           case dwarf::DW_LNE_define_file:
             dumpFileEntry(LineData, Offset, NewOp.FileEntry);
