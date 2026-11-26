@@ -217,23 +217,27 @@ struct PostEmscripten : public Pass {
     std::vector<Address> segmentOffsets; // segment index => address offset
     calcSegmentOffsets(module, segmentOffsets);
 
+    auto removeSection = [&](Name start, Name stop) {
+      removeData(module, segmentOffsets, start, stop);
+      module.removeExport(start);
+      module.removeExport(stop);
+    };
+
     auto sideModule = hasArgument("post-emscripten-side-module");
     if (!sideModule) {
-      removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
+      // Side modules read EM_ASM and EM_JS data from the module at runtime, so
+      // preserve EM_ASM exports and both sections' data in that case.
+      removeSection("__start_em_asm", "__stop_em_asm");
       removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
-
-      // Side modules read EM_ASM data from the module based on these exports
-      // so we need to keep them around in that case.
-      module.removeExport("__start_em_asm");
-      module.removeExport("__stop_em_asm");
     }
 
-    removeData(
-      module, segmentOffsets, "__start_em_lib_deps", "__stop_em_lib_deps");
     module.removeExport("__start_em_js");
     module.removeExport("__stop_em_js");
-    module.removeExport("__start_em_lib_deps");
-    module.removeExport("__stop_em_lib_deps");
+
+    // Link-time metadata sections are never read at runtime, even in side
+    // modules.
+    removeSection("__start_em_lib_deps", "__stop_em_lib_deps");
+    removeSection("__start_em_embind", "__stop_em_embind");
   }
 
   void removeEmJsExports(Module& module) {
