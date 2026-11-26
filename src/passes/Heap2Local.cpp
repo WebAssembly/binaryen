@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 WebAssembly Community Group participants
+ * Copyright 2026 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,1685 +15,1354 @@
  */
 
 //
-// Find heap allocations that never escape the current function, and lower the
-// allocation's data into locals. That is, avoid allocating a GC object, and
-// instead use one local for each of its fields.
+// Replace non-escaping GC allocations with local variables in a single
+// function-wide analysis and rewrite.
 //
-// To get a sense for what this pass does, here is an example to clarify. First,
-// in pseudocode:
+// Phase 1 builds a dataflow graph over reference expressions in a function,
+// collecting candidate StructNew, fixed-size ArrayNew, and ArrayNewFixed
+// allocations alongside identity and cast edges, atomic cmpxchg sites, and
+// escaping uses.
 //
-//   ref = new Int(42)
-//   do {
-//     ref.set(ref.get() + 1)
-//   } while (import(ref.get())
+// Phase 2 solves a smallest fixed point over Flat<AllocId> origins (i.e. the
+// flat lattice of all allocation sites) across all candidate allocations
+// simultaneously:
+//   - Top: unknown / nullable / multiple merged allocations.
+//   - Val(a): definitely non-null reference to a single allocation `a`.
+//   - Bot: unreachable or statically trapping cast output.
 //
-// That is, we allocate an int on the heap and use it as a counter.
-// Unnecessarily, as it could be a normal int on the stack.
+// Phase 3 propagates escapes over cmpxchg (expected -> replacement) edges,
+// escaping uses, and identity-edge mixes (Val(a) flowing into Top).
 //
-// Wat:
-//
-//   (module
-//    ;; A boxed integer: an entire struct just to hold an int.
-//    (type $boxed-int (struct (field (mut i32))))
-//
-//    (import "env" "import" (func $import (param i32) (result i32)))
-//
-//    (func $example
-//     (local $ref (ref null $boxed-int))
-//
-//     ;; Allocate a boxed integer of 42 and save the reference to it.
-//     (local.set $ref
-//      (struct.new $boxed-int
-//       (i32.const 42)
-//      )
-//     )
-//
-//     ;; Increment the integer in a loop, looking for some condition.
-//     (loop $loop
-//      (struct.set $boxed-int 0
-//       (local.get $ref)
-//       (i32.add
-//        (struct.get $boxed-int 0
-//         (local.get $ref)
-//        )
-//        (i32.const 1)
-//       )
-//      )
-//      (br_if $loop
-//       (call $import
-//        (struct.get $boxed-int 0
-//         (local.get $ref)
-//        )
-//       )
-//      )
-//     )
-//    )
-//   )
-//
-// Before this pass, the optimizer could do essentially nothing with this. Even
-// with this pass, running -O1 has no effect, as the pass is only used in -O2+.
-// However, running --heap2local -O1 leads to this:
-//
-//    (func $0
-//     (local $0 i32)
-//     (local.set $0
-//      (i32.const 42)
-//     )
-//     (loop $loop
-//      (br_if $loop
-//       (call $import
-//        (local.tee $0
-//         (i32.add
-//          (local.get $0)
-//          (i32.const 1)
-//         )
-//        )
-//       )
-//      )
-//     )
-//    )
-//
-// All the GC heap operations have been removed, and we just have a plain int
-// now, allowing a bunch of other opts to run.
-//
-// For us to replace an allocation with locals, we need to prove two things:
-//
-//  * It must not escape from the function. If it escapes, we must pass out a
-//    reference anyhow. (In theory we could do a whole-program transformation
-//    to replace the reference with parameters in some cases, but inlining can
-//    hopefully let us optimize most cases.)
-//  * It must be used "exclusively", without overlap. That is, we cannot
-//    handle the case where a local.get might return our allocation, but might
-//    also get some other value. We also cannot handle a select where one arm
-//    is our allocation and another is something else. If the use is exclusive
-//    then we have a simple guarantee of being able to replace the heap
-//    allocation with the locals.
-//
-// Non-exclusive uses are optimizable too, but they require more work and add
-// overhead. For example, here is a non-exclusive use:
-//
-//   var x;
-//   if (..) {
-//     x = new Something(); // the allocation we want to optimize
-//   } else {
-//     x = something_else;
-//   }
-//   // 'x' here is not used exclusively by our allocation
-//   return x.field0;
-//
-// To optimize x.field0, we'd need to check if it contains our allocation or
-// not, perhaps marking a boolean as true when it is, then doing an if on that
-// local, etc.:
-//
-//   var x_is_our_alloc; // whether x is our allocation
-//   var x; // keep x around for when it is not our allocation
-//   var x_field0; // the value of field0 on x, when x is our allocation
-//   if (..) {
-//     x_field0 = ..default value for the type..
-//     x_is_our_alloc = true;
-//   } else {
-//     x = something_else;
-//     x_is_our_alloc = false;
-//   }
-//   return x_is_our_alloc ? x_field0 : x.field0;
-//
-// (node splitting/code duplication is another possible approach). On the other
-// hand, if the allocation is used exclusively in all places (the if-else above
-// does not have an else any more) then we can do this:
-//
-//   var x_field0; // the value of field0 on x
-//   if (..) {
-//     x_field0 = ..default value for the type..
-//   }
-//   return x_field0;
-//
-// This optimization focuses on such cases.
+// Phase 4 rewrites every non-escaping allocation and all expressions it flows
+// into in a single post-order pass, followed by ReFinalize and
+// TypeUpdating::handleNonDefaultableLocals.
 //
 
+#include <cstdint>
+#include <limits>
+#include <optional>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "analysis/lattices/flat.h"
 #include "ir/abstract.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
+#include "ir/iteration.h"
 #include "ir/local-graph.h"
-#include "ir/parents.h"
-#include "ir/properties.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
+#include "support/small_vector.h"
 #include "wasm-builder.h"
-#include "wasm-type.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
 
-// Interactions between a child and a parent, with regard to the behavior of the
-// allocation.
-enum class ParentChildInteraction : int8_t {
-  // The parent lets the child escape. E.g. the parent is a call.
-  Escapes,
-  // The parent fully consumes the child in a safe, non-escaping way, and
-  // after consuming it nothing remains to flow further through the parent.
-  // E.g. the parent is a struct.get, which reads from the allocated heap
-  // value and does nothing more with the reference.
-  FullyConsumes,
-  // The parent flows the child out, that is, the child is the single value
-  // that can flow out from the parent. E.g. the parent is a block with no
-  // branches and the child is the final value that is returned.
-  Flows,
-  // The parent does not consume the child completely, so the child's value
-  // can be used through it. However the child does not flow cleanly through.
-  // E.g. the parent is a block with branches, and the value on them may be
-  // returned from the block and not only the child. This means the allocation
-  // is not used in an exclusive way, and we cannot optimize it.
-  Mixes,
-  // No interaction (not relevant to the analysis).
-  None,
-};
+// Fixed arrays larger than this are rarely profitable to expand into locals,
+// and valid Wasm can ask for huge constant sizes like (array.new (i32.const
+// -1)).
+constexpr uint32_t MaxArraySize = 20;
 
-// Core analysis that provides an escapes() method to check if an allocation
-// escapes in a way that prevents optimizing it away as described above. It also
-// stashes information about the relevant expressions as it goes, which helps
-// optimization later (|reached|).
-struct EscapeAnalyzer {
-  // To find what escapes, we need to follow where values flow, both up to
-  // parents, and via branches, and through locals.
-  //
-  // We use a lazy graph here because we only need this for reference locals,
-  // and even among them, only ones we see an allocation is stored to. The
-  // LocalGraph is is augmented by ScratchInfo, since the LocalGraph does not
-  // know about scratch locals we add. We currently only record scratch locals
-  // that might possibly have another optimized allocation flowing through them.
-  // If it's not possible for another optimized allocation to flow through the
-  // scratch local, then we will never look at it again after creating it and do
-  // not need to record it here.
-  const LazyLocalGraph& localGraph;
-  Parents& parents;
-  const BranchUtils::BranchTargets& branchTargets;
+// Refer to candidate allocation sites and dataflow graph nodes by dense integer
+// indices rather than pointers so the fixed-point and escape passes can store
+// per-node and per-allocation state in compact flat vectors.
+using AllocId = uint32_t;
+using NodeId = uint32_t;
+constexpr NodeId TopNode = 0;
 
-  const PassOptions& passOptions;
-  Module& wasm;
+// Lattice of origins used in Phase 2 origin analysis.
+using OriginLattice = analysis::Flat<AllocId>;
+using Origin = OriginLattice::Element;
 
-  EscapeAnalyzer(const LazyLocalGraph& localGraph,
-                 Parents& parents,
-                 const BranchUtils::BranchTargets& branchTargets,
-                 const PassOptions& passOptions,
-                 Module& wasm)
-    : localGraph(localGraph), parents(parents), branchTargets(branchTargets),
-      passOptions(passOptions), wasm(wasm) {}
+// Metadata and lowered local variable assignments for a candidate allocation
+// (either a struct.new* or array.new*).
+struct AllocInfo {
+  Expression* expr = nullptr;
+  FieldList fields;
+  bool escaped = false;
 
-  // We must track all the local.sets that write the allocation, to verify
-  // exclusivity.
-  std::unordered_set<LocalSet*> sets;
+  // Populated before Phase 4 if we can optimize this allocation.
+  std::vector<Index> fieldLocals;
+  std::optional<Index> descLocal;
 
-  // A map of every expression we reached during the flow analysis (which is
-  // exactly all the places where our allocation is used) to the interaction of
-  // the allocation there. If we optimize, anything in this map will be fixed up
-  // at the end, and how we fix it up may depend on the interaction,
-  // specifically, it can matter if the allocations flows out of here (Flows,
-  // which is the case for e.g. a Block that we flow through) or if it is fully
-  // consumed (FullyConsumes, e.g. for a struct.get). We do not store irrelevant
-  // things here (that is, anything not in the map has the interaction |None|,
-  // implicitly).
-  std::unordered_map<Expression*, ParentChildInteraction> reachedInteractions;
-
-  // Analyze an allocation to see if it escapes or not.
-  bool escapes(Expression* allocation) {
-    // A queue of flows from children to parents. When something is in the queue
-    // here then it assumed that it is ok for the allocation to be at the child
-    // (that is, we have already checked the child before placing it in the
-    // queue), and we need to check if it is ok to be at the parent, and to flow
-    // from the child to the parent. We will analyze that (see
-    // ParentChildInteraction, above) and continue accordingly.
-    using ChildAndParent = std::pair<Expression*, Expression*>;
-    UniqueNonrepeatingDeferredQueue<ChildAndParent> flows;
-
-    // Start the flow from the allocation itself to its parent.
-    flows.push({allocation, parents.getParent(allocation)});
-
-    // Keep flowing while we can.
-    while (!flows.empty()) {
-      auto flow = flows.pop();
-      auto* child = flow.first;
-      auto* parent = flow.second;
-
-      auto interaction = getParentChildInteraction(allocation, parent, child);
-      if (interaction == ParentChildInteraction::Escapes ||
-          interaction == ParentChildInteraction::Mixes) {
-        // If the parent may let us escape, or the parent mixes other values
-        // up with us, give up.
-        return true;
-      }
-
-      // The parent either fully consumes us, or flows us onwards; either way,
-      // we can proceed here, hopefully.
-      assert(interaction == ParentChildInteraction::FullyConsumes ||
-             interaction == ParentChildInteraction::Flows);
-
-      // We can proceed, as the parent interacts with us properly, and we are
-      // the only allocation to get here.
-
-      if (interaction == ParentChildInteraction::Flows) {
-        // The value flows through the parent; we need to look further at the
-        // grandparent.
-        flows.push({parent, parents.getParent(parent)});
-      }
-
-      if (auto* set = parent->dynCast<LocalSet>()) {
-        // This is one of the sets we are written to, and so we must check for
-        // exclusive use of our allocation by all the gets that read the
-        // value. Note the set, and we will check the gets at the end once we
-        // know all of our sets.
-        sets.insert(set);
-        for (auto* get : localGraph.getSetInfluences(set)) {
-          flows.push({get, parents.getParent(get)});
-        }
-      }
-
-      // If the parent may send us on a branch, we will need to look at the flow
-      // to the branch target(s).
-      for (auto name : branchesSentByParent(child, parent)) {
-        flows.push({child, branchTargets.getTarget(name)});
-      }
-
-      // If we got to here, then we can continue to hope that we can optimize
-      // this allocation. Mark the parent and child as reached by it, and
-      // continue. The child flows the value to the parent, and the parent's
-      // behavior was computed before.
-      reachedInteractions[child] = ParentChildInteraction::Flows;
-      reachedInteractions[parent] = interaction;
-    }
-
-    // We finished the loop over the flows. Do the final checks.
-    if (!getsAreExclusiveToSets()) {
-      return true;
-    }
-
-    // Nothing escapes, hurray!
-    return false;
+  std::optional<HeapType> getDescHeapType() const {
+    return expr->type.getHeapType().getDescriptorType();
   }
 
-  ParentChildInteraction getParentChildInteraction(Expression* allocation,
-                                                   Expression* parent,
-                                                   Expression* child) const {
-    // If there is no parent then we are the body of the function, and that
-    // means we escape by flowing to the caller.
-    if (!parent) {
-      return ParentChildInteraction::Escapes;
-    }
-
-    struct Checker : public Visitor<Checker> {
-      Expression* allocation;
-      Expression* child;
-
-      // Assume escaping (or some other problem we cannot analyze) unless we are
-      // certain otherwise.
-      bool escapes = true;
-
-      // Assume we do not fully consume the value unless we are certain
-      // otherwise. If this is set to true, then we do not need to check any
-      // further. If it remains false, then we will analyze the value that
-      // falls through later to check for mixing.
-      //
-      // Note that this does not need to be set for expressions if their type
-      // proves that the value does not continue onwards (e.g. if their type is
-      // none, or not a reference type), but for clarity some do still mark this
-      // field as true when it is clearly so.
-      bool fullyConsumes = false;
-
-      // General operations
-      void visitBlock(Block* curr) {
-        escapes = false;
-        // We do not mark fullyConsumes as the value may continue through this
-        // and other control flow structures.
-      }
-      // Note that If is not supported here, because for our value to flow
-      // through it there must be an if-else, and that means there is no single
-      // value falling through anyhow.
-      void visitLoop(Loop* curr) { escapes = false; }
-      void visitDrop(Drop* curr) {
-        escapes = false;
-        fullyConsumes = true;
-      }
-      void visitBreak(Break* curr) { escapes = false; }
-      void visitSwitch(Switch* curr) { escapes = false; }
-
-      // Local operations. Locals by themselves do not escape; the analysis
-      // tracks where locals are used.
-      void visitLocalGet(LocalGet* curr) { escapes = false; }
-      void visitLocalSet(LocalSet* curr) { escapes = false; }
-
-      // Reference operations. TODO add more
-      void visitRefIsNull(RefIsNull* curr) {
-        // The reference is compared to null, but nothing more.
-        escapes = false;
-        fullyConsumes = true;
-      }
-
-      void visitRefEq(RefEq* curr) {
-        // The reference is compared for identity, but nothing more.
-        escapes = false;
-        fullyConsumes = true;
-      }
-
-      void visitRefAs(RefAs* curr) {
-        // TODO General OptimizeInstructions integration, that is, since we know
-        //      that our allocation is what flows into this RefAs, we can
-        //      know the exact outcome of the operation.
-        if (curr->op == RefAsNonNull) {
-          // As it is our allocation that flows through here, we know it is not
-          // null (so there is no trap), and we can continue to (hopefully)
-          // optimize this allocation.
-          escapes = false;
-        }
-      }
-
-      void visitRefTest(RefTest* curr) {
-        escapes = false;
-        fullyConsumes = true;
-      }
-
-      void visitRefCast(RefCast* curr) {
-        // Whether the cast succeeds or fails, it does not escape.
-        escapes = false;
-
-        if (curr->ref == child) {
-          // If the cast fails then the allocation is fully consumed and does
-          // not flow any further (instead, we trap).
-          if (!Type::isSubType(allocation->type, curr->type)) {
-            fullyConsumes = true;
-          }
-        } else {
-          // Either the child is the descriptor, in which case we consume it, or
-          // we have already optimized this ref.cast_desc_eq for an allocation
-          // that flowed through as its `ref`. In the latter case the current
-          // child must have originally been the descriptor, so we can still say
-          // it's fully consumed, but we cannot assert that curr->desc == child.
-          fullyConsumes = true;
-        }
-      }
-
-      void visitRefGetDesc(RefGetDesc* curr) {
-        escapes = false;
-        fullyConsumes = true;
-      }
-
-      // GC operations.
-      void visitStructSet(StructSet* curr) {
-        // The reference does not escape (but the value is stored to memory and
-        // therefore might).
-        if (curr->ref == child) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      void visitStructGet(StructGet* curr) {
-        escapes = false;
-        fullyConsumes = true;
-      }
-      void visitStructRMW(StructRMW* curr) {
-        if (curr->ref == child) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      void visitStructCmpxchg(StructCmpxchg* curr) {
-        if (curr->ref == child || curr->expected == child) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      void visitArraySet(ArraySet* curr) {
-        // Arrays flowing into array operations on nonconstant indexes do not
-        // escape in the normal sense, but they do escape from our being able to
-        // analyze them, so stop as soon as we see one.
-        if (child == curr->ref && curr->index->is<Const>()) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      void visitArrayGet(ArrayGet* curr) {
-        if (child == curr->ref && curr->index->is<Const>()) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      void visitArrayRMW(ArrayRMW* curr) {
-        if (child == curr->ref && curr->index->is<Const>()) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-        // Allocations flowing into `expected` are fully consumed and
-        // optimizable even if the index is not constant.
-        if (child == curr->expected ||
-            (child == curr->ref && curr->index->is<Const>())) {
-          escapes = false;
-          fullyConsumes = true;
-        }
-      }
-      // TODO other GC operations
-    } checker;
-
-    checker.allocation = allocation;
-    checker.child = child;
-    checker.visit(parent);
-
-    if (checker.escapes) {
-      return ParentChildInteraction::Escapes;
-    }
-
-    // If the parent returns a type that is not a reference, then by definition
-    // it fully consumes the value as it does not flow our allocation onward.
-    if (checker.fullyConsumes || !parent->type.isRef()) {
-      return ParentChildInteraction::FullyConsumes;
-    }
-
-    // Finally, check for mixing. If the child is the immediate fallthrough
-    // of the parent then no other values can be mixed in.
-    if (Properties::getImmediateFallthrough(parent, passOptions, wasm) ==
-        child) {
-      return ParentChildInteraction::Flows;
-    }
-
-    // Likewise, if the child branches to the parent, and it is the sole branch,
-    // with no other value exiting the block (in particular, no final value at
-    // the end that flows out), then there is no mixing.
-    auto branches =
-      branchTargets.getBranches(BranchUtils::getDefinedName(parent));
-    if (branches.size() == 1 &&
-        BranchUtils::getSentValue(*branches.begin()) == child) {
-      // TODO: support more types of branch targets.
-      if (auto* parentAsBlock = parent->dynCast<Block>()) {
-        if (parentAsBlock->list.back()->type == Type::unreachable) {
-          return ParentChildInteraction::Flows;
-        }
-      }
-    }
-
-    // TODO: Also check for safe merges where our allocation is in all places,
-    //       like two if or select arms, or branches.
-
-    return ParentChildInteraction::Mixes;
-  }
-
-  const BranchUtils::NameSet branchesSentByParent(Expression* child,
-                                                  Expression* parent) {
-    BranchUtils::NameSet names;
-    BranchUtils::operateOnScopeNameUsesAndSentValues(
-      parent, [&](Name name, Expression* value) {
-        if (value == child) {
-          names.insert(name);
-        }
-      });
-    return names;
-  }
-
-  // Verify exclusivity of all the gets for a bunch of sets. That is, assuming
-  // the sets are exclusive (they all write exactly our allocation, and nothing
-  // else), we need to check whether all the gets that read that value cannot
-  // read anything else (which would be the case if another set writes to that
-  // local, in the right live range).
-  bool getsAreExclusiveToSets() {
-    // Find all the relevant gets (which may overlap between the sets).
-    std::unordered_set<LocalGet*> gets;
-    for (auto* set : sets) {
-      for (auto* get : localGraph.getSetInfluences(set)) {
-        gets.insert(get);
-      }
-    }
-
-    // Check that the gets can only read from the specific known sets.
-    for (auto* get : gets) {
-      for (auto* set : localGraph.getSets(get)) {
-        if (!sets.contains(set)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  // Helper function for Struct2Local and Array2Struct. Given an old expression
-  // that is being replaced by a new one, add the proper interaction for the
-  // replacement.
-  void applyOldInteractionToReplacement(Expression* old, Expression* rep) {
-    // We can only replace something relevant that we found in the analysis.
-    // (Not only would anything else be invalid to process, but also we wouldn't
-    // know what interaction to give the replacement.)
-    assert(reachedInteractions.contains(old));
-
-    // The replacement should have the same interaction as the thing it
-    // replaces, since it is a drop-in replacement for it. The one exception is
-    // when we replace with something unreachable, which is the result of us
-    // figuring out that some code will trap at runtime. In that case, we've
-    // made the code unreachable and the allocation does not interact with that
-    // code at all.
-    if (rep->type != Type::unreachable) {
-      reachedInteractions[rep] = reachedInteractions[old];
-    }
-  }
-
-  // Get the interaction of an expression.
-  ParentChildInteraction getInteraction(Expression* curr) {
-    auto iter = reachedInteractions.find(curr);
-    if (iter == reachedInteractions.end()) {
-      // This is not interacted with.
-      return ParentChildInteraction::None;
-    }
-    return iter->second;
+  Type getDescLocalType() const {
+    auto descHeapType = getDescHeapType();
+    assert(descHeapType.has_value());
+    return Type(*descHeapType, NonNullable, Exact);
   }
 };
 
-// An optimizer that handles the rewriting to turn a struct allocation into
-// locals. We run this after proving that allocation does not escape.
-//
-// TODO: Doing a single rewrite walk at the end (for all structs) would be more
-//       efficient, but it would need to be more complex.
-struct Struct2Local : PostWalker<Struct2Local> {
-  StructNew* allocation;
+// An atomic cmpxchg site linking expected and replacement origins. If the
+// expected allocation does not escape, it can never reside in the heap field
+// being compared, so the comparison always fails at runtime and replacement is
+// never written to memory. If expected escapes, however, it could match the
+// heap value at runtime and cause cmpxchg to store replacement into the heap,
+// forcing replacement to escape as well.
+struct CmpxchgSite {
+  NodeId expNode;
+  NodeId repNode;
+};
 
-  // The analyzer is not |const| because we update
-  // |analyzer.reachedInteractions| as we go (see replaceCurrent, below).
-  EscapeAnalyzer& analyzer;
+// Shared per-function state populated by GraphBuilder (Phase 1) and consumed by
+// origin propagation (Phase 2), escape analysis (Phase 3), and IR rewriting
+// (Phase 4).
+struct AnalysisState {
+  // Flat lattice over AllocId values (Bot < Val(alloc) < Top).
+  OriginLattice originLattice;
+  // Metadata and lowered local indices for each candidate allocation, indexed
+  // by AllocId.
+  std::vector<AllocInfo> allocs;
+  // Maps tracked reference-typed expressions to their dataflow NodeId.
+  std::unordered_map<Expression*, NodeId> exprNodes;
+  // Maps each NodeId back to its Expression* (nullptr for TopNode).
+  std::vector<Expression*> nodeExprs;
+  // Current lattice value for each dataflow node, indexed by NodeId.
+  std::vector<Origin> origins;
+  // Directed dataflow edges (from, to) between tracked nodes. Edges into
+  // RefCast nodes trigger cast re-evaluation; all other edges propagate
+  // reference values unchanged.
+  std::vector<std::pair<NodeId, NodeId>> edges;
+  // Nodes whose values flow into contexts that escape the function or alias
+  // heap memory.
+  std::vector<NodeId> escapingNodes;
+  // Tracked cmpxchg sites where an escaping expected value forces replacement
+  // to escape.
+  std::vector<CmpxchgSite> cmpxchgSites;
 
+  AnalysisState() {
+    // Node 0 (TopNode) is a shared sentinel node with fixed origin Top
+    // representing expressions absent from exprNodes that can never produce a
+    // candidate allocation (e.g. call, global.get, struct.get, or ref.null).
+    origins.push_back(originLattice.getTop());
+    nodeExprs.push_back(nullptr);
+  }
+
+  NodeId getNode(Expression* curr) {
+    assert(curr);
+    assert(curr->type.isRef());
+    auto [it, inserted] = exprNodes.emplace(curr, NodeId(origins.size()));
+    if (inserted) {
+      origins.push_back(originLattice.getBottom());
+      nodeExprs.push_back(curr);
+    }
+    return it->second;
+  }
+
+  NodeId getNodeOrTop(Expression* curr) const {
+    assert(curr);
+    assert(curr->type.isRef());
+    auto it = exprNodes.find(curr);
+    return it != exprNodes.end() ? it->second : TopNode;
+  }
+
+  const Origin& getOrigin(Expression* curr) const {
+    return origins[getNodeOrTop(curr)];
+  }
+
+  void join(Expression* curr, Origin val) {
+    originLattice.join(origins[getNode(curr)], val);
+  }
+
+  void joinTop(Expression* curr) { join(curr, originLattice.getTop()); }
+
+  void addEdge(NodeId fromNode, NodeId toNode) {
+    if (fromNode == TopNode) {
+      originLattice.join(origins[toNode], originLattice.getTop());
+    } else {
+      edges.emplace_back(fromNode, toNode);
+    }
+  }
+
+  void addEdge(Expression* from, NodeId toNode) {
+    // Since we are building up the graph via a post-order traversal, we will
+    // have visited a child node (i.e. `from`) before its parent (i.e.
+    // `toNode`). If the child is not already in the graph, then it must be
+    // something we can't analyze, so we represent it as Top.
+    addEdge(getNodeOrTop(from), toNode);
+  }
+
+  void addEdge(NodeId fromNode, Expression* to) {
+    addEdge(fromNode, getNode(to));
+  }
+
+  void addEdge(Expression* from, Expression* to) {
+    addEdge(getNodeOrTop(from), getNode(to));
+  }
+
+  void escapeIfRef(Expression* curr) {
+    if (curr->type.isRef()) {
+      NodeId node = getNodeOrTop(curr);
+      if (node != TopNode) {
+        escapingNodes.push_back(node);
+      }
+    }
+  }
+};
+
+// Phase 1: Single post-order walk over the function body to collect candidate
+// allocations, dataflow edges, cmpxchg sites, and escaping uses.
+struct GraphBuilder
+  : public ControlFlowWalker<GraphBuilder,
+                             UnifiedExpressionVisitor<GraphBuilder>> {
+  AnalysisState& state;
   Function* func;
   Module& wasm;
-  Builder builder;
-  const FieldList& fields;
+  // Reference-typed local.gets collected during the walk to connect to their
+  // reaching local.sets in build().
+  std::vector<LocalGet*> refLocalGets;
 
-  // The descriptor can arrive as nullable, but we trap if it is null, so there
-  // is only something to store if it is non-nullable, and we store it that way.
-  Type descType;
+  GraphBuilder(AnalysisState& state, Function* func, Module& wasm)
+    : state(state), func(func), wasm(wasm) {}
 
-  Struct2Local(StructNew* allocation,
-               EscapeAnalyzer& analyzer,
-               Function* func,
-               Module& wasm,
-               bool refinalize_ = false)
-    : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields),
-      refinalize(refinalize_) {
-
-    // Allocate locals to store the allocation's fields and descriptor in.
-    for (auto field : fields) {
-      localIndexes.push_back(builder.addVar(func, field.type));
-    }
-    if (allocation->desc) {
-      descType = allocation->desc->type.with(NonNullable);
-      localIndexes.push_back(builder.addVar(func, descType));
-    }
-
-    // Replace the things we need to using the visit* methods.
+  void build() {
     walk(func->body);
 
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, &wasm);
-    }
-  }
-
-  // Maps indexes in the struct to the local index that will replace them.
-  std::vector<Index> localIndexes;
-
-  // In rare cases we may need to refinalize, see below.
-  bool refinalize = false;
-
-  Expression* replaceCurrent(Expression* expression) {
-    analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
-    PostWalker<Struct2Local>::replaceCurrent(expression);
-    return expression;
-  }
-
-  // Rewrite the code in visit* methods. The general approach taken is to
-  // replace the allocation with a null reference (which may require changing
-  // types in some places, like making a block return value nullable), and to
-  // remove all uses of it as much as possible, using the information we have
-  // (for example, when our allocation reaches a RefAsNonNull we can simply
-  // remove that operation as we know it would not throw). Some things are
-  // left to other passes, like getting rid of dropped code without side
-  // effects.
-
-  // Adjust the type that flows through an expression, updating that type as
-  // necessary.
-  void adjustTypeFlowingThrough(Expression* curr) {
-    if (analyzer.getInteraction(curr) != ParentChildInteraction::Flows) {
+    if (state.allocs.empty()) {
+      // Nothing to optimize.
       return;
     }
 
-    if (curr->type == Type::unreachable) {
-      // We ended up with unreachable code, and have nothing to do.
-      return;
-    }
+    // Values returned out of the function body escape.
+    state.escapeIfRef(func->body);
 
-    // Our allocation passes through this expr. We must turn its type into a
-    // nullable one, because we will remove things like RefAsNonNull of it,
-    // which means we may no longer have a non-nullable value as our input,
-    // and we could fail to validate. It is safe to make this change in terms
-    // of our parent, since we know very specifically that only safe things
-    // will end up using our value, like a StructGet or a Drop, which do not
-    // care about non-nullability.
-    assert(curr->type.isRef());
-    curr->type = Type(curr->type.getHeapType(), Nullable);
+    // Connect local.gets to reaching local.sets via LazyLocalGraph.
+    LazyLocalGraph localGraph(func, &wasm);
+    for (auto* get : refLocalGets) {
+      for (LocalSet* set : localGraph.getSets(get)) {
+        if (!set) {
+          // Reading entry/default local value violates the single-live-instance
+          // invariant (e.g. a value from an earlier loop iteration or param).
+          state.joinTop(get);
+        } else {
+          assert(set->value->type.isRef() && "unexpected unreachable set");
+          state.addEdge(set->value, get);
+        }
+      }
+    }
   }
 
-  void visitBlock(Block* curr) { adjustTypeFlowingThrough(curr); }
+  void visitExpression(Expression* curr) {
+    // Default to assuming all reference-typed children escape.
+    for (auto* child : ChildIterator(curr)) {
+      state.escapeIfRef(child);
+    }
+    // Unhandled scope-branching instructions (e.g. TryTable, BrOn) can send
+    // values to enclosing ref-typed Blocks. Initialize those target Blocks with
+    // Top so any candidate allocations flowing into them are treated as
+    // escaping.
+    // TODO: Model BrOn* and TryTable dataflow edges directly instead of
+    // conservatively initializing target blocks with Top.
+    BranchUtils::operateOnScopeNameUsesAndSentTypes(
+      curr, [&](Name& name, Type sentType) {
+        if (sentType.isRef()) {
+          auto* target = findBreakTarget(name);
+          assert(target);
+          assert(target->type.isRef());
+          state.joinTop(target);
+        }
+      });
+  }
 
-  void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
+  AllocId addCandidateAlloc(Expression* curr, const FieldList& fields) {
+    assert(state.allocs.size() < std::numeric_limits<AllocId>::max());
+    auto id = AllocId(state.allocs.size());
+    auto& info = state.allocs.emplace_back();
+    info.expr = curr;
+    info.fields.assign(fields.begin(), fields.end());
+    state.join(curr, state.originLattice.get(id));
+    return id;
+  }
+
+  void visitStructNew(StructNew* curr) {
+    // TODO: Track field, element, and descriptor edges to optimize nested
+    // allocations.
+    for (auto* op : curr->operands) {
+      state.escapeIfRef(op);
+    }
+    if (curr->desc) {
+      state.escapeIfRef(curr->desc);
+    }
+    // We still visit and escape operands above even when curr is unreachable,
+    // because a later unreachable operand lets earlier operands execute before
+    // trapping. Only register reachable struct.new instructions as candidates.
+    if (curr->type != Type::unreachable) {
+      assert(!curr->desc || curr->desc->type.isRef());
+      addCandidateAlloc(curr, curr->type.getHeapType().getStruct().fields);
+    }
+  }
+
+  void visitArrayNew(ArrayNew* curr) {
+    // Escape init even if curr is unreachable (init executes before a trap in
+    // size).
+    if (curr->init) {
+      state.escapeIfRef(curr->init);
+    }
+    if (curr->type != Type::unreachable) {
+      if (auto* c = curr->size->dynCast<Const>()) {
+        uint32_t size = c->value.getUnsigned();
+        if (size < MaxArraySize) {
+          FieldList fields(size, curr->type.getHeapType().getArray().element);
+          addCandidateAlloc(curr, fields);
+        }
+      }
+    }
+  }
+
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    // Escape element operands even if curr is unreachable (earlier operands
+    // execute before an unreachable operand traps).
+    for (auto* val : curr->values) {
+      state.escapeIfRef(val);
+    }
+    if (curr->type != Type::unreachable) {
+      if (curr->values.size() < MaxArraySize) {
+        FieldList fields(curr->values.size(),
+                         curr->type.getHeapType().getArray().element);
+        addCandidateAlloc(curr, fields);
+      }
+    }
+  }
+
+  // Block and Loop fallthroughs are wired directly rather than via
+  // Properties::getImmediateFallthrough, which conservatively rejects all named
+  // blocks and loops.
+  void visitBlock(Block* curr) {
+    if (curr->type.isRef()) {
+      assert(!curr->list.empty());
+      if (curr->list.back()->type.isRef()) {
+        state.addEdge(curr->list.back(), curr);
+      }
+    }
+  }
+
+  void visitLoop(Loop* curr) {
+    if (curr->type.isRef()) {
+      if (curr->body->type.isRef()) {
+        state.addEdge(curr->body, curr);
+      }
+    }
+  }
+
+  void visitIf(If* curr) {
+    if (curr->type.isRef()) {
+      assert(curr->ifFalse);
+      NodeId outNode = state.getNode(curr);
+      if (curr->ifTrue->type.isRef()) {
+        state.addEdge(curr->ifTrue, outNode);
+      }
+      if (curr->ifFalse->type.isRef()) {
+        state.addEdge(curr->ifFalse, outNode);
+      }
+    }
+  }
+
+  void visitSelect(Select* curr) {
+    if (curr->type.isRef()) {
+      assert(curr->ifTrue->type.isRef());
+      assert(curr->ifFalse->type.isRef());
+      NodeId outNode = state.getNode(curr);
+      state.addEdge(curr->ifTrue, outNode);
+      state.addEdge(curr->ifFalse, outNode);
+    }
+  }
+
+  void visitBreak(Break* curr) {
+    if (curr->value && curr->value->type.isRef()) {
+      auto* target = findBreakTarget(curr->name);
+      assert(target);
+      assert(target->type.isRef());
+      NodeId valNode = state.getNodeOrTop(curr->value);
+      state.addEdge(valNode, target);
+      // Reachable ref-typed br_if also returns its value (unconditional br has
+      // unreachable type).
+      if (curr->type.isRef()) {
+        state.addEdge(valNode, curr);
+      }
+    }
+  }
+
+  void visitSwitch(Switch* curr) {
+    if (curr->value && curr->value->type.isRef()) {
+      NodeId valNode = state.getNodeOrTop(curr->value);
+      for (Name name : BranchUtils::getUniqueTargets(curr)) {
+        auto* target = findBreakTarget(name);
+        assert(target);
+        assert(target->type.isRef());
+        state.addEdge(valNode, target);
+      }
+    }
+  }
 
   void visitLocalSet(LocalSet* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // We don't need any sets of the reference to any of the locals it
-    // originally was written to.
-    if (curr->isTee()) {
-      replaceCurrent(curr->value);
-    } else {
-      replaceCurrent(builder.makeDrop(curr->value));
+    // In Binaryen IR, a local.tee is a LocalSet whose expression type is
+    // the local's type rather than Type::none. Its write to the local is
+    // wired to reaching local.gets via LazyLocalGraph in build(), while its
+    // fallthrough value flows to its parent expression via this identity
+    // edge.
+    if (curr->isTee() && curr->value->type.isRef()) {
+      state.addEdge(curr->value, curr);
     }
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
+    if (curr->type.isRef()) {
+      refLocalGets.push_back(curr);
+      state.getNode(curr);
     }
-
-    // Uses of this get will drop it, so the value does not matter. Replace it
-    // with something else, which avoids issues with non-nullability (when
-    // non-nullable locals are enabled), which could happen like this:
-    //
-    //   (local $x (ref $foo))
-    //   (local.set $x ..)
-    //   (.. (local.get $x))
-    //
-    // If we remove the set but not the get then the get would appear to read
-    // the default value of a non-nullable local, which is not allowed.
-    //
-    // For simplicity, replace the get with a null. We anyhow have null types
-    // in the places where our allocation was earlier, see notes on
-    // visitBlock, and so using a null here adds no extra complexity.
-    replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
-  }
-
-  void visitBreak(Break* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // Breaks that our allocation flows through may change type, as we now
-    // have a nullable type there.
-    curr->finalize();
-  }
-
-  void visitStructNew(StructNew* curr) {
-    if (curr != allocation) {
-      return;
-    }
-
-    // First, assign the initial values to the new locals.
-    std::vector<Expression*> contents;
-
-    // We might be in a loop, so the locals representing the struct fields might
-    // already have values. Furthermore, the computation of the new field values
-    // might depend on the old field values. If we naively assign the new values
-    // to the locals as they are computed, the computation of a later field may
-    // use the new value of an earlier field where it should have used the old
-    // value of the earlier field. To avoid this problem, we store all the
-    // nontrivial new values in temp locals, and only once they have fully been
-    // computed do we copy them into the locals representing the fields.
-    std::vector<Index> tempIndexes;
-    Index numTemps =
-      (curr->isWithDefault() ? 0 : fields.size()) + bool(curr->desc);
-    tempIndexes.reserve(numTemps);
-
-    // Create the temp variables.
-    if (!curr->isWithDefault()) {
-      for (auto field : fields) {
-        tempIndexes.push_back(builder.addVar(func, field.type));
-      }
-    }
-    if (curr->desc) {
-      tempIndexes.push_back(builder.addVar(func, descType));
-    }
-
-    // Store the initial values into the temp locals.
-    if (!curr->isWithDefault()) {
-      for (Index i = 0; i < fields.size(); i++) {
-        contents.push_back(
-          builder.makeLocalSet(tempIndexes[i], curr->operands[i]));
-      }
-    }
-    if (curr->desc) {
-      // Preserve the trapping on null descriptors by inserting a
-      // ref.as_non_null.
-      Expression* desc = curr->desc;
-      if (curr->desc->type.isNullableRef()) {
-        desc = builder.makeRefAs(RefAsNonNull, desc);
-      }
-      contents.push_back(builder.makeLocalSet(tempIndexes[numTemps - 1], desc));
-    }
-
-    // Store the values into the locals representing the fields.
-    for (Index i = 0; i < fields.size(); ++i) {
-      auto* val =
-        curr->isWithDefault()
-          ? builder.makeConstantExpression(Literal::makeZero(fields[i].type))
-          : builder.makeLocalGet(tempIndexes[i], fields[i].type);
-      contents.push_back(builder.makeLocalSet(localIndexes[i], val));
-    }
-    if (curr->desc) {
-      auto* val = builder.makeLocalGet(tempIndexes[numTemps - 1], descType);
-      contents.push_back(
-        builder.makeLocalSet(localIndexes[fields.size()], val));
-    }
-
-    // Replace the allocation with a null reference. This changes the type
-    // from non-nullable to nullable, but as we optimize away the code that
-    // the allocation reaches, we will handle that.
-    contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
-    replaceCurrent(builder.makeBlock(contents));
-  }
-
-  void visitRefIsNull(RefIsNull* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    if (curr->type == Type::unreachable) {
-      // The result does not matter. Leave things as they are (and let DCE
-      // handle it).
-      return;
-    }
-
-    // The result must be 0, since the allocation is not null. Drop the RefIs
-    // and append that.
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(curr), builder.makeConst(Literal(int32_t(0)))));
-  }
-
-  void visitRefEq(RefEq* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    if (curr->type == Type::unreachable) {
-      // The result does not matter. Leave things as they are (and let DCE
-      // handle it).
-      return;
-    }
-
-    // If our reference is compared to itself, the result is 1. If it is
-    // compared to something else, the result must be 0, as our reference does
-    // not escape to any other place.
-    int32_t result =
-      analyzer.getInteraction(curr->left) == ParentChildInteraction::Flows &&
-      analyzer.getInteraction(curr->right) == ParentChildInteraction::Flows;
-    replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
-                                      builder.makeDrop(curr->right),
-                                      builder.makeConst(Literal(result))}));
   }
 
   void visitRefAs(RefAs* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
+    if (curr->op == RefAsNonNull) {
+      if (curr->type.isRef()) {
+        assert(curr->value->type.isRef());
+        state.addEdge(curr->value, curr);
+      }
+    } else {
+      visitExpression(curr);
     }
-
-    // It is safe to optimize out this RefAsNonNull, since we proved it
-    // contains our allocation, and so cannot trap.
-    assert(curr->op == RefAsNonNull);
-    replaceCurrent(curr->value);
-  }
-
-  void visitRefTest(RefTest* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    if (curr->type == Type::unreachable) {
-      // We must not modify unreachable code here, as we will replace it with a
-      // const, which has a concrete type (similar to the situation with
-      // local.get in other cases in this pass).
-      return;
-    }
-
-    // This test operates on the allocation, which means we can compute whether
-    // it will succeed statically. We do not even need
-    // GCTypeUtils::evaluateCastCheck because we know the allocation's type
-    // precisely (it cannot be a strict subtype of the type - it is the type).
-    int32_t result = Type::isSubType(allocation->type, curr->castType);
-    // Remove the RefTest and leave only its reference child. If we kept it,
-    // we'd need to refinalize (as the input to the test changes, since the
-    // reference becomes a null, which has a different type).
-    replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                        builder.makeConst(Literal(result))));
   }
 
   void visitRefCast(RefCast* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+    // Neither ref nor desc escapes through ref.cast{,_desc_eq}; if the cast
+    // is already unreachable, Optimizer will skip it.
+    if (curr->type.isRef()) {
+      assert(curr->ref->type.isRef());
+      NodeId refNode = state.getNodeOrTop(curr->ref);
+      if (refNode == TopNode) {
+        // We already know this cast is not optimizable, so we don't need to
+        // consider it further.
+        return;
+      }
+      NodeId outNode = state.getNode(curr);
+      state.addEdge(refNode, outNode);
+      if (curr->desc) {
+        assert(curr->desc->type.isRef());
+        NodeId descNode = state.getNodeOrTop(curr->desc);
+        if (descNode != TopNode) {
+          // Only add edges from tracked descriptors; a Top descriptor must
+          // not join Top into outNode because the cast result originates from
+          // ref.
+          state.addEdge(descNode, outNode);
+        }
+      }
+    }
+  }
+
+  // These instructions only inspect or consume their reference operands without
+  // letting them escape; overriding them prevents visitExpression from marking
+  // their reference children as escaping.
+  void visitDrop(Drop* curr) {}
+  void visitRefIsNull(RefIsNull* curr) {}
+  void visitRefEq(RefEq* curr) {}
+  void visitRefTest(RefTest* curr) {}
+  void visitRefGetDesc(RefGetDesc* curr) {}
+  void visitStructGet(StructGet* curr) {}
+
+  void visitStructSet(StructSet* curr) { state.escapeIfRef(curr->value); }
+
+  void visitStructRMW(StructRMW* curr) { state.escapeIfRef(curr->value); }
+
+  void handleCmpxchg(Expression* cmpxchg,
+                     Expression* expected,
+                     Expression* replacement) {
+    if (!replacement->type.isRef()) {
+      return;
+    }
+    NodeId repNode = state.getNodeOrTop(replacement);
+    if (repNode == TopNode) {
+      // We will not optimize replacement anyway, so it doesn't depend on
+      // whether expected escapes.
+      return;
+    }
+    if (cmpxchg->type == Type::unreachable || !expected->type.isRef()) {
+      // Optimizer leaves unreachable cmpxchg operations in place. If a
+      // reachable `ref` requires `replacement` to be non-nullable, or a bottom
+      // nullref cmpxchg takes its non-nullable result type from
+      // `replacement->type` in `finalize()`, optimizing `replacement` and
+      // replacing it with a null would cause a validation failure. Escape
+      // `replacement` to avoid this.
+      state.escapingNodes.push_back(repNode);
+      return;
+    }
+    NodeId expNode = state.getNodeOrTop(expected);
+    if (expNode == TopNode) {
+      state.escapingNodes.push_back(repNode);
+    } else {
+      state.cmpxchgSites.push_back({expNode, repNode});
+    }
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    handleCmpxchg(curr, curr->expected, curr->replacement);
+  }
+
+  void visitArrayGet(ArrayGet* curr) {
+    if (!curr->index->is<Const>()) {
+      state.escapeIfRef(curr->ref);
+    }
+  }
+
+  void visitArraySet(ArraySet* curr) {
+    if (!curr->index->is<Const>()) {
+      state.escapeIfRef(curr->ref);
+    }
+    state.escapeIfRef(curr->value);
+  }
+
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (!curr->index->is<Const>()) {
+      state.escapeIfRef(curr->ref);
+    }
+    state.escapeIfRef(curr->value);
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (!curr->index->is<Const>()) {
+      state.escapeIfRef(curr->ref);
+    }
+    // Note: expected never escapes even when index is non-constant.
+    handleCmpxchg(curr, curr->expected, curr->replacement);
+  }
+};
+
+// Phase 2: Solve smallest fixed point over Flat<AllocId> origins to find which
+// allocation each Expression's value comes from (possibly none or many).
+void computeOrigins(AnalysisState& state) {
+  size_t numNodes = state.origins.size();
+  // Build a compressed-sparse-row (CSR) forward-adjacency table from
+  // state.edges: first count outgoing edges per node and compute prefix sums in
+  // outOffsets so node u's targets live in [outOffsets[u], outOffsets[u + 1]).
+  std::vector<NodeId> outOffsets(numNodes + 1, 0);
+  for (const auto& [u, v] : state.edges) {
+    ++outOffsets[u + 1];
+  }
+  for (size_t u = 0; u < numNodes; ++u) {
+    outOffsets[u + 1] += outOffsets[u];
+  }
+  // Populate each source node's slice in outTargets. nextTargetIdx[u] starts
+  // at outOffsets[u] and advances as targets of u are written, tracking the
+  // next slot to fill (i.e. outOffsets[u] plus the number of targets populated
+  // for u so far).
+  std::vector<NodeId> outTargets(state.edges.size());
+  std::vector<NodeId> nextTargetIdx(outOffsets.begin(),
+                                    outOffsets.begin() + numNodes);
+  for (const auto& [u, v] : state.edges) {
+    outTargets[nextTargetIdx[u]++] = v;
+  }
+
+  // Skip sink nodes that have no outgoing edges to propagate into.
+  std::vector<bool> inWorklist(numNodes, false);
+  std::vector<NodeId> worklist;
+  auto pushNode = [&](NodeId u) {
+    if (outOffsets[u] != outOffsets[u + 1]) {
+      if (!inWorklist[u]) {
+        inWorklist[u] = true;
+        worklist.push_back(u);
+      }
+    }
+  };
+
+  // Start at node 1 because TopNode (0) never has outgoing edges.
+  for (NodeId u = 1; u < numNodes; ++u) {
+    if (!state.origins[u].isBottom()) {
+      pushNode(u);
+    }
+  }
+
+  while (!worklist.empty()) {
+    NodeId u = worklist.back();
+    worklist.pop_back();
+    inWorklist[u] = false;
+
+    Origin uOrigin = state.origins[u];
+    for (NodeId i = outOffsets[u], end = outOffsets[u + 1]; i < end; ++i) {
+      NodeId v = outTargets[i];
+      Origin out = uOrigin;
+      if (auto* cast = state.nodeExprs[v]->dynCast<RefCast>()) {
+        // The cast flows through the reference value, unless we know it will
+        // fail, in which case we don't need to update the output at all.
+        out = state.getOrigin(cast->ref);
+        // Check failure due to missing descriptor.
+        // TODO: Consider the specific descriptor allocation once we can do
+        // better than always considering it to have escaped.
+        if (cast->desc && state.getOrigin(cast->desc).isBottom()) {
+          continue;
+        }
+        // Check failure due to type mismatch.
+        if (const auto* alloc = out.getVal()) {
+          if (!Type::isSubType(state.allocs[*alloc].expr->type, cast->type)) {
+            continue;
+          }
+        }
+      }
+      if (state.originLattice.join(state.origins[v], out)) {
+        pushNode(v);
+      }
+    }
+  }
+}
+
+// Phase 3: Compute escaped allocations and return whether any remain unescaped
+// and can be optimized. Return true if we find something to optimize.
+bool computeEscapes(AnalysisState& state) {
+  size_t numAllocs = state.allocs.size();
+  // Conditional escape adjacency list: escapeAdj[u] lists replacement
+  // allocations v that must escape if expected allocation u escapes in a
+  // cmpxchg. Lazily allocated since candidate-to-candidate cmpxchg is rare.
+  std::vector<SmallVector<AllocId, 1>> escapeAdj;
+  std::vector<AllocId> worklist;
+
+  auto addEscapeEdge = [&](AllocId from, AllocId to) {
+    if (escapeAdj.empty()) {
+      escapeAdj.resize(numAllocs);
+    }
+    escapeAdj[from].push_back(to);
+  };
+
+  auto markEscaped = [&](AllocId alloc) {
+    if (!state.allocs[alloc].escaped) {
+      state.allocs[alloc].escaped = true;
+      worklist.push_back(alloc);
+    }
+  };
+
+  for (const auto& site : state.cmpxchgSites) {
+    const auto* repAlloc = state.origins[site.repNode].getVal();
+    if (!repAlloc) {
+      // Replacement is either unreachable (Bot) or already mixed to Top (whose
+      // incoming allocations escape via the mixing check below).
+      continue;
+    }
+    const auto& expOrigin = state.origins[site.expNode];
+    if (expOrigin.isTop()) {
+      // Expected may be an arbitrary heap reference that matches the stored
+      // value at runtime, so replacement may be written to the heap.
+      markEscaped(*repAlloc);
+    } else if (const auto* expAlloc = expOrigin.getVal()) {
+      // If expAlloc ends up escaping, expected remains a live heap reference
+      // that could match the field at runtime and cause cmpxchg to write
+      // replacement to the heap, so repAlloc must escape too (when
+      // *expAlloc == *repAlloc, that is already vacuously true without another
+      // edge in the graph).
+      if (*expAlloc != *repAlloc) {
+        addEscapeEdge(*expAlloc, *repAlloc);
+      }
+    } else {
+      // The cmpxchg is never executed, so it cannot cause the replacement to
+      // escape.
+      assert(expOrigin.isBottom());
+    }
+  }
+
+  for (NodeId u : state.escapingNodes) {
+    if (const auto* alloc = state.origins[u].getVal()) {
+      markEscaped(*alloc);
+    }
+  }
+
+  // Mixing check: if an allocation flows into an identity edge whose target
+  // became Top (e.g. mixed with null or another allocation), mark it escaped.
+  // Edges into RefCast nodes are excluded because a descriptor operand does not
+  // flow to the cast's output, so RefCast can never cause mixing.
+  for (const auto& [u, v] : state.edges) {
+    if (state.nodeExprs[v]->is<RefCast>()) {
+      continue;
+    }
+    if (const auto* alloc = state.origins[u].getVal()) {
+      if (state.origins[v].isTop()) {
+        markEscaped(*alloc);
+      }
+    }
+  }
+
+  if (!escapeAdj.empty()) {
+    while (!worklist.empty()) {
+      AllocId alloc = worklist.back();
+      worklist.pop_back();
+      for (AllocId dep : escapeAdj[alloc]) {
+        markEscaped(dep);
+      }
+    }
+  }
+
+  for (const auto& info : state.allocs) {
+    if (!info.escaped) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Phase 4: Rewrite all non-escaping allocations and their uses in one
+// post-order walk.
+struct Optimizer : public PostWalker<Optimizer> {
+  AnalysisState& state;
+  Function* func;
+  Module& wasm;
+  Builder builder;
+
+  Optimizer(AnalysisState& state, Function* func, Module& wasm)
+    : state(state), func(func), wasm(wasm), builder(wasm) {}
+
+  void optimize() {
+    for (auto& info : state.allocs) {
+      if (info.escaped) {
+        continue;
+      }
+      // We will optimize this allocation. Create locals for its fields and
+      // descriptor.
+      info.fieldLocals.reserve(info.fields.size());
+      for (const auto& field : info.fields) {
+        info.fieldLocals.push_back(builder.addVar(func, field.type));
+      }
+      if (info.getDescHeapType()) {
+        info.descLocal = builder.addVar(func, info.getDescLocalType());
+      }
+    }
+
+    walk(func->body);
+
+    ReFinalize().walkFunctionInModule(func, &wasm);
+    TypeUpdating::handleNonDefaultableLocals(func, wasm);
+  }
+
+  Expression* replaceCurrent(Expression* rep) {
+    // Preserve the old expression's dataflow node on its replacement so
+    // ancestor visitors later in the post-order walk still see the same origin
+    // for values flowing out of rewritten subexpressions.
+    if (auto it = state.exprNodes.find(getCurrent());
+        it != state.exprNodes.end()) {
+      NodeId node = it->second;
+      state.exprNodes[rep] = node;
+    }
+    return PostWalker<Optimizer>::replaceCurrent(rep);
+  }
+
+  // If `curr` evaluates exclusively to a single non-escaping candidate
+  // allocation, return its ID; otherwise return nullopt.
+  std::optional<AllocId> getOptimizedAlloc(Expression* curr) {
+    auto it = state.exprNodes.find(curr);
+    if (it == state.exprNodes.end()) {
+      return std::nullopt;
+    }
+    if (const auto* alloc = state.origins[it->second].getVal()) {
+      if (!state.allocs[*alloc].escaped) {
+        return *alloc;
+      }
+    }
+    return std::nullopt;
+  }
+
+  // Returns true when `curr` could match an existing heap value at runtime
+  // (i.e. it is neither a non-escaping allocation nor dynamically
+  // unreachable).
+  bool canMatchHeapValue(Expression* curr) {
+    if (getOptimizedAlloc(curr)) {
+      return false;
+    }
+    auto it = state.exprNodes.find(curr);
+    return it == state.exprNodes.end() || !state.origins[it->second].isBottom();
+  }
+
+  // Create the null value with which we will replace an optimized allocation.
+  Expression* makeOptimizedNull(AllocId alloc) {
+    return builder.makeRefNull(
+      state.allocs[alloc].expr->type.getHeapType().getBottom());
+  }
+
+  void visitLocalSet(LocalSet* curr) {
+    if (getOptimizedAlloc(curr->value)) {
+      if (curr->isTee()) {
+        replaceCurrent(curr->value);
+      } else {
+        assert(curr->type == Type::none);
+        replaceCurrent(builder.makeDrop(curr->value));
+      }
+    }
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    if (auto alloc = getOptimizedAlloc(curr)) {
+      assert(curr->type != Type::unreachable);
+      replaceCurrent(makeOptimizedNull(*alloc));
+    }
+  }
+
+  void visitStructNew(StructNew* curr) {
+    auto alloc = getOptimizedAlloc(curr);
+    if (!alloc) {
+      return;
+    }
+    const auto& info = state.allocs[*alloc];
+    assert(info.expr == curr);
+    SmallVector<Expression*, 8> contents;
+    SmallVector<Index, 8> tempIndexes;
+
+    // Evaluate all operands and the descriptor into fresh temporary locals
+    // before writing the allocation's field/descriptor locals, so earlier
+    // reads or traps in later operands (e.g. inside a loop iteration) observe
+    // the previous instance's state intact.
+    if (!curr->isWithDefault()) {
+      tempIndexes.reserve(info.fields.size());
+      for (Index i = 0; i < info.fields.size(); ++i) {
+        Index temp = builder.addVar(func, info.fields[i].type);
+        tempIndexes.push_back(temp);
+        contents.push_back(builder.makeLocalSet(temp, curr->operands[i]));
+      }
+    }
+    std::optional<Index> tempDesc;
+    if (curr->desc) {
+      Type descLocalType = info.getDescLocalType();
+      tempDesc = builder.addVar(func, descLocalType);
+      Expression* desc = curr->desc;
+      if (desc->type.isNullableRef()) {
+        desc = builder.makeRefAs(RefAsNonNull, desc);
+      }
+      contents.push_back(builder.makeLocalSet(*tempDesc, desc));
+    }
+
+    for (Index i = 0; i < info.fields.size(); ++i) {
+      Expression* val =
+        curr->isWithDefault()
+          ? builder.makeConstantExpression(
+              Literal::makeZero(info.fields[i].type))
+          : builder.makeLocalGet(tempIndexes[i], info.fields[i].type);
+      contents.push_back(builder.makeLocalSet(info.fieldLocals[i], val));
+    }
+    if (curr->desc) {
+      contents.push_back(builder.makeLocalSet(
+        *info.descLocal,
+        builder.makeLocalGet(*tempDesc, info.getDescLocalType())));
+    }
+    contents.push_back(makeOptimizedNull(*alloc));
+    replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitArrayNew(ArrayNew* curr) {
+    auto alloc = getOptimizedAlloc(curr);
+    if (!alloc) {
+      return;
+    }
+    const auto& info = state.allocs[*alloc];
+    assert(info.expr == curr);
+    Type elemType = curr->type.getHeapType().getArray().element.type;
+
+    if (curr->isWithDefault()) {
+      SmallVector<Expression*, 8> contents;
+      for (Index local : info.fieldLocals) {
+        contents.push_back(builder.makeLocalSet(
+          local, builder.makeConstantExpression(Literal::makeZero(elemType))));
+      }
+      contents.push_back(makeOptimizedNull(*alloc));
+      replaceCurrent(builder.makeBlock(contents));
       return;
     }
 
-    if (curr->desc) {
-      auto descTrap = [&]() {
-        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->desc),
-                                        builder.makeUnreachable()));
-      };
-
-      // If we are doing a ref.cast_desc_eq of the optimized allocation, but the
-      // allocation does not have a descriptor, then we know the cast must fail.
-      // We also know the cast must fail (except for nulls it might let through)
-      // if the optimized allocation flows in as the descriptor, since it cannot
-      // possibly have been used in the allocation of the cast value without
-      // having been considered to escape.
-      bool allocIsCastRef =
-        analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows;
-      bool allocIsCastDescEq =
-        analyzer.getInteraction(curr->desc) == ParentChildInteraction::Flows;
-      if (!allocation->desc || allocIsCastDescEq) {
-        // It would seem convenient to use ChildLocalizer here, but we cannot.
-        // ChildLocalizer would create a local.set for a desc operand with
-        // side effects, but that local.set would not be reflected in the parent
-        // map, so it would not be updated if the allocation flowing through
-        // that desc operand were later optimized.
-        if (allocIsCastDescEq && !allocIsCastRef &&
-            curr->type.isNullableRef() &&
-            curr->ref->type != Type::unreachable) {
-          // There might be a null value to let through. Reuse curr as a cast to
-          // null. Use a scratch local to move the reference value past the desc
-          // value.
-          Index scratch = builder.addVar(func, curr->ref->type);
-          replaceCurrent(
-            builder.blockify(builder.makeLocalSet(scratch, curr->ref),
-                             builder.makeDrop(curr->desc),
-                             curr));
-          curr->desc = nullptr;
-          curr->type = curr->type.with(curr->type.getHeapType().getBottom());
-          curr->ref = builder.makeLocalGet(scratch, curr->ref->type);
-        } else {
-          // Either the cast does not allow nulls or we know the value isn't
-          // null anyway, so the cast certainly fails.
-          descTrap();
-        }
-      } else if (allocIsCastRef) {
-        if (!Type::isSubType(allocation->type, curr->type)) {
-          // The cast fails, so it must trap. We mark such failing casts as
-          // fully consuming their inputs, so we cannot just emit the explicit
-          // descriptor equality check below because it would appear to be able
-          // to propagate the optimized allocation on to the parent (as a null
-          // value, which might not validate).
-          descTrap();
-        } else {
-          // The cast succeeds iff the optimized allocation's descriptor is the
-          // same as the given descriptor and traps otherwise.
-          replaceCurrent(builder.blockify(
-            builder.makeDrop(curr->ref),
-            builder.makeIf(
-              builder.makeRefEq(
-                curr->desc,
-                builder.makeLocalGet(localIndexes[fields.size()], descType)),
-              builder.makeRefNull(allocation->type.getHeapType()),
-              builder.makeUnreachable())));
-        }
-      } else {
-        // The allocation is neither the ref nor the descriptor inputs to this
-        // cast. This can happen if a previous operation led to the StructNew
-        // being dropped, as a result if it being used in unreachable code (it
-        // ends up happening because some of the initial analysis, like Parents,
-        // is stale; we could also recompute Parents after each Struct2Local,
-        // but it is simple enough to handle this with a trap).
-        assert(curr->type == Type::unreachable);
-        descTrap();
-      }
-    } else {
-      // We know this RefCast receives our allocation, so we can see whether it
-      // succeeds or fails.
-      if (Type::isSubType(allocation->type, curr->type)) {
-        // The cast succeeds, so it is a no-op, and we can skip it, since after
-        // we remove the allocation it will not even be needed for validation.
-        replaceCurrent(curr->ref);
-      } else {
-        // The cast fails, so this must trap.
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                            builder.makeUnreachable()));
-      }
+    if (info.fields.empty()) {
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->init),
+                                          makeOptimizedNull(*alloc)));
+      return;
     }
 
-    // In any case, we need to refinalize here (we either added an unreachable,
-    // or we replaced a cast with the value being cast, which may have a less-
-    // refined type - it will not be used after we remove the allocation, but we
-    // must still fix that up for validation).
-    refinalize = true;
+    // Store curr->init into a temp once so it executes once and before any
+    // element local is overwritten.
+    Index initTemp = builder.addVar(func, elemType);
+    SmallVector<Expression*, 8> contents;
+    contents.push_back(builder.makeLocalSet(initTemp, curr->init));
+    for (Index local : info.fieldLocals) {
+      contents.push_back(
+        builder.makeLocalSet(local, builder.makeLocalGet(initTemp, elemType)));
+    }
+    contents.push_back(makeOptimizedNull(*alloc));
+    replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    auto alloc = getOptimizedAlloc(curr);
+    if (!alloc) {
+      return;
+    }
+    const auto& info = state.allocs[*alloc];
+    assert(info.expr == curr);
+    Type elemType = curr->type.getHeapType().getArray().element.type;
+    SmallVector<Index, 8> tempIndexes;
+    SmallVector<Expression*, 8> contents;
+    tempIndexes.reserve(info.fields.size());
+
+    // Evaluate all element operands into temps before overwriting element
+    // locals so earlier values remain intact if a later operand traps or reads
+    // them.
+    for (Index i = 0; i < info.fields.size(); ++i) {
+      Index temp = builder.addVar(func, elemType);
+      tempIndexes.push_back(temp);
+      contents.push_back(builder.makeLocalSet(temp, curr->values[i]));
+    }
+    for (Index i = 0; i < info.fields.size(); ++i) {
+      contents.push_back(builder.makeLocalSet(
+        info.fieldLocals[i], builder.makeLocalGet(tempIndexes[i], elemType)));
+    }
+    contents.push_back(makeOptimizedNull(*alloc));
+    replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitRefAs(RefAs* curr) {
+    if (curr->op == RefAsNonNull && getOptimizedAlloc(curr->value)) {
+      assert(curr->type != Type::unreachable);
+      replaceCurrent(curr->value);
+    }
+  }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    if (getOptimizedAlloc(curr->value)) {
+      assert(curr->type != Type::unreachable);
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
+                                          builder.makeConst(int32_t(0))));
+    }
+  }
+
+  void visitRefEq(RefEq* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    auto lhsAlloc = getOptimizedAlloc(curr->left);
+    auto rhsAlloc = getOptimizedAlloc(curr->right);
+    if (lhsAlloc || rhsAlloc) {
+      bool same = lhsAlloc && rhsAlloc && *lhsAlloc == *rhsAlloc;
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
+                                        builder.makeDrop(curr->right),
+                                        builder.makeConst(int32_t(same))}));
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      assert(curr->type != Type::unreachable);
+      int32_t res =
+        Type::isSubType(state.allocs[*alloc].expr->type, curr->castType);
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeConst(res)));
+    }
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    auto descAlloc = curr->desc ? getOptimizedAlloc(curr->desc) : std::nullopt;
+    if (!refAlloc && !descAlloc) {
+      return;
+    }
+
+    auto descTrap = [&]() {
+      assert(curr->desc);
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()}));
+    };
+
+    if (refAlloc && descAlloc) {
+      // An allocation's descriptor is currently always marked as escaping, so a
+      // non-escaping `desc` cannot match `ref`'s descriptor, and `ref` is
+      // non-null, so the cast always traps.
+      descTrap();
+      return;
+    }
+
+    if (refAlloc) {
+      const auto& info = state.allocs[*refAlloc];
+      if (!curr->desc) {
+        // Without a descriptor operand, the cast depends only on the static
+        // type of the non-null allocation.
+        if (Type::isSubType(info.expr->type, curr->type)) {
+          replaceCurrent(curr->ref);
+        } else {
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
+        }
+        return;
+      }
+      // `ref` is an optimized allocation while `desc` is not optimized. If
+      // origin propagation left the cast output Bot (either because the target
+      // type is incompatible or `desc` never produces a value), fold to a trap;
+      // otherwise check `desc` against the allocation's stored descriptor local
+      // at runtime.
+      auto outIt = state.exprNodes.find(curr);
+      assert(outIt != state.exprNodes.end());
+      if (state.origins[outIt->second].isBottom()) {
+        descTrap();
+        return;
+      }
+      assert(Type::isSubType(info.expr->type, curr->type));
+      assert(info.getDescHeapType().has_value());
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeIf(
+          builder.makeRefEq(
+            curr->desc,
+            builder.makeLocalGet(*info.descLocal, info.getDescLocalType())),
+          makeOptimizedNull(*refAlloc),
+          builder.makeUnreachable())));
+      return;
+    }
+
+    assert(descAlloc);
+    // `desc` is an optimized non-escaping allocation and `ref` is not
+    // optimized, so no non-null `ref` can have `desc` as its descriptor. A
+    // nullable cast can still succeed if `ref` is null, unless `curr->ref` was
+    // already rewritten to unreachable earlier in the post-order walk (before
+    // ReFinalize updates `curr->type`).
+    if (curr->type.isNullableRef() && curr->ref->type != Type::unreachable) {
+      // Stash `ref` in a scratch local before evaluating `desc` to preserve
+      // operand evaluation order while keeping only a null check on `ref`.
+      Type refType = curr->ref->type;
+      Index scratch = builder.addVar(func, refType);
+      replaceCurrent(
+        builder.makeBlock({builder.makeLocalSet(scratch, curr->ref),
+                           builder.makeDrop(curr->desc),
+                           curr}));
+      curr->desc = nullptr;
+      curr->type = curr->type.with(curr->type.getHeapType().getBottom());
+      curr->ref = builder.makeLocalGet(scratch, refType);
+      return;
+    }
+    descTrap();
   }
 
   void visitRefGetDesc(RefGetDesc* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      const auto& info = state.allocs[*alloc];
+      assert(curr->type != Type::unreachable);
+      assert(info.descLocal.has_value());
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeLocalGet(*info.descLocal, info.getDescLocalType())));
     }
-
-    if (curr->type == Type::unreachable) {
-      // We must not modify unreachable code here, as we will replace it with a
-      // local.get, which has a concrete type (another option could be to run
-      // DCE and not only ReFinalize - DCE will propagate an unreachable out of
-      // a concrete block, like we emit here - but we can just ignore such
-      // code).
-      return;
-    }
-
-    auto descIndex = localIndexes[fields.size()];
-    Expression* value = builder.makeLocalGet(descIndex, descType);
-    replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
-
-    // After removing the ref.get_desc, a null may be falling through,
-    // requiring refinalization to update parents.
-    refinalize = true;
-  }
-
-  void visitStructSet(StructSet* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // Drop the ref (leaving it to other opts to remove, when possible), and
-    // write the data to the local instead of the heap allocation.
-    auto* replacement = builder.makeSequence(
-      builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index], curr->value));
-
-    // This struct.set cannot possibly synchronize with other threads via the
-    // read value, since the struct never escapes this function, so we don't
-    // need a fence.
-    replaceCurrent(replacement);
   }
 
   void visitStructGet(StructGet* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      assert(curr->type != Type::unreachable);
+      const auto& info = state.allocs[*alloc];
+      const auto& field = info.fields[curr->index];
+      Expression* value =
+        builder.makeLocalGet(info.fieldLocals[curr->index], field.type);
+      value = Bits::makePackedFieldGet(value, field, curr->signed_, wasm);
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref), value));
     }
-
-    if (curr->type == Type::unreachable) {
-      // As with RefGetDesc, above.
-      return;
-    }
-
-    auto& field = fields[curr->index];
-    auto type = field.type;
-    if (type != curr->type) {
-      // Normally we are just replacing a struct.get with a local.get of a
-      // local that was created to have the same type as the struct's field,
-      // but in some cases we may refine, if the struct.get's reference type
-      // is less refined than the reference that actually arrives, like here:
-      //
-      //  (struct.get $parent 0
-      //    (block (ref $parent)
-      //      (struct.new $child)))
-      //
-      // We allocated locals for the field of the child, and are replacing a
-      // get of the parent field with a local of the same type as the child's,
-      // which may be more refined.
-      refinalize = true;
-    }
-    Expression* value = builder.makeLocalGet(localIndexes[curr->index], type);
-    // Note that in theory we could try to do better here than to fix up the
-    // packing and signedness on gets: we could truncate on sets. That would be
-    // more efficient if all gets are unsigned, as gets outnumber sets in
-    // general. However, signed gets make that more complicated, so leave this
-    // for other opts to handle.
-    value = Bits::makePackedFieldGet(value, field, curr->signed_, wasm);
-    auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-    // Just like optimized struct.set, this struct.get cannot synchronize with
-    // anything, so we don't need a fence.
-    replaceCurrent(builder.blockify(replacement, value));
   }
 
-  void visitStructRMW(StructRMW* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
+  void visitStructSet(StructSet* curr) {
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeLocalSet(state.allocs[*alloc].fieldLocals[curr->index],
+                             curr->value)));
     }
+  }
 
-    if (curr->type == Type::unreachable) {
-      // As with RefGetDesc and StructGet, above.
-      return;
-    }
-
-    [[maybe_unused]] auto& field = fields[curr->index];
-    auto type = curr->type;
-    assert(type == field.type);
-    assert(!field.isPacked());
-
-    // We need a scratch local to hold the old, unmodified field value while we
-    // update the original local with the modified value. We also need another
-    // scratch local to hold the evaluated modification value while we set the
-    // first scratch local in case the evaluation of the modification value ends
-    // up changing the field value. This is similar to the scratch locals used
-    // for struct.new.
-    auto oldScratch = builder.addVar(func, type);
-    auto valScratch = builder.addVar(func, type);
-    auto local = localIndexes[curr->index];
-
-    auto* block =
-      builder.makeSequence(builder.makeDrop(curr->ref),
-                           builder.makeLocalSet(valScratch, curr->value));
-
-    // Stash the old value to return.
-    block->list.push_back(
-      builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type)));
-
-    // Store the updated value.
+  void emitRMW(Expression* ref,
+               Expression* value,
+               AtomicRMWOp op,
+               Index local,
+               Type type) {
+    // Capture `value` and the old field value in scratch locals to preserve
+    // operand evaluation order and return the pre-RMW value.
+    Index oldScratch = builder.addVar(func, type);
+    Index valScratch = builder.addVar(func, type);
+    Abstract::Op binop = Abstract::Add;
     Expression* newVal = nullptr;
-    if (curr->op == RMWXchg) {
-      newVal = builder.makeLocalGet(valScratch, type);
-    } else {
-      Abstract::Op binop = Abstract::Add;
-      switch (curr->op) {
-        case RMWAdd:
-          binop = Abstract::Add;
-          break;
-        case RMWSub:
-          binop = Abstract::Sub;
-          break;
-        case RMWAnd:
-          binop = Abstract::And;
-          break;
-        case RMWOr:
-          binop = Abstract::Or;
-          break;
-        case RMWXor:
-          binop = Abstract::Xor;
-          break;
-        case RMWXchg:
-          WASM_UNREACHABLE("unexpected op");
-      }
+
+    switch (op) {
+      case RMWAdd:
+        binop = Abstract::Add;
+        break;
+      case RMWSub:
+        binop = Abstract::Sub;
+        break;
+      case RMWAnd:
+        binop = Abstract::And;
+        break;
+      case RMWOr:
+        binop = Abstract::Or;
+        break;
+      case RMWXor:
+        binop = Abstract::Xor;
+        break;
+      case RMWXchg:
+        newVal = builder.makeLocalGet(valScratch, type);
+        break;
+      default:
+        WASM_UNREACHABLE("unexpected rmw op");
+    }
+    if (!newVal) {
       newVal = builder.makeBinary(Abstract::getBinary(type, binop),
                                   builder.makeLocalGet(local, type),
                                   builder.makeLocalGet(valScratch, type));
     }
-    block->list.push_back(builder.makeLocalSet(local, newVal));
 
-    // Unstash the old value.
-    block->list.push_back(builder.makeLocalGet(oldScratch, type));
-    block->type = type;
-    replaceCurrent(block);
+    replaceCurrent(builder.makeBlock(
+      {builder.makeDrop(ref),
+       builder.makeLocalSet(valScratch, value),
+       builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type)),
+       builder.makeLocalSet(local, newVal),
+       builder.makeLocalGet(oldScratch, type)}));
+  }
+
+  void visitStructRMW(StructRMW* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      const auto& info = state.allocs[*alloc];
+      [[maybe_unused]] const auto& field = info.fields[curr->index];
+      assert(!field.isPacked());
+      emitRMW(curr->ref,
+              curr->value,
+              curr->op,
+              info.fieldLocals[curr->index],
+              field.type);
+    }
+  }
+
+  void emitOptimizedRefCmpxchg(Expression* ref,
+                               Expression* expected,
+                               Expression* replacement,
+                               bool expCanMatch,
+                               const AllocInfo& info,
+                               Index index) {
+    assert(!info.fields[index].isPacked());
+    Index fieldLocal = info.fieldLocals[index];
+    Type fieldType = info.fields[index].type;
+    if (!expCanMatch) {
+      // `expected` is non-escaping or dynamically unreachable, so the
+      // comparison never succeeds.
+      replaceCurrent(
+        builder.makeBlock({builder.makeDrop(ref),
+                           builder.makeDrop(expected),
+                           builder.makeDrop(replacement),
+                           builder.makeLocalGet(fieldLocal, fieldType)}));
+      return;
+    }
+
+    Type expectedType = fieldType;
+    if (fieldType.isRef()) {
+      expectedType = Type(
+        HeapTypes::eq.getBasic(fieldType.getHeapType().getShared()), Nullable);
+    }
+    // Stash `expected`, `replacement`, and the pre-cmpxchg field value in
+    // scratch locals so operand evaluation order is preserved if `replacement`
+    // traps or reads/mutates `local`.
+    Index oldScratch = builder.addVar(func, fieldType);
+    Index expectedScratch = builder.addVar(func, expectedType);
+    Index replacementScratch = builder.addVar(func, fieldType);
+
+    Expression* pred = nullptr;
+    if (fieldType.isRef()) {
+      pred =
+        builder.makeRefEq(builder.makeLocalGet(fieldLocal, fieldType),
+                          builder.makeLocalGet(expectedScratch, expectedType));
+    } else {
+      pred =
+        builder.makeBinary(Abstract::getBinary(fieldType, Abstract::Eq),
+                           builder.makeLocalGet(fieldLocal, fieldType),
+                           builder.makeLocalGet(expectedScratch, expectedType));
+    }
+
+    replaceCurrent(builder.makeBlock(
+      {builder.makeDrop(ref),
+       builder.makeLocalSet(expectedScratch, expected),
+       builder.makeLocalSet(replacementScratch, replacement),
+       builder.makeLocalSet(oldScratch,
+                            builder.makeLocalGet(fieldLocal, fieldType)),
+       builder.makeIf(
+         pred,
+         builder.makeLocalSet(
+           fieldLocal, builder.makeLocalGet(replacementScratch, fieldType))),
+       builder.makeLocalGet(oldScratch, fieldType)}));
   }
 
   void visitStructCmpxchg(StructCmpxchg* curr) {
     if (curr->type == Type::unreachable ||
         curr->ref->type == Type::unreachable) {
-      // Leave this for DCE.
       return;
     }
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    bool expCanMatch = canMatchHeapValue(curr->expected);
+    if (refAlloc) {
+      emitOptimizedRefCmpxchg(curr->ref,
+                              curr->expected,
+                              curr->replacement,
+                              expCanMatch,
+                              state.allocs[*refAlloc],
+                              curr->index);
+      return;
+    }
+    if (expCanMatch) {
+      return;
+    }
+    // `curr->ref` is unoptimized while `curr->expected` is a non-escaping
+    // allocation or dynamically unreachable, so `expected` cannot match the
+    // heap struct field. Stash `ref` in a scratch local before dropping
+    // `expected` and `replacement` to preserve evaluation order
+    // (`ChildLocalizer` cannot be used here because compound `expected` or
+    // `replacement` operands whose inner allocations became `nullref` still
+    // carry stale non-nullable types until `ReFinalize`, which would give
+    // `ChildLocalizer`'s scratch locals invalid non-nullable types).
+    Type refType = curr->ref->type.with(Nullable);
+    Index refScratch = builder.addVar(func, refType);
+    replaceCurrent(builder.makeBlock(
+      {builder.makeLocalSet(refScratch, curr->ref),
+       builder.makeDrop(curr->expected),
+       builder.makeDrop(curr->replacement),
+       builder.makeStructGet(curr->index,
+                             builder.makeLocalGet(refScratch, refType),
+                             curr->order,
+                             curr->type)}));
+  }
 
-    // The allocation might flow into `ref` or `expected`, but not
-    // `replacement`, because then it would be considered to have escaped.
-    if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
-      [[maybe_unused]] auto& field = fields[curr->index];
-      auto type = curr->type;
-      assert(type == field.type);
-      assert(!field.isPacked());
-      auto local = localIndexes[curr->index];
-
-      if (analyzer.getInteraction(curr->expected) ==
-          ParentChildInteraction::Flows) {
-        // Since the allocation does not escape, it cannot possibly match the
-        // value already in the struct. The cmpxchg will just do a read.
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->expected),
-                                          builder.makeDrop(curr->replacement),
-                                          builder.makeLocalGet(local, type)}));
+  void visitArrayGet(ArrayGet* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      Index idx = curr->index->cast<Const>()->value.getUnsigned();
+      const auto& info = state.allocs[*alloc];
+      if (idx >= info.fields.size()) {
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeUnreachable()));
         return;
       }
+      const auto& elem = info.fields[idx];
+      Expression* value =
+        builder.makeLocalGet(info.fieldLocals[idx], elem.type);
+      value = Bits::makePackedFieldGet(value, elem, curr->signed_, wasm);
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref), value));
+    }
+  }
 
-      // Hold everything in scratch locals, just like for other RMW ops and
-      // struct.new. Use a nullable (shared) eqref local for `expected` to
-      // accommodate any allowed optimized or unoptimized value there.
-      auto expectedType = type;
-      if (type.isRef()) {
-        expectedType = Type(
-          HeapTypes::eq.getBasic(type.getHeapType().getShared()), Nullable);
+  void visitArraySet(ArraySet* curr) {
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      Index idx = curr->index->cast<Const>()->value.getUnsigned();
+      const auto& info = state.allocs[*alloc];
+      if (idx >= info.fields.size()) {
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->value),
+                                          builder.makeUnreachable()}));
+        return;
       }
-      auto oldScratch = builder.addVar(func, type);
-      auto expectedScratch = builder.addVar(func, expectedType);
-      auto replacementScratch = builder.addVar(func, type);
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeLocalSet(info.fieldLocals[idx], curr->value)));
+    }
+  }
 
-      auto* block = builder.makeBlock(
-        {builder.makeDrop(curr->ref),
-         builder.makeLocalSet(expectedScratch, curr->expected),
-         builder.makeLocalSet(replacementScratch, curr->replacement),
-         builder.makeLocalSet(oldScratch, builder.makeLocalGet(local, type))});
-
-      // Create the check for whether we should do the exchange.
-      auto* lhs = builder.makeLocalGet(local, type);
-      auto* rhs = builder.makeLocalGet(expectedScratch, expectedType);
-      Expression* pred;
-      if (type.isRef()) {
-        pred = builder.makeRefEq(lhs, rhs);
-      } else {
-        pred =
-          builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), lhs, rhs);
-      }
-
-      // The conditional exchange.
-      block->list.push_back(builder.makeIf(
-        pred,
-        builder.makeLocalSet(local,
-                             builder.makeLocalGet(replacementScratch, type))));
-
-      // Unstash the old value.
-      block->list.push_back(builder.makeLocalGet(oldScratch, type));
-      block->type = type;
-      replaceCurrent(block);
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (curr->type == Type::unreachable) {
       return;
     }
-    if (analyzer.getInteraction(curr->expected) !=
-        ParentChildInteraction::Flows) {
-      // Since the allocation does not flow from `ref`, it must not flow through
-      // this cmpxchg at all.
-      return;
+    if (auto alloc = getOptimizedAlloc(curr->ref)) {
+      Index idx = curr->index->cast<Const>()->value.getUnsigned();
+      const auto& info = state.allocs[*alloc];
+      if (idx >= info.fields.size()) {
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->value),
+                                          builder.makeUnreachable()}));
+        return;
+      }
+      assert(!info.fields[idx].isPacked());
+      emitRMW(curr->ref,
+              curr->value,
+              curr->op,
+              info.fieldLocals[idx],
+              info.fields[idx].type);
     }
-
-    // Since the allocation does not escape, it cannot possibly match the value
-    // already in the struct. The cmpxchg will just do a read. Drop the other
-    // arguments and do the atomic read at the end, when the cmpxchg would have
-    // happened. Use a nullable scratch local in case we also optimize `ref`
-    // later and need to replace it with a null.
-    auto refType = curr->ref->type.with(Nullable);
-    auto refScratch = builder.addVar(func, refType);
-    auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
-    auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
-    auto* structGet = builder.makeStructGet(
-      curr->index, getRefScratch, curr->order, curr->type);
-    auto* block = builder.makeBlock({setRefScratch,
-                                     builder.makeDrop(curr->expected),
-                                     builder.makeDrop(curr->replacement),
-                                     structGet});
-    if (block->type != curr->type) {
-      refinalize = true;
-    }
-    replaceCurrent(block);
-    return;
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr) {
     if (curr->type == Type::unreachable ||
         curr->ref->type == Type::unreachable) {
-      // Leave this for DCE.
       return;
     }
-    // Array2Struct would have replaced this operation if the optimized
-    // allocation were flowing into the `ref` field, but not if it is flowing
-    // into the `expected` field.
-    if (analyzer.getInteraction(curr->expected) ==
-        ParentChildInteraction::Flows) {
-      // See the equivalent handling of allocations flowing through the
-      // `expected` field of StructCmpxchg.
-      auto refType = curr->ref->type.with(Nullable);
-      auto refScratch = builder.addVar(func, refType);
-      auto* setRefScratch = builder.makeLocalSet(refScratch, curr->ref);
-      auto* getRefScratch = builder.makeLocalGet(refScratch, refType);
-
-      auto indexScratch = builder.addVar(func, Type::i32);
-      auto* setIndexScratch = builder.makeLocalSet(indexScratch, curr->index);
-      auto* getIndexScratch = builder.makeLocalGet(indexScratch, Type::i32);
-
-      auto* arrayGet = builder.makeArrayGet(
-        getRefScratch, getIndexScratch, curr->order, curr->type);
-      auto* block = builder.makeBlock({setRefScratch,
-                                       setIndexScratch,
-                                       builder.makeDrop(curr->expected),
-                                       builder.makeDrop(curr->replacement),
-                                       arrayGet});
-      if (block->type != curr->type) {
-        refinalize = true;
-      }
-      replaceCurrent(block);
-      // Since `ref` must be an array and arrays are processed before structs,
-      // it is not possible that `ref` will be processed later. We therefore do
-      // not need to do the extra bookkeeping that we needed to do for
-      // StructCmpxchg.
-      return;
-    }
-  }
-};
-
-// An optimizer that handles the rewriting to turn a nonescaping array
-// allocation into a struct allocation. Struct2Local can then be run on that
-// allocation.
-// TODO: As with Struct2Local doing a single rewrite walk at the end (for all
-//       structs) would be more efficient, but more complex.
-struct Array2Struct : PostWalker<Array2Struct> {
-  Expression* allocation;
-  EscapeAnalyzer& analyzer;
-  Function* func;
-  Builder builder;
-  // The original type of the allocation, before we turn it into a struct.
-  Type originalType;
-
-  // The type of the struct we are changing to (nullable and non-nullable
-  // variations).
-  HeapType structType;
-
-  Array2Struct(Expression* allocation,
-               EscapeAnalyzer& analyzer,
-               Function* func,
-               Module& wasm)
-    : allocation(allocation), analyzer(analyzer), func(func), builder(wasm),
-      originalType(allocation->type) {
-
-    // Build the struct type we need: as many fields as the size of the array,
-    // all of the same type as the array's element.
-    numFields = getArrayNewSize(allocation);
-    auto arrayType = allocation->type.getHeapType();
-    auto element = arrayType.getArray().element;
-    FieldList fields;
-    for (Index i = 0; i < numFields; i++) {
-      fields.push_back(element);
-    }
-    TypeBuilder typeBuilder(1);
-    typeBuilder[0] = Struct(fields);
-    typeBuilder[0].setShared(arrayType.getShared());
-    structType = (*typeBuilder.build())[0];
-
-    // Update types along the path reached by the allocation: whenever we see
-    // the array type, it should be the struct type. Note that we do this before
-    // the walk that is after us, because the walk may read these types and
-    // depend on them to be valid.
-    //
-    // Note that |reached| contains array.get operations, which are reached in
-    // the analysis, and so we will update their types if they happen to have
-    // the array type (which can be the case of an array of arrays). But that is
-    // fine to do as the array.get is rewritten to a struct.get which is then
-    // lowered away to locals anyhow.
-    for (auto& [reached, _] : analyzer.reachedInteractions) {
-      if (reached->is<RefCast>()) {
-        // Casts must be handled later: We need to see the old type, and to
-        // potentially replace the cast based on that, see below.
-        continue;
-      }
-
-      if (!reached->type.isRef()) {
-        continue;
-      }
-
-      // The allocation type may be generalized as it flows around. If we do see
-      // such generalizing, then we are refining here and must refinalize.
-      auto reachedHeapType = reached->type.getHeapType();
-      if (HeapType::isSubType(arrayType, reachedHeapType)) {
-        if (arrayType != reachedHeapType) {
-          refinalize = true;
-        }
-        reached->type = Type(structType, reached->type.getNullability());
-      }
-    }
-
-    // Technically we should also fix up the types of locals as well, but after
-    // Struct2Local those locals will no longer be used anyhow (the locals hold
-    // allocations that are removed), so avoid that work (though it makes the
-    // IR temporarily invalid in between Array2Struct and Struct2Local).
-
-    // Replace the things we need to using the visit* methods.
-    walk(func->body);
-  }
-
-  Expression* replaceCurrent(Expression* expression) {
-    analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
-    PostWalker<Array2Struct>::replaceCurrent(expression);
-    return expression;
-  }
-
-  // In rare cases we may need to refinalize, as with Struct2Local.
-  bool refinalize = false;
-
-  // The number of slots in the array (which will become the number of fields in
-  // the struct).
-  Index numFields;
-
-  // The StructNew that replaces the ArrayNew*. The user of this class can then
-  // optimize that StructNew using Struct2Local.
-  StructNew* structNew;
-
-  void visitArrayNew(ArrayNew* curr) {
-    if (curr == allocation) {
-      // Generate a StructNew to replace the ArrayNew.
-      Expression* arrayNewReplacement;
-      if (curr->isWithDefault()) {
-        structNew = builder.makeStructNew(structType, {});
-        arrayNewReplacement = structNew;
-      } else {
-        // The ArrayNew is writing the same value to each slot of the array. To
-        // do the same for the struct, we store that value in a local and
-        // generate multiple local.gets of it.
-        auto elementType = originalType.getHeapType().getArray().element.type;
-        auto local = builder.addVar(func, elementType);
-        auto* set = builder.makeLocalSet(local, curr->init);
-        std::vector<Expression*> gets;
-        for (Index i = 0; i < numFields; i++) {
-          gets.push_back(builder.makeLocalGet(local, elementType));
-        }
-        structNew = builder.makeStructNew(structType, gets);
-        // The ArrayNew* will be replaced with a block containing the local.set
-        // and the structNew.
-        arrayNewReplacement = builder.makeSequence(set, structNew);
-      }
-      // Mark the new StructNew as flowing out the allocation so Struct2Local
-      // will process it. (replaceCurrent below does the same for
-      // arrayNewReplacement.)
-      analyzer.reachedInteractions[structNew] = ParentChildInteraction::Flows;
-      replaceCurrent(arrayNewReplacement);
-    }
-  }
-
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (curr == allocation) {
-      // Simply use the same values as the array. An operand may have become
-      // unreachable during the walk (e.g. an OOB array.get of this allocation
-      // in an unreachable loop), which causes makeStructNew to finalize
-      // structNew->type to unreachable. However, we still must run Struct2Local
-      // because Array2Struct has already rewritten reached expressions (such as
-      // local.gets) to use structType without updating local types, leaving the
-      // IR invalid until Struct2Local removes them. Keep structNew->type as the
-      // concrete struct type (the only place StructNew stores its HeapType) and
-      // defer ReFinalize until the end of Struct2Local so Struct2Local can look
-      // up the struct fields and replace structNew.
-      structNew = builder.makeStructNew(structType, curr->values);
-      structNew->type = Type(structType, NonNullable, Exact);
-      replaceCurrent(structNew);
-    }
-  }
-
-  void visitArraySet(ArraySet* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // If this is an OOB array.set then we trap.
-    auto index = getIndex(curr->index);
-    if (index >= numFields) {
-      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->value),
-                                        builder.makeUnreachable()}));
-      // We added an unreachable, and must propagate that type.
-      refinalize = true;
-      return;
-    }
-
-    // Convert the ArraySet into a StructSet.
-    replaceCurrent(
-      builder.makeStructSet(index, curr->ref, curr->value, curr->order));
-  }
-
-  void visitArrayGet(ArrayGet* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // If this is an OOB array.get then we trap.
-    auto index = getIndex(curr->index);
-    if (index >= numFields) {
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                          builder.makeUnreachable()));
-      // We added an unreachable, and must propagate that type.
-      refinalize = true;
-      return;
-    }
-
-    // Convert the ArrayGet into a StructGet.
-    replaceCurrent(builder.makeStructGet(
-      index, curr->ref, curr->order, curr->type, curr->signed_));
-  }
-
-  void visitArrayRMW(ArrayRMW* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    auto index = getIndex(curr->index);
-    if (index >= numFields) {
-      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->value),
-                                        builder.makeUnreachable()}));
-      refinalize = true;
-      return;
-    }
-
-    // Convert the ArrayRMW into a StructRMW.
-    replaceCurrent(builder.makeStructRMW(
-      curr->op, index, curr->ref, curr->value, curr->order));
-  }
-
-  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // The allocation might flow into `ref` or `expected`, but not
-    // `replacement`, because then it would be considered to have escaped.
-    if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
-      auto index = getIndex(curr->index);
-      if (index >= numFields) {
+    auto refAlloc = getOptimizedAlloc(curr->ref);
+    bool expCanMatch = canMatchHeapValue(curr->expected);
+    if (refAlloc) {
+      Index idx = curr->index->cast<Const>()->value.getUnsigned();
+      const auto& info = state.allocs[*refAlloc];
+      if (idx >= info.fields.size()) {
         replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                           builder.makeDrop(curr->expected),
                                           builder.makeDrop(curr->replacement),
                                           builder.makeUnreachable()}));
-        refinalize = true;
         return;
       }
-
-      // The accessed array is being optimized. Convert the ArrayCmpxchg into a
-      // StructCmpxchg.
-      replaceCurrent(builder.makeStructCmpxchg(
-        index, curr->ref, curr->expected, curr->replacement, curr->order));
+      emitOptimizedRefCmpxchg(
+        curr->ref, curr->expected, curr->replacement, expCanMatch, info, idx);
       return;
     }
-
-    // The `expected` value must be getting optimized. Since the accessed object
-    // is remaining an array for now, do not change anything. The ArrayCmpxchg
-    // will be optimized later by Struct2Local.
-    return;
-  }
-
-  // Some additional operations need special handling
-
-  void visitRefTest(RefTest* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+    if (expCanMatch) {
       return;
     }
-
-    // When we ref.test an array allocation, we cannot simply turn the array
-    // into a struct, as then the test will behave differently. To properly
-    // handle this, check if the test succeeds or not, and write out the outcome
-    // here (similar to Struct2Local::visitRefTest). Note that we test on
-    // |originalType| here and not |allocation->type|, as the allocation has
-    // been turned into a struct.
-    int32_t result = Type::isSubType(originalType, curr->castType);
-    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                        builder.makeConst(Literal(result))));
-  }
-
-  void visitRefCast(RefCast* curr) {
-    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
-      return;
-    }
-
-    // As with RefTest, we need to check if the cast succeeds with the array
-    // type before we turn it into a struct type (as after that change, the
-    // outcome of the cast will look different).
-    if (!Type::isSubType(originalType, curr->type)) {
-      // The cast fails, ensure we trap with an unreachable.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                          builder.makeUnreachable()));
-    } else {
-      // The cast succeeds. Update the type. (It is ok to use the non-nullable
-      // type here unconditionally, since we know the allocation flows through
-      // here, and anyhow we will be removing the reference during Struct2Local,
-      // later.)
-      curr->type = Type(structType, NonNullable);
-    }
-
-    // Regardless of how we altered the type here, refinalize.
-    refinalize = true;
-  }
-
-  // Get the value in an expression we know must contain a constant index.
-  Index getIndex(Expression* curr) {
-    return curr->cast<Const>()->value.getUnsigned();
-  }
-
-  // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
-  // being allocated.
-  Index getArrayNewSize(Expression* allocation) {
-    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      return getIndex(arrayNew->size);
-    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
-      return arrayNewFixed->values.size();
-    } else {
-      WASM_UNREACHABLE("bad allocation");
-    }
+    // `curr->ref` is unoptimized while `curr->expected` is a non-escaping
+    // allocation or dynamically unreachable, so `expected` cannot match the
+    // element in memory. Stash `ref` and `index` in scratch locals before
+    // dropping `expected` and `replacement` to preserve evaluation order, then
+    // read the element directly.
+    Type refType = curr->ref->type.with(Nullable);
+    Index refScratch = builder.addVar(func, refType);
+    Index indexScratch = builder.addVar(func, Type::i32);
+    replaceCurrent(builder.makeBlock(
+      {builder.makeLocalSet(refScratch, curr->ref),
+       builder.makeLocalSet(indexScratch, curr->index),
+       builder.makeDrop(curr->expected),
+       builder.makeDrop(curr->replacement),
+       builder.makeArrayGet(builder.makeLocalGet(refScratch, refType),
+                            builder.makeLocalGet(indexScratch, Type::i32),
+                            curr->order,
+                            curr->type)}));
   }
 };
 
-// Core Heap2Local optimization that operates on a function: Builds up the data
-// structures we need (LocalGraph, etc.) that we will use across multiple
-// analyses of allocations, and then runs those analyses and optimizes where
-// possible.
-struct Heap2Local {
-  Function* func;
-  Module& wasm;
-  const PassOptions& passOptions;
-
-  std::unique_ptr<LazyLocalGraph> localGraph;
-  std::unique_ptr<Parents> parents;
-  std::unique_ptr<BranchUtils::BranchTargets> branchTargets;
-
-  Heap2Local(Function* func, Module& wasm, const PassOptions& passOptions)
-    : func(func), wasm(wasm), passOptions(passOptions),
-      localGraph(std::make_unique<LazyLocalGraph>(func, &wasm)),
-      parents(std::make_unique<Parents>(func->body)),
-      branchTargets(std::make_unique<BranchUtils::BranchTargets>(func->body)) {
-
-    // Find all the relevant allocations in the function: StructNew, ArrayNew,
-    // ArrayNewFixed.
-    struct AllocationFinder : public PostWalker<AllocationFinder> {
-      std::vector<StructNew*> structNews;
-      std::vector<Expression*> arrayNews;
-
-      void visitStructNew(StructNew* curr) {
-        // Ignore unreachable allocations that DCE will remove anyhow.
-        if (curr->type != Type::unreachable) {
-          structNews.push_back(curr);
-        }
-      }
-      void visitArrayNew(ArrayNew* curr) {
-        // Only new arrays of fixed size are relevant for us.
-        if (curr->type != Type::unreachable && isValidSize(curr->size)) {
-          arrayNews.push_back(curr);
-        }
-      }
-      void visitArrayNewFixed(ArrayNewFixed* curr) {
-        if (curr->type != Type::unreachable &&
-            isValidSize(curr->values.size())) {
-          arrayNews.push_back(curr);
-        }
-      }
-
-      bool isValidSize(Expression* size) {
-        // The size of an array is valid if it is constant, and its value is
-        // valid.
-        if (auto* c = size->dynCast<Const>()) {
-          return isValidSize(c->value.getUnsigned());
-        }
-        return false;
-      }
-
-      bool isValidSize(Index size) {
-        // Set a reasonable limit on the size here, as valid wasm can contain
-        // things like (array.new (i32.const -1)) which will likely fail at
-        // runtime on a VM limitation on array size. We also are converting a
-        // heap allocation to a stack allocation, which can be noticeable in
-        // some cases, so to be careful here use a fairly small limit.
-        return size < 20;
-      }
-    } finder;
-    finder.walk(func->body);
-
-    // First, lower non-escaping arrays into structs. That allows us to handle
-    // arrays in a single place, and let all the rest of this pass assume we are
-    // working on structs. We are in fact only optimizing struct-like arrays
-    // here, that is, arrays of a fixed size and whose items are accessed using
-    // constant indexes, so they are effectively structs, and turning them into
-    // such allows uniform handling later.
-    for (auto* allocation : finder.arrayNews) {
-      if (allocation->type == Type::unreachable) {
-        // Leave this for DCE.
-        continue;
-      }
-      EscapeAnalyzer analyzer(
-        *localGraph, *parents, *branchTargets, passOptions, wasm);
-      if (!analyzer.escapes(allocation)) {
-        // Convert the allocation and all its uses into a struct. Then convert
-        // the struct into locals.
-        Array2Struct array2Struct(allocation, analyzer, func, wasm);
-        Struct2Local(array2Struct.structNew,
-                     analyzer,
-                     func,
-                     wasm,
-                     array2Struct.refinalize);
-        resetAnalysisData();
-      }
-    }
-
-    // Next, process all structNews.
-    for (auto* allocation : finder.structNews) {
-      if (allocation->type == Type::unreachable) {
-        // Leave this for DCE.
-        continue;
-      }
-      // Check for escaping, noting relevant information as we go. If this does
-      // not escape, optimize it into locals.
-      EscapeAnalyzer analyzer(
-        *localGraph, *parents, *branchTargets, passOptions, wasm);
-      if (!analyzer.escapes(allocation)) {
-        Struct2Local(allocation, analyzer, func, wasm);
-        resetAnalysisData();
-      }
-    }
-  }
-
-  void resetAnalysisData() {
-    // Optimizations may add new locals and parent-child relationships. Rather
-    // than trying to keep these data structures up-to-date, just clear and
-    // recompute them after each optimization.
-    localGraph = std::make_unique<LazyLocalGraph>(func, &wasm);
-    parents = std::make_unique<Parents>(func->body);
-    branchTargets = std::make_unique<BranchUtils::BranchTargets>(func->body);
-  }
-};
-
-struct Heap2LocalPass : public WalkerPass<PostWalker<Heap2LocalPass>> {
+struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
   bool isFunctionParallel() override { return true; }
 
+  // Optimizer updates non-nullable local uses right after optimizing.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<Heap2LocalPass>();
+    return std::make_unique<Heap2Local>();
   }
 
   void doWalkFunction(Function* func) {
-    // Multiple rounds of optimization may work in theory, as once we turn one
-    // allocation into locals, references written to its fields become
-    // references written to locals, which we may see do not escape. However,
-    // this does not work yet, since we do not remove the original allocation -
-    // we just "detach" it from other things and then depend on other
-    // optimizations to remove it. That means this pass must be interleaved with
-    // vacuum, in particular, to optimize such nested allocations.
-    // TODO Consider running multiple iterations here, and running vacuum in
-    //      between them.
-    Heap2Local(func, *getModule(), getPassOptions());
+    Module& wasm = *getModule();
+    if (!wasm.features.hasGC()) {
+      return;
+    }
+    AnalysisState state;
+    GraphBuilder(state, func, wasm).build();
+    if (state.allocs.empty()) {
+      // Nothing to do.
+      return;
+    }
+    computeOrigins(state);
+    if (!computeEscapes(state)) {
+      return;
+    }
+    Optimizer(state, func, wasm).optimize();
   }
 };
 
 } // anonymous namespace
 
-Pass* createHeap2LocalPass() { return new Heap2LocalPass(); }
+Pass* createHeap2LocalPass() { return new Heap2Local(); }
 
 } // namespace wasm

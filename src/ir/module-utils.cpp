@@ -450,17 +450,49 @@ struct CodeScanner : PostWalker<CodeScanner> {
   void visitArrayInitElem(ArrayInitElem* curr) { info.note(curr->ref->type); }
   void visitRefCast(RefCast* curr) { info.note(curr->type); }
   void visitRefTest(RefTest* curr) { info.note(curr->castType); }
+  void visitRefGetDesc(RefGetDesc* curr) { info.note(curr->ref->type); }
   void visitBrOn(BrOn* curr) {
-    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-      info.note(curr->ref->type);
-      info.note(curr->castType);
+    switch (curr->op) {
+      case BrOnNull:
+      case BrOnNonNull:
+        break;
+      case BrOnCast:
+      case BrOnCastFail:
+      case BrOnCastDescEq:
+      case BrOnCastDescEqFail:
+        info.note(curr->ref->type);
+        info.note(curr->castType);
+        break;
     }
   }
   void visitStructGet(StructGet* curr) { info.note(curr->ref->type); }
   void visitStructSet(StructSet* curr) { info.note(curr->ref->type); }
+  void visitStructRMW(StructRMW* curr) { info.note(curr->ref->type); }
+  void visitStructCmpxchg(StructCmpxchg* curr) { info.note(curr->ref->type); }
   void visitStructWait(StructWait* curr) { info.note(curr->ref->type); }
   void visitArrayGet(ArrayGet* curr) { info.note(curr->ref->type); }
   void visitArraySet(ArraySet* curr) { info.note(curr->ref->type); }
+  void visitArrayLoad(ArrayLoad* curr) { info.note(curr->ref->type); }
+  void visitArrayStore(ArrayStore* curr) { info.note(curr->ref->type); }
+  void visitArrayRMW(ArrayRMW* curr) { info.note(curr->ref->type); }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) { info.note(curr->ref->type); }
+  void visitTupleExtract(TupleExtract* curr) {
+    if (curr->index != 0) {
+      auto* tuple = curr->tuple;
+      if (!tuple->is<LocalGet>() && !tuple->is<LocalSet>() &&
+          !tuple->is<GlobalGet>()) {
+        // A scratch local of this type will be emitted in the binary.
+        info.note(curr->type);
+      }
+    }
+  }
+  void visitBreak(Break* curr) {
+    if (curr->condition) {
+      // A br_if with a refined reference value may need a ref.cast or scratch
+      // locals of this type in the binary (see BinaryInstWriter::visitBreak).
+      info.include(curr->type);
+    }
+  }
   void visitContBind(ContBind* curr) {
     info.note(curr->cont->type);
     info.note(curr->type);

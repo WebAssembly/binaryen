@@ -6,6 +6,7 @@
 ;; type, and hit an error during --roundtrip.
 
 ;; RUN: foreach %s %t wasm-opt -all --roundtrip -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt -all --generate-stack-ir --roundtrip -S -o - | filecheck %s
 
 (module
   (type $struct.A (struct i32))
@@ -174,6 +175,400 @@
       (local.get $index)
       (local.get $offset)
       (local.get $size)
+    )
+  )
+)
+
+;; The following tests use an unnamed block whose result type is only emitted by
+;; the consuming instruction (or scratch locals). With --generate-stack-ir, the
+;; unnamed block itself is not emitted in StackIR, so CodeScanner must note the
+;; type on the consuming instruction directly.
+
+(module
+  (type $a (shared (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $s (shared (descriptor $d) (struct)))
+    (type $s (shared (descriptor $d) (struct)))
+    ;; CHECK:       (type $d (shared (describes $s) (struct)))
+    (type $d (shared (describes $s) (struct)))
+  )
+  ;; CHECK:      (func $test (type $2) (param $desc (ref $d)) (result (ref $s))
+  ;; CHECK-NEXT:  (block $b (result (ref $s))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_cast_desc_eq $b (ref $s) (ref $s)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (local.get $desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $desc (ref $d)) (result (ref $s))
+    (block $b (result (ref $s))
+      (drop
+        (br_on_cast_desc_eq $b (ref $a) (ref $s)
+          (block (result (ref $a))
+            (unreachable)
+          )
+          (local.get $desc)
+        )
+      )
+      (unreachable)
+    )
+  )
+)
+
+(module
+  (type $a (shared (struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $s (shared (descriptor $d) (struct)))
+    (type $s (shared (descriptor $d) (struct)))
+    ;; CHECK:       (type $d (shared (describes $s) (struct)))
+    (type $d (shared (describes $s) (struct)))
+  )
+  ;; CHECK:      (func $test (type $2) (param $desc (ref $d)) (result (ref $s))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $b (result (ref (shared any)))
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (br_on_cast_desc_eq_fail $b (ref $s) (ref $s)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $test (param $desc (ref $d)) (result (ref $s))
+    (block $b (result (ref (shared any)))
+      (return
+        (br_on_cast_desc_eq_fail $b (ref $a) (ref $s)
+          (block (result (ref $a))
+            (unreachable)
+          )
+          (local.get $desc)
+        )
+      )
+    )
+    (unreachable)
+  )
+)
+
+(module
+  (rec
+    (type $s (descriptor $d) (struct))
+    (type $d (describes $s) (struct))
+  )
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefGetDesc we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (ref.get_desc $s
+        (block (result (ref $s))
+          (unreachable)
+        )
+      )
+    )
+  )
+)
+
+(module
+  (type $s (shared (struct (field (mut i32)))))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructRMW we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.atomic.rmw.add $s 0
+        (block (result (ref $s))
+          (unreachable)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  (type $s (shared (struct (field (mut i32)))))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructCmpxchg we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.atomic.rmw.cmpxchg $s 0
+        (block (result (ref $s))
+          (unreachable)
+        )
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  (type $a (array i8))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayLoad we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (i32.load8_u (type $a)
+        (block (result (ref $a))
+          (unreachable)
+        )
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+(module
+  (type $a (array (mut i8)))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayStore we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (i32.store8 (type $a)
+      (block (result (ref $a))
+        (unreachable)
+      )
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
+)
+
+(module
+  (type $a (shared (array (mut i32))))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayRMW we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (array.atomic.rmw.add $a
+        (block (result (ref $a))
+          (unreachable)
+        )
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  (type $a (shared (array (mut i32))))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayCmpxchg we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (array.atomic.rmw.cmpxchg $a
+        (block (result (ref $a))
+          (unreachable)
+        )
+        (i32.const 0)
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $s (struct))
+  (type $s (struct))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref $s))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (tuple.extract 2 1
+        (block (result i32 (ref $s))
+          (unreachable)
+        )
+      )
+    )
+  )
+)
+
+(module
+  (type $s (struct))
+  ;; CHECK:      (func $test (type $0) (result anyref)
+  ;; CHECK-NEXT:  (block $b (result anyref)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $b
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result anyref)
+    (block $b (result anyref)
+      (br_if $b
+        (block (result (ref $s))
+          (unreachable)
+        )
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $s (struct))
+  (type $s (struct))
+  ;; CHECK:      (func $test (type $0) (result i32 anyref)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 (ref $s))
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 (ref $s)))
+  ;; CHECK-NEXT:  (local $scratch_4 i32)
+  ;; CHECK-NEXT:  (block $b (type $0) (result i32 anyref)
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $scratch_4
+  ;; CHECK-NEXT:      (tuple.extract 2 0
+  ;; CHECK-NEXT:       (local.tee $scratch
+  ;; CHECK-NEXT:        (br_if $b
+  ;; CHECK-NEXT:         (tuple.make 2
+  ;; CHECK-NEXT:          (local.get $1)
+  ;; CHECK-NEXT:          (local.get $2)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (tuple.extract 2 1
+  ;; CHECK-NEXT:       (local.get $scratch)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $scratch_4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (tuple.make 2
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result i32 anyref)
+    (block $b (result i32 anyref)
+      (br_if $b
+        (block (result i32 (ref $s))
+          (unreachable)
+        )
+        (i32.const 0)
+      )
     )
   )
 )
