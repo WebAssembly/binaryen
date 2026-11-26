@@ -421,6 +421,11 @@ generator: `cmake -G Ninja . && ninja`.
 
 To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
+With `BUILD_TOOLS` and `INSTALL_LIBS` enabled, installation also provides the
+`wasm-opt` static library and its public `wasm-opt-c.h` header. Link it with
+`binaryen` and call `WasmOptTranslateToFuzz` to generate modules from seed bytes.
+Module configuration, optimization and serialization use the Binaryen C API.
+
 Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
 - Building for Node.js:

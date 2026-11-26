@@ -608,6 +608,10 @@ if(INSTALL_LIBS OR BUILD_SHARED_LIBS)
 endif()
 if(INSTALL_LIBS)
   install(FILES src/binaryen-c.h src/wasm-delegations.def DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  if(BUILD_TOOLS)
+    install(TARGETS wasm-opt-lib ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(FILES src/wasm-opt-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  endif()
 endif()
 
 # binaryen.js
