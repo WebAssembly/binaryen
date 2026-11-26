@@ -27,11 +27,69 @@
 
 #include "abi/stack.h"
 #include "cfg/liveness-traversal.h"
+#include "ir/iteration.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
+
+// Make values held on the operand stack across calls visible to local liveness
+// analysis. Only expressions with a possible pointer before a calling operand
+// need to be rewritten, rather than flattening the entire function.
+struct LocalizePointerOperands
+  : PostWalker<LocalizePointerOperands,
+               UnifiedExpressionVisitor<LocalizePointerOperands>> {
+  Type pointerType;
+  std::unordered_set<Expression*> hasCalls;
+
+  LocalizePointerOperands(Type pointerType) : pointerType(pointerType) {}
+
+  void visitExpression(Expression* curr) {
+    bool calls = curr->is<Call>() || curr->is<CallIndirect>();
+    for (auto* child : ChildIterator(curr)) {
+      calls |= hasCalls.contains(child);
+    }
+    if (calls) {
+      hasCalls.insert(curr);
+    }
+
+    bool pointer = false;
+    bool needsLocals = false;
+    ValueChildIterator children(curr);
+    for (auto* child : children) {
+      if (!child->type.isConcrete()) {
+        // The parent is never reached, so earlier operand values are not used.
+        return;
+      }
+      needsLocals |= pointer && hasCalls.contains(child);
+      pointer |= child->type == pointerType;
+    }
+    if (!needsLocals) {
+      return;
+    }
+
+    Builder builder(*getModule());
+    auto* block = builder.makeBlock();
+    for (auto*& child : children) {
+      // Move all operands in order, including non-pointers, to preserve their
+      // effects. Use fresh locals even for local.get: a later operand may write
+      // to its source local while the old value is still on the operand stack.
+      auto type = child->type;
+      auto temp = builder.addVar(
+        getFunction(),
+        TypeUpdating::getValidLocalType(type, getModule()->features));
+      block->list.push_back(builder.makeLocalSet(temp, child));
+      child = TypeUpdating::fixLocalGet(builder.makeLocalGet(temp, type),
+                                        *getModule());
+    }
+    block->list.push_back(curr);
+    block->finalize();
+    hasCalls.insert(block);
+    replaceCurrent(block);
+  }
+};
 
 struct SpillPointers
   : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
@@ -69,6 +127,8 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
+    LocalizePointerOperands(getModule()->memories[0]->addressType)
+      .walkFunctionInModule(func, getModule());
     Super::doWalkFunction(func);
     spillPointers();
   }
