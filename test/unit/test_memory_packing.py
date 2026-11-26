@@ -41,3 +41,38 @@ class MemoryPackingTest(utils.BinaryenTestCase):
         self.assertEqual(p.returncode, 0)
         self.assertIn('Some VMs may not accept this binary', p.stderr)
         self.assertIn('Run the limit-segments pass to merge segments.', p.stderr)
+
+    def test_init_trap_does_not_write(self):
+        for address_type in ['i32', 'i64']:
+            for dynamic_dest in [False, True]:
+                for zero_first in [False, True]:
+                    for dest in [65525, 65526]:
+                        with self.subTest(address_type=address_type,
+                                          dynamic_dest=dynamic_dest,
+                                          zero_first=zero_first, dest=dest):
+                            zeros = '\\00' * 10
+                            data = zeros + 'A' if zero_first else 'A' + zeros
+                            ptr = ('(call $dest)' if dynamic_dest else
+                                   f'({address_type}.const {dest})')
+                            module = f'''
+                            (module
+                              (memory {address_type} 1)
+                              (data $d "{data}")
+                              (func $dest (result {address_type})
+                                ({address_type}.const {dest}))
+                              (func (export "copy")
+                                (i32.store8 ({address_type}.const {dest})
+                                  (i32.const 42))
+                                (memory.init $d {ptr}
+                                  (i32.const 0) (i32.const 11)))
+                              (func (export "peek") (result i32)
+                                (i32.load8_u ({address_type}.const {dest}))))
+                            '''
+                            p = shared.run_process(
+                                shared.WASM_OPT + ['-all', '--memory-packing',
+                                                   '--fuzz-exec', '-o', os.devnull],
+                                input=module, check=False, capture_output=True)
+                            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+                            expected = 42 if dest == 65526 else (0 if zero_first else 65)
+                            self.assertEqual(p.stdout.count(
+                                f'note result: peek => {expected}'), 2)

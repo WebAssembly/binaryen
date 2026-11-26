@@ -871,6 +871,27 @@ void MemoryPacking::createReplacements(Module* module,
       appendResult(set);
     }
 
+    // Check the full destination range before any split writes. Loading the
+    // last byte with an immediate offset also checks for address overflow.
+    if (end > ranges[firstRangeIdx].end) {
+      auto* memory = module->getMemory(init->memory);
+      auto* constantDest = init->dest->dynCast<Const>();
+      if (!constantDest || !provablyInBounds(*memory,
+                                             constantDest->value.getUnsigned(),
+                                             end - start)) {
+        Expression* dest;
+        if (constantDest) {
+          dest = builder.makeConst(constantDest->value);
+        } else {
+          auto* get = builder.makeLocalGet(-1, memory->addressType);
+          getVars.push_back(&get->index);
+          dest = get;
+        }
+        appendResult(builder.makeDrop(builder.makeLoad(
+          1, false, end - start - 1, 1, dest, Type::i32, init->memory)));
+      }
+    }
+
     // We only need to explicitly check the drop state when we will emit
     // memory.fill first, since memory.init will implicitly do the check for us.
     if (ranges[firstRangeIdx].isZero) {
